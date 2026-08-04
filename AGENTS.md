@@ -13,11 +13,11 @@ All npm commands run from `site/`, not the repo root.
 - No tests, no lint, no typecheck. **`npm run build` is the only correctness gate** — run it before calling any change done.
 
 ## Architecture
-- `site/src/pages/index.astro` (~2700 lines) — homepage is **standalone**: own layout, CSS, JS, nav, footer. Does NOT use Base.astro.
+- `site/src/pages/index.astro` (~2950 lines) — homepage is **standalone**: own layout, CSS, JS, nav, footer. Does NOT use Base.astro.
 - `site/src/layouts/Base.astro` — shared layout for every other page (about, community, contact, blog/*, research/*)
 - `site/src/styles/global.css` — shared theme variables and styles (imported by Base.astro)
 - `site/src/content.config.ts` — Astro 5 `glob()` loader API (not legacy collection style). Two collections: `research`, `blog`
-- `site/src/components/AboutTabs.astro` — only reusable component
+- `site/src/components/` — `AboutStory.astro`, `CommandPalette.astro`
 - Content: `site/src/content/blog/*.mdx` (2 posts), `site/src/content/research/*.mdx` (3 papers)
 - Dynamic routes use `[...slug].astro` pattern
 
@@ -47,6 +47,6 @@ Homepage aliases exist in `global.css :root` for backwards compat only.
 
 ## Known Tech Debt
 See `FURTHER_WORK.md` for details. Key items:
-- `index.astro` duplicates ~1275 lines of CSS from `global.css` with different variable names
+- `index.astro` duplicates a large CSS block from `global.css` (351 lines) with different variable names
 - Duplicate ticker data in `Base.astro` and `index.astro`
 - ~276 lines of decorative canvas code (globe + force graph)
