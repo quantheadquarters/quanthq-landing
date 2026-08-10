@@ -306,30 +306,6 @@ html.light .vignette-fx { background: radial-gradient(ellipse 130% 100% at 50% 4
 }
 .btn-glass:active { transform: scale(0.96); }
 
-/* ticker tape (matches landing page) */
-.tape {
-  position: fixed; top: 64px; left: 0; right: 0; z-index: 40;
-  height: 28px; overflow: hidden;
-  background: var(--card-bg);
-  opacity: 0.85;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--border);
-}
-.tape-track {
-  display: flex; gap: 36px; align-items: center; height: 100%;
-  width: max-content; padding: 0 18px;
-  font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em;
-  animation: tapeScroll 45s linear infinite;
-}
-.tape:hover .tape-track { animation-play-state: paused; }
-@keyframes tapeScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-.tape-sym { color: var(--text-1); font-weight: 700; }
-.tape-px { color: var(--text-3); margin-left: 6px; }
-.tape-chg { margin-left: 6px; font-weight: 700; }
-.tape-chg.up { color: var(--green); }
-.tape-chg.down { color: var(--red); }
-@media (max-width: 767px) { .tape { display: none; } }
 
 
 

@@ -1,4 +1,12 @@
 ---
+import { getCollection } from 'astro:content';
+import { projects, openSourceCount } from '../data/projects.ts';
+
+// Counts come from the content collections and the project list, never hand-written,
+// so the About page can't drift out of sync with the archives.
+const researchCount = (await getCollection('research')).length;
+const blogCount = (await getCollection('blog')).length;
+
 // Continuous, static About page. Section ids match the nav / anchor links.
 const sections = [
   {
@@ -6,7 +14,7 @@ const sections = [
     headline: 'Building practical AI systems through open research.',
     lead: 'QuantHQ is a digital research institution — a place to make rigorous quantitative research open, collaborative, and reproducible, with a global community of quants, engineers, and scientists building in public.',
     type: 'stats',
-    stats: [['3', 'Research Papers'], ['4', 'Open-Source Projects'], ['4', 'Blog Posts'], ['3', 'Partner Universities']],
+    stats: [[String(researchCount), 'Published papers'], [String(openSourceCount), 'Open-source projects'], [String(blogCount), 'Published articles'], [String(projects.length), 'Tracked projects']],
   },
   {
     id: 'research', n: '02', label: 'Research',
@@ -32,7 +40,7 @@ const sections = [
   },
   {
     id: 'community', n: '04', label: 'Community',
-    headline: 'Intelligence is a team sport.',
+    headline: 'Join the research community.',
     lead: 'Where the network lives — debate, competition, and open collaboration across the globe.',
     type: 'list',
     list: [
@@ -57,7 +65,7 @@ const sections = [
   {
     id: 'future', n: '06', label: 'Future',
     headline: 'Where QuantHQ is headed.',
-    lead: 'The institution, taking shape — a lab, open models, fellowships, and a flagship gathering.',
+    lead: 'What we are working towards next — a dedicated lab, released model weights, funded fellowships, and an annual gathering.',
     type: 'roadmap',
     roadmap: [
       ['Research Lab', 'Dedicated full-time research'],

@@ -4,17 +4,6 @@ import { ClientRouter } from 'astro:transitions';
 import CommandPalette from '../components/CommandPalette.astro';
 const { title = 'QuantHQ', description = 'QuantHQ is an open research institution for quantitative finance and financial AI. Explore reproducible factor research, backtesting methods, and open-source tools.' } = Astro.props;
 const canonicalUrl = new URL(Astro.url.pathname, Astro.site ?? 'https://quanthq.in').href;
-const tickers = [
-  { sym: 'NVDA', px: '131.42', chg: '+2.8%', dir: 'up' },
-  { sym: 'AAPL', px: '212.18', chg: '+1.4%', dir: 'up' },
-  { sym: 'MSFT', px: '448.62', chg: '+0.4%', dir: 'up' },
-  { sym: 'META', px: '562.90', chg: '+1.9%', dir: 'up' },
-  { sym: 'TSLA', px: '189.34', chg: '-1.6%', dir: 'down' },
-  { sym: 'BTC', px: '68,420', chg: '+3.1%', dir: 'up' },
-  { sym: 'ETH', px: '3,840', chg: '+2.2%', dir: 'up' },
-  { sym: 'VIX', px: '16.3', chg: '-2.1%', dir: 'down' },
-];
-const tapeList = [...tickers, ...tickers];
 const nav = [
   { href: '/research/', label: 'Research' },
   { href: '/blog/', label: 'Blog' },
@@ -55,13 +44,6 @@ const nav = [
     <div class="vignette-fx"></div>
     <div class="bgfx-grain"></div>
   </div>
-  <div class="tape" aria-hidden="true">
-    <div class="tape-track">
-      {tapeList.map((t) => (
-        <span><span class="tape-sym">{t.sym}</span><span class="tape-px">{t.px}</span><span class={`tape-chg ${t.dir}`}>{t.chg}</span></span>
-      ))}
-    </div>
-  </div>
   <nav class="lg-nav">
     <div class="max-w-[var(--shell)] mx-auto px-8 h-full flex items-center gap-12 w-full">
       <a href="/" class="flex items-center gap-2.5 font-bold text-[15px] tracking-tight">
@@ -90,6 +72,7 @@ const nav = [
     <div id="mnav" class="hidden md:hidden bg-ink-97 backdrop-blur-xl border-b border-[var(--border)] px-8 py-4 flex-col gap-3 text-[15px]">
       <a href="/about/" class="block py-2 text-[var(--text-1)]">About</a>
       {nav.map((n) => <a href={n.href} class="block py-2 text-[var(--text-1)]">{n.label}</a>)}
+      <a href="/#join" class="block py-2 font-semibold text-[var(--gold-hi)]">Join the community</a>
     </div>
   </nav>
 

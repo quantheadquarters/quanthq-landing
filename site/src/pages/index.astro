@@ -1,10 +1,23 @@
 ---
 import { getCollection } from 'astro:content';
 import CommandPalette from '../components/CommandPalette.astro';
+import HomeFooter from '../components/HomeFooter.astro';
+import HomeNav from '../components/HomeNav.astro';
 import JsonLd from '../components/JsonLd.astro';
-const research = (await getCollection('research'))
-  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
-  .slice(0, 3);
+import { projects, openSourceCount } from '../data/projects.ts';
+import '../styles/home.css';
+
+const allResearch = (await getCollection('research')).sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+const [leadPaper, ...restPapers] = allResearch;
+const secondaryPapers = restPapers.slice(0, 2);
+
+const allPosts = (await getCollection('blog')).sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+const latestPosts = allPosts.slice(0, 3);
+
+const featuredProjects = projects.filter((p) => p.featured).slice(0, 4);
+
+const monthYear = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+
 const canonicalUrl = new URL(Astro.url.pathname, Astro.site ?? 'https://quanthq.in').href;
 
 const organizationSchema = {
@@ -43,1475 +56,29 @@ const organizationSchema = {
 <meta name="twitter:description" content="QuantHQ is an open research institution for quantitative finance and financial AI. Explore reproducible factor research, backtesting methods, and open-source tools.">
 <link rel="canonical" href={canonicalUrl} />
 <JsonLd data={organizationSchema} />
+<script is:inline>if(localStorage.theme==='light')document.documentElement.classList.add('light')</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
-<style is:global>
-*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-:root{
-  --black:#04060B;
-  --carbon:#090D15;
-  --blue:#3D7BFF;
-  --violet:#7B5CFF;
-  --cyan:#00FFF0;
-  --white:#FFFFFF;
-  --green:#00FF88;
-  --red:#FF4466;
-  --text-1:rgba(255,255,255,0.88);
-  --text-2:rgba(255,255,255,0.70);
-  --text-3:rgba(255,255,255,0.55);
-  /* --text-4 is decorative only (dots, rules, text-stroke) — fails AA as text */
-  --text-4:rgba(255,255,255,0.38);
-  --border:rgba(255,255,255,0.06);
-  --border-hover:rgba(255,255,255,0.12);
-  /* raised fill for chips/bars that sit on top of a card — NOT --border */
-  --surface-2:rgba(255,255,255,0.05);
-  /* aliases so the shared liquid-glass nav CSS resolves here too (themed via --black/--white) */
-  --bg:var(--black);
-  --text:var(--white);
-  --card-bg:var(--carbon);
-  --grad-hi:#9BB8FF;
-  /* the single warm signature accent — primary action only, never data */
-  --gold:#EBA83A;
-  --gold-hi:#FFD27A;
-  --gold-glow:rgba(235,168,58,0.45);
-  --on-gold:#1A1206;
-  --shell:1280px;
-  --gutter:32px;
-  --section-gap:160px;
-  --panel:880px;
-  --ease-spring:cubic-bezier(0.34,1.56,0.64,1);
-  --ease-out:cubic-bezier(0.22,1,0.36,1);
-  --font-display:'Instrument Serif',Georgia,serif;
-  --font-mono:'JetBrains Mono','SFMono-Regular',ui-monospace,monospace;
-}
-html.light{
-  --black:#F5F5F7;
-  --carbon:#FFFFFF;
-  --blue:#2563EB;
-  --violet:#6D28D9;
-  --cyan:#0891B2;
-  --white:#0F172A;
-  --green:#16A34A;
-  --red:#DC2626;
-  --text-1:rgba(15,23,42,0.94);
-  --text-2:rgba(15,23,42,0.76);
-  --text-3:rgba(15,23,42,0.62);
-  --text-4:rgba(15,23,42,0.44);
-  --border:rgba(15,23,42,0.10);
-  --border-hover:rgba(15,23,42,0.20);
-  --surface-2:rgba(15,23,42,0.04);
-  /* the dark highlight stop is far too pale on a light bg — 1.8:1 */
-  --grad-hi:#3B82F6;
-  --gold:#C77E12;
-  --gold-hi:#E8A93E;
-  --gold-glow:rgba(199,126,18,0.30);
-  --on-gold:#1A1206;
-}
-html{scroll-behavior:smooth;background:var(--black)}
-body{
-  font-family:'Inter',system-ui,sans-serif;
-  background:var(--black);
-  color:var(--white);
-  overflow-x:hidden;
-  -webkit-font-smoothing:antialiased;
-  counter-reset:sec;
-}
-a{text-decoration:none;color:inherit}
-button{border:none;background:none;color:inherit;font:inherit}
-
-/* ── SKIP LINK ── */
-.skip-link{
-  position:absolute;top:-100%;left:16px;z-index:9999;
-  padding:8px 16px;background:var(--blue);color:#000;
-  font-size:13px;font-weight:600;border-radius:4px;
-  transition:top 0.2s;
-}
-.skip-link:focus{top:8px}
-
-/* ── FOCUS STYLES ── */
-*:focus-visible{
-  outline:2px solid var(--blue);
-  outline-offset:2px;
-}
-
-/* ── LOADER ── */
-#loader{
-  position:fixed;inset:0;z-index:9999;
-  background:var(--black);
-  display:flex;align-items:center;justify-content:center;flex-direction:column;
-  transition:opacity 0.8s var(--ease-out),transform 0.8s var(--ease-out);
-}
-#loader.hide{opacity:0;pointer-events:none;transform:scale(1.05)}
-.loader-logo{
-  font-size:13px;letter-spacing:0.4em;text-transform:uppercase;
-  color:var(--text-3);font-weight:500;
-  animation:loaderPulse 2s ease-in-out infinite;
-}
-.loader-bar-wrap{
-  width:200px;height:1px;background:var(--border);
-  margin-top:32px;overflow:hidden;border-radius:2px;
-}
-.loader-bar{
-  height:100%;background:var(--blue);
-  width:0%;transition:width 0.1s linear;
-  box-shadow:0 0 12px var(--blue);
-}
-.loader-quant{
-  position:absolute;
-  font-family:var(--font-display);
-  font-size:clamp(60px,12vw,160px);
-  font-weight:400;
-  letter-spacing:-0.03em;
-  color:transparent;
-  -webkit-text-stroke:1px var(--text-4);
-  animation:loaderReveal 0.5s var(--ease-out) 0.05s both;
-  pointer-events:none;
-}
-@keyframes loaderReveal{
-  from{opacity:0.4;letter-spacing:0.1em}
-  to{opacity:1;letter-spacing:-0.03em}
-}
-@keyframes loaderPulse{0%,100%{opacity:0.3}50%{opacity:0.8}}
-
-/* ── SCROLL PROGRESS ── */
-#scroll-prog{
-  position:fixed;top:0;left:0;height:1px;width:0%;
-  background:var(--blue);
-  z-index:9000;pointer-events:none;
-}
-
-/* ── NAV (liquid glass — identical treatment to Base.astro) ── */
-nav{
-  position:fixed;top:0;left:0;right:0;z-index:800;
-  height:64px;display:flex;align-items:center;
-  background:color-mix(in srgb, var(--bg) 58%, transparent);
-  backdrop-filter:blur(22px) saturate(1.8);
-  -webkit-backdrop-filter:blur(22px) saturate(1.8);
-  border-bottom:1px solid color-mix(in srgb, var(--text) 8%, transparent);
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, #fff 9%, transparent),
-    0 16px 40px -28px rgba(0,0,0,0.6);
-  transition:background 0.4s,box-shadow 0.4s,border-color 0.4s;
-}
-html.light nav{
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.75),
-    0 16px 40px -28px rgba(15,23,42,0.14);
-}
-nav.scrolled{
-  background:color-mix(in srgb, var(--bg) 74%, transparent);
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, #fff 10%, transparent),
-    0 22px 50px -28px rgba(0,0,0,0.72);
-}
-html.light nav.scrolled{
-  background:color-mix(in srgb, var(--bg) 82%, transparent);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,0.85), 0 22px 50px -28px rgba(15,23,42,0.16);
-}
-.nav-inner{
-  max-width:var(--shell);margin:0 auto;padding:0 var(--gutter);
-  width:100%;display:flex;align-items:center;gap:48px;
-}
-.nav-logo{
-  display:flex;align-items:center;gap:10px;
-  font-size:15px;font-weight:700;letter-spacing:-0.01em;
-  flex-shrink:0;
-}
-.nav-links{display:flex;gap:32px;margin-left:auto}
-.nav-links a{
-  font-size:13px;color:var(--text-2);
-  font-weight:500;letter-spacing:0.01em;
-  transition:color 0.2s;
-}
-.nav-links a:hover{color:var(--text-1)}
-.nav-cta{
-  display:inline-flex;align-items:center;gap:6px;
-  font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;
-  padding:8px 18px;border-radius:999px;flex-shrink:0;color:var(--text);
-  background:color-mix(in srgb, var(--gold) 14%, transparent);
-  backdrop-filter:blur(14px) saturate(1.6);
-  -webkit-backdrop-filter:blur(14px) saturate(1.6);
-  border:1px solid color-mix(in srgb, var(--gold) 42%, transparent);
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, #fff 34%, transparent),
-    0 4px 16px -6px var(--gold-glow);
-  transition:all 0.25s var(--ease-out);
-}
-.nav-cta:hover{
-  background:color-mix(in srgb, var(--gold) 24%, transparent);
-  border-color:var(--gold);
-  transform:translateY(-1px);
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, #fff 44%, transparent),
-    0 8px 22px -8px var(--gold-glow);
-}
-/* ── MOBILE MENU ── */
-.nav-hamburger{
-  display:none;flex-direction:column;gap:5px;
-  padding:8px;margin-left:auto;cursor:pointer;
-  z-index:900;
-}
-.nav-hamburger span{
-  display:block;width:22px;height:2px;
-  background:var(--text-1);
-  border-radius:2px;
-  transition:transform 0.3s var(--ease-out),opacity 0.2s;
-}
-.nav-hamburger.active span:nth-child(1){transform:rotate(45deg) translate(5px,5px)}
-.nav-hamburger.active span:nth-child(2){opacity:0}
-.nav-hamburger.active span:nth-child(3){transform:rotate(-45deg) translate(5px,-5px)}
-
-/* ── BACKGROUND SYSTEM ── */
-.bg-aurora{
-  position:fixed;inset:0;z-index:1;pointer-events:none;
-  background:
-    radial-gradient(ellipse 80% 60% at 20% 15%,rgba(43,90,255,0.10) 0%,transparent 60%),
-    radial-gradient(ellipse 60% 80% at 82% 85%,rgba(110,70,255,0.09) 0%,transparent 60%),
-    radial-gradient(ellipse 45% 45% at 55% 45%,rgba(30,140,255,0.05) 0%,transparent 70%);
-  animation:auroraShift 20s ease-in-out infinite alternate;
-}
-html.light .bg-aurora{
-  background:
-    radial-gradient(ellipse 80% 60% at 20% 15%,rgba(43,90,255,0.05) 0%,transparent 60%),
-    radial-gradient(ellipse 60% 80% at 82% 85%,rgba(110,70,255,0.04) 0%,transparent 60%),
-    radial-gradient(ellipse 45% 45% at 55% 45%,rgba(30,140,255,0.03) 0%,transparent 70%);
-}
-.bg-grid{
-  position:fixed;inset:0;z-index:1;pointer-events:none;
-  background-image:
-    linear-gradient(rgba(122,158,255,0.055) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(122,158,255,0.055) 1px,transparent 1px);
-  background-size:72px 72px;
-  -webkit-mask-image:radial-gradient(ellipse 90% 70% at 50% 0%,#000 0%,transparent 78%);
-  mask-image:radial-gradient(ellipse 90% 70% at 50% 0%,#000 0%,transparent 78%);
-}
-html.light .bg-grid{
-  background-image:
-    linear-gradient(rgba(100,130,220,0.07) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(100,130,220,0.07) 1px,transparent 1px);
-}
-.nebula-blob{
-  position:fixed;border-radius:50%;pointer-events:none;z-index:0;
-  filter:blur(90px);
-}
-.nb1{
-  width:55vw;height:55vw;top:-20vw;left:-15vw;
-  background:rgba(38,84,255,0.16);
-  animation:nbDrift1 38s ease-in-out infinite alternate;
-}
-.nb2{
-  width:46vw;height:46vw;bottom:-18vw;right:-12vw;
-  background:rgba(38,84,255,0.09);
-  animation:nbDrift2 46s ease-in-out infinite alternate;
-}
-html.light .nb1{background:rgba(38,84,255,0.06)}
-html.light .nb2{background:rgba(38,84,255,0.04)}
-@keyframes nbDrift1{to{transform:translate(14vw,10vh) scale(1.18)}}
-@keyframes nbDrift2{to{transform:translate(-12vw,-12vh) scale(1.22)}}
-/* ── LIGHT MODE ── */
-html.light{color-scheme:light}
-html.light body,html.light #loader{background:var(--black);color:var(--white)}
-html.light nav.scrolled{background:rgba(245,245,247,0.85);border-bottom-color:var(--border)}
-html.light .bg-aurora{opacity:0.5}
-html.light .bg-grid{opacity:0.3}
-html.light .nebula-blob{opacity:0.4}
-html.light .hero-floor{opacity:0.3}
-html.light .grain{opacity:0.02}
-html.light .bb-cell{background:rgba(255,255,255,0.9)}
-html.light .bb-cell:hover{background:rgba(255,255,255,1)}
-html.light .bento-card{background:rgba(255,255,255,0.8);border-color:var(--border)}
-html.light .bento-card:hover{border-color:var(--border-hover);box-shadow:0 32px 64px -16px rgba(0,0,0,0.08)}
-html.light .hs-card{background:rgba(255,255,255,0.7);border-color:var(--border)}
-html.light .terminal-body{background:rgba(245,245,247,0.98)}
-html.light .terminal-window::after{background:repeating-linear-gradient(0deg,rgba(15,23,42,0.02) 0 1px,transparent 1px 3px)}
-html.light .terminal-window{box-shadow:0 32px 64px -24px rgba(15,23,42,0.18)}
-html.light .bento-card:hover{box-shadow:0 32px 64px -16px rgba(15,23,42,0.12),0 0 0 1px var(--border)}
-html.light .stat-cell{background:rgba(255,255,255,0.9)}
-html.light .stat-cell:hover{background:rgba(255,255,255,1)}
-html.light .tape{background:rgba(245,245,247,0.75);border-bottom-color:var(--border)}
-html.light footer{border-top-color:var(--border)}
-html.light .signup-form{background:rgba(255,255,255,0.8);border-color:var(--border)}
-html.light .loader-bar-wrap{background:rgba(0,0,0,0.06)}
-html.light ::-webkit-scrollbar-track{background:var(--black)}
-html.light ::-webkit-scrollbar-thumb{border-color:var(--black)}
-.theme-toggle{
-  width:34px;height:34px;border-radius:50%;
-  display:inline-flex;align-items:center;justify-content:center;
-  background:var(--surface-2);
-  backdrop-filter:blur(12px);
-  -webkit-backdrop-filter:blur(12px);
-  border:1px solid var(--border-hover);
-  cursor:pointer;color:var(--white);
-  transition:all 0.2s;flex-shrink:0;
-}
-.theme-toggle:hover{background:var(--border-hover);transform:rotate(20deg)}
-.theme-toggle svg{width:16px;height:16px}
-.theme-toggle .tt-moon{display:none}
-html.light .theme-toggle .tt-moon{display:block}
-html.light .theme-toggle .tt-sun{display:none}
-
-::selection{background:rgba(61,123,255,0.4);color:var(--white)}
-::-webkit-scrollbar{width:9px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{
-  background:var(--text-4);
-  border-radius:6px;border:2px solid var(--black);
-  transition:background 0.2s;
-}
-::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,var(--blue),var(--violet))}
-@keyframes auroraShift{
-  0%{background-position:0% 0%,100% 100%,50% 50%}
-  100%{background-position:30% 20%,70% 60%,60% 40%}
-}
-/* ── SECTION BASE ── */
-section{position:relative;z-index:10}
-/* clear the fixed nav (64) + ticker tape (28) on anchor / section-dot jumps */
-section[id]{scroll-margin-top:112px}
-@media(max-width:767px){section[id]{scroll-margin-top:84px}}
-
-/* ── FILM GRAIN ── */
-.vignette{
-  position:fixed;inset:0;z-index:2;pointer-events:none;
-  background:radial-gradient(ellipse 130% 100% at 50% 42%,transparent 55%,rgba(0,0,0,0.28) 100%);
-}
-html.light .vignette{background:radial-gradient(ellipse 130% 100% at 50% 42%,transparent 60%,rgba(15,23,42,0.05) 100%)}
-.grain{
-  position:fixed;inset:-50%;z-index:9990;pointer-events:none;
-  opacity:0.045;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  animation:grainShift 0.6s steps(4) infinite;
-}
-html.light .grain{opacity:0.02}
-@keyframes grainShift{
-  0%,100%{transform:translate(0,0)}
-  25%{transform:translate(-1.5%,1%)}
-  50%{transform:translate(1%,-1.5%)}
-  75%{transform:translate(-1%,1.5%)}
-}
-
-/* ── MEGA MARQUEE ── */
-.mega-marquee{
-  overflow:hidden;padding:56px 0;margin-bottom:var(--section-gap);
-  border-top:1px solid var(--border);
-  border-bottom:1px solid var(--border);
-}
-.mega-track{
-  display:flex;width:max-content;white-space:nowrap;
-  font-family:var(--font-display);
-  font-size:clamp(72px,11vw,160px);font-weight:400;letter-spacing:-0.02em;
-  color:transparent;
-  -webkit-text-stroke:1px var(--text-4);
-  animation:tapeScroll 30s linear infinite;
-  will-change:transform;
-}
-/* JS takes over when it can measure velocity; class removes the CSS fallback */
-.mega-track.js-driven{animation:none}
-.mega-track b{
-  font-weight:800;color:transparent;
-  -webkit-text-stroke:1px var(--blue);
-}
-
-/* ── TICKER TAPE ── */
-.tape{
-  position:fixed;top:64px;left:0;right:0;z-index:790;
-  height:28px;overflow:hidden;
-  background:var(--carbon);
-  opacity:0.85;
-  backdrop-filter:blur(16px);
-  -webkit-backdrop-filter:blur(16px);
-  border-bottom:1px solid var(--border);
-}
-.tape-track{
-  display:flex;gap:36px;align-items:center;height:100%;
-  width:max-content;padding:0 18px;
-  font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;
-  animation:tapeScroll 45s linear infinite;
-}
-.tape:hover .tape-track{animation-play-state:paused}
-@keyframes tapeScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-.tape-sym{color:var(--text-1);font-weight:700}
-.tape-px{color:var(--text-3);margin-left:6px}
-.tape-chg{margin-left:6px;font-weight:700}
-.tape-chg.up{color:var(--green)}
-.tape-chg.down{color:var(--red)}
-
-/* ── HERO HUD ── */
-/* constellation particle field */
-.hero-canvas{
-  position:absolute;inset:0;z-index:1;pointer-events:none;
-  width:100%;height:100%;
-}
-/* cursor-reactive light — follows the pointer, breathes when idle */
-.hero-spot{
-  position:absolute;inset:0;z-index:1;pointer-events:none;
-  background:radial-gradient(420px circle at var(--hx,50%) var(--hy,38%),
-    rgba(61,123,255,0.16),transparent 62%);
-  transition:background 0.45s var(--ease-out);
-}
-html.light .hero-spot{
-  background:radial-gradient(420px circle at var(--hx,50%) var(--hy,38%),
-    rgba(37,99,235,0.10),transparent 62%);
-}
-.hero-floor{
-  position:absolute;left:-25%;right:-25%;bottom:-4%;height:46%;
-  z-index:1;pointer-events:none;opacity:0.5;
-  background-image:
-    linear-gradient(rgba(122,158,255,0.20) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(122,158,255,0.20) 1px,transparent 1px);
-  background-size:56px 56px;
-  transform:perspective(600px) rotateX(60deg);
-  transform-origin:50% 100%;
-  animation:floorScroll 3.2s linear infinite;
-  -webkit-mask-image:linear-gradient(to top,#000 10%,transparent 90%);
-  mask-image:linear-gradient(to top,#000 10%,transparent 90%);
-}
-html.light .hero-floor{opacity:0.25}
-@keyframes floorScroll{to{background-position:0 56px}}
-.hud{position:absolute;inset:116px 28px 24px;pointer-events:none;z-index:4}
-.hud-corner{
-  position:absolute;width:20px;height:20px;
-  border:0 solid rgba(122,158,255,0.55);
-}
-.hud-tl{top:0;left:0;border-top-width:1px;border-left-width:1px}
-.hud-tr{top:0;right:0;border-top-width:1px;border-right-width:1px}
-.hud-bl{bottom:0;left:0;border-bottom-width:1px;border-left-width:1px}
-.hud-br{bottom:0;right:0;border-bottom-width:1px;border-right-width:1px}
-.hud-read{
-  position:absolute;bottom:8px;
-  font-family:var(--font-mono);font-size:10px;
-  letter-spacing:0.14em;color:var(--text-3);
-  display:flex;align-items:center;gap:8px;
-}
-.hud-read-l{left:32px}
-.hud-read-r{right:32px}
-.hud-dot{
-  width:6px;height:6px;border-radius:50%;background:var(--blue);
-  box-shadow:0 0 8px var(--blue);
-  animation:livePulse 1.5s ease-in-out infinite;
-}
-.hud-scroll{
-  position:absolute;bottom:4px;left:50%;transform:translateX(-50%);
-  font-size:8px;letter-spacing:0.3em;text-align:center;
-  color:var(--text-3);line-height:1.8;
-  animation:scrollBob 2.2s ease-in-out infinite;
-}
-@keyframes scrollBob{
-  0%,100%{transform:translateX(-50%) translateY(0)}
-  50%{transform:translateX(-50%) translateY(6px)}
-}
-@media(max-width:767px){.hud{display:none}.tape{display:none}}
-
-/* ── HERO ── */
-.hero{
-  min-height:100vh;
-  display:flex;align-items:center;
-  padding:120px var(--gutter) var(--section-gap);
-  position:relative;
-  overflow:hidden;
-}
-.hero-inner{
-  max-width:var(--shell);margin:0 auto;width:100%;
-  position:relative;z-index:5;
-  text-align:center;
-}
-.hero-eyebrow{
-  display:inline-flex;align-items:center;gap:10px;
-  font-size:10px;letter-spacing:0.3em;text-transform:uppercase;
-  color:var(--blue);font-weight:600;margin-bottom:40px;
-  opacity:0;animation:heroFadeUp 0.8s var(--ease-out) 0.3s both;
-}
-.hero-eyebrow::before{
-  content:'';width:32px;height:1px;
-  background:linear-gradient(90deg,var(--blue),transparent);
-}
-.hero-h1{
-  font-family:var(--font-display);
-  font-size:clamp(44px,7vw,104px);
-  font-weight:400;
-  line-height:0.92;
-  letter-spacing:-0.03em;
-}
-/* each line masks up from below (clip reveal) — staggered on load */
-.hero-h1 .hl{display:block;overflow:hidden;padding-bottom:0.04em}
-.hero-h1 .hl-in{
-  display:inline-block;
-  transform:translateY(110%);
-  animation:heroLineUp 1.05s var(--ease-out) both;
-}
-.hero-h1 .hl:nth-child(1) .hl-in{animation-delay:0.35s}
-.hero-h1 .hl:nth-child(2) .hl-in{animation-delay:0.47s}
-.hero-h1 .hl:nth-child(3) .hl-in{animation-delay:0.59s}
-.hero-h1 .hl:nth-child(4) .hl-in{animation-delay:0.71s}
-.hero-h1 .muted{color:var(--text-3)}
-.hero-h1 em{font-style:italic}
-.hero-description{
-  font-size:17px;color:var(--text-2);
-  line-height:1.6;max-width:600px;
-  margin:24px auto 0;opacity:0;
-  animation:heroFadeUp 0.8s var(--ease-out) 1.2s both;
-}
-@keyframes heroLineUp{
-  from{transform:translateY(110%)}
-  to{transform:translateY(0)}
-}
-@keyframes textShimmer{
-  0%{background-position:0% center}
-  100%{background-position:250% center}
-}
-.grad-text{
-  background:linear-gradient(110deg,var(--blue),var(--grad-hi),var(--blue));
-  background-size:250% auto;
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-  background-clip:text;
-  animation:textShimmer 5s ease-in-out infinite;
-}
-@keyframes heroFadeUp{
-  from{opacity:0;transform:translateY(16px)}
-  to{opacity:1;transform:translateY(0)}
-}
-.hero-ctas{
-  margin-top:40px;display:flex;gap:16px;align-items:center;justify-content:center;
-  opacity:0;animation:heroFadeUp 0.8s var(--ease-out) 1.3s both;
-}
-/* liquid glass — ported from 21st.dev LiquidButton (refractive bezel + specular highlight) */
-.btn-primary{
-  display:inline-flex;align-items:center;gap:8px;
-  padding:0 44px;height:60px;
-  background:linear-gradient(180deg,var(--gold-hi),var(--gold));
-  color:var(--on-gold);font-size:16px;font-weight:700;
-  letter-spacing:0.04em;text-transform:uppercase;
-  border:1px solid var(--gold-hi);
-  border-radius:999px;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.55),
-    inset 0 -2px 6px rgba(120,72,0,0.28),
-    0 14px 44px -10px var(--gold-glow);
-  transition:all 0.25s var(--ease-out);
-  position:relative;overflow:hidden;
-}
-.btn-primary::after{
-  content:'';position:absolute;inset:0;border-radius:inherit;
-  background:linear-gradient(135deg,rgba(255,255,255,0.25),transparent 50%);
-  opacity:0;transition:opacity 0.2s;
-}
-.btn-primary:hover::after{opacity:1}
-.btn-primary:hover{
-  background:linear-gradient(180deg,#FFDE96,var(--gold-hi));
-  transform:translateY(-2px);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.65),
-    inset 0 -2px 6px rgba(120,72,0,0.22),
-    0 22px 56px -12px var(--gold-glow);
-}
-.btn-primary:active{transform:scale(0.96)}
-.btn-ghost{
-  display:inline-flex;align-items:center;gap:8px;
-  padding:0 32px;height:60px;
-  background:var(--surface-2);
-  backdrop-filter:blur(12px);
-  -webkit-backdrop-filter:blur(12px);
-  border:1px solid var(--border-hover);
-  color:var(--text-2);
-  font-size:15px;font-weight:600;
-  letter-spacing:0.02em;
-  border-radius:999px;
-  transition:all 0.2s;
-}
-.btn-ghost:hover{
-  border-color:var(--border-hover);
-  color:var(--text-1);
-  background:var(--border-hover);
-}
-.btn-ghost:active{transform:scale(0.96)}
-.hero-metrics{
-  margin-top:48px;display:flex;gap:48px;justify-content:center;
-  opacity:0;animation:heroFadeUp 0.8s var(--ease-out) 1.5s both;
-}
-.hero-metric .n{
-  font-size:28px;font-weight:700;letter-spacing:-0.03em;
-  color:var(--white);line-height:1;
-}
-.hero-metric .l{
-  font-size:11px;letter-spacing:0.08em;text-transform:uppercase;
-  color:var(--text-3);margin-top:4px;font-weight:500;
-}
-
-/* ── SCROLL NARRATIVE ── */
-/* ── DASHBOARD SECTION ── */
-.dashboard-section{
-  padding:0 var(--gutter) var(--section-gap);
-  position:relative;overflow:hidden;
-}
-.section-label{
-  counter-increment:sec;
-  font-size:10px;letter-spacing:0.3em;text-transform:uppercase;
-  color:var(--text-3);font-weight:500;
-  display:flex;align-items:center;gap:12px;margin-bottom:24px;
-}
-.section-label::before{
-  content:'';width:24px;height:1px;
-  background:linear-gradient(90deg,var(--blue),transparent);
-}
-/* editorial chapter numeral — rendered first via flex order */
-.section-label::after{
-  content:counter(sec,decimal-leading-zero);
-  order:-1;
-  font-family:var(--font-mono);font-weight:500;
-  font-size:11px;letter-spacing:0.1em;color:var(--text-4);
-}
-.section-h2{
-  font-family:var(--font-display);
-  font-size:clamp(32px,3.5vw,52px);
-  font-weight:400;letter-spacing:-0.03em;line-height:1.05;
-  margin-bottom:20px;
-}
-.section-sub{
-  font-size:16px;color:var(--text-2);
-  line-height:1.7;max-width:65ch;
-}
-.section-head{
-  margin-bottom:32px;
-}
-/* centred variant — replaces the per-section inline text-align/margin patches */
-.section-head.center{text-align:center}
-.section-head.center .section-label{justify-content:center}
-.section-head.center .section-sub{margin-left:auto;margin-right:auto}
-/* word-by-word heading reveal */
-.wrd{
-  display:inline-block;
-  opacity:0;transform:translateY(18px);filter:blur(8px);
-  transition:opacity 0.6s var(--ease-out),transform 0.6s var(--ease-out),filter 0.6s var(--ease-out);
-}
-.in .wrd{opacity:1;transform:none;filter:none}
-/* odometer digits removed */
-/* sparkline crosshair tooltip */
-.bb-chart-line{position:relative}
-.spark-tip{
-  position:absolute;top:-26px;transform:translateX(-50%);
-  padding:2px 8px;border-radius:4px;
-  background:var(--surface-2);
-  backdrop-filter:blur(8px);
-  border:1px solid var(--border-hover);
-  font-family:var(--font-mono);font-size:10px;color:var(--white);
-  pointer-events:none;opacity:0;transition:opacity 0.15s;
-  white-space:nowrap;z-index:5;
-}
-.hm-cell{cursor:pointer;transition:outline-color 0.15s}
-.hm-cell.sel{outline:1px solid var(--text-1);outline-offset:1px}
-.hm-detail{
-  margin-top:10px;font-family:var(--font-mono);
-  font-size:10px;color:var(--text-2);
-  min-height:14px;letter-spacing:0.05em;
-}
-.ds-inner{max-width:var(--shell);margin:0 auto}
-.ds-header{margin-bottom:64px}
-.bloomberg-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr 1fr 1fr;
-  grid-template-rows:auto auto auto;
-  gap:1px;
-  background:var(--border);
-  border:1px solid var(--border);
-  border-radius:8px;
-  overflow:hidden;
-}
-.bb-cell{
-  background:var(--carbon);
-  padding:20px;
-  position:relative;
-  overflow:hidden;
-}
-.bb-cell:hover{background:var(--carbon)}
-.bb-cell.span2{grid-column:span 2}
-.bb-cell.tall{grid-row:span 2}
-.bb-label{
-  font-size:9px;letter-spacing:0.15em;text-transform:uppercase;
-  color:var(--text-3);font-weight:600;margin-bottom:12px;
-  display:flex;align-items:center;justify-content:space-between;
-}
-.bb-val{
-  font-size:32px;font-weight:700;letter-spacing:-0.03em;
-  line-height:1;color:var(--white);
-}
-.bb-change{
-  font-size:12px;font-weight:600;margin-top:4px;
-}
-.bb-change.up{color:var(--green)}
-.bb-change.down{color:var(--red)}
-.bb-chart-line{
-  width:100%;height:48px;margin-top:16px;
-}
-.bb-chart-line svg{width:100%;height:100%}
-.ticker-row{
-  display:flex;align-items:center;gap:12px;
-  padding:8px 0;
-  border-bottom:1px solid var(--border);
-  font-size:12px;
-}
-.ticker-row:last-child{border-bottom:none}
-.ticker-sym{
-  font-family:var(--font-mono);
-  color:var(--text-1);font-weight:600;
-  width:50px;flex-shrink:0;
-}
-.ticker-price{
-  margin-left:auto;font-family:var(--font-mono);
-  color:var(--text-2);
-}
-.ticker-chg{
-  font-family:var(--font-mono);font-size:11px;
-  font-weight:600;width:52px;text-align:right;flex-shrink:0;
-}
-.ticker-chg.up{color:var(--green)}
-.ticker-chg.down{color:var(--red)}
-.mini-heatmap{
-  display:grid;grid-template-columns:repeat(7,1fr);grid-auto-rows:1fr;gap:2px;
-  margin-top:8px;height:104px;
-}
-.hm-cell{
-  border-radius:2px;
-  animation:hmPulse ease-in-out infinite;
-}
-html.light .hm-cell{animation:none}
-@keyframes hmPulse{
-  0%,100%{filter:brightness(1)}
-  50%{filter:brightness(1.3)}
-}
-/* price flash on ticker update */
-.ticker-row.flash-up{animation:rowFlashUp 0.5s var(--ease-out)}
-.ticker-row.flash-down{animation:rowFlashDown 0.5s var(--ease-out)}
-@keyframes rowFlashUp{from{background:color-mix(in srgb,var(--green) 16%,transparent)}to{background:transparent}}
-@keyframes rowFlashDown{from{background:color-mix(in srgb,var(--red) 16%,transparent)}to{background:transparent}}
-/* heatmap repricing flash */
-.hm-cell.hm-flash{animation:hmFlash 0.6s var(--ease-out)}
-@keyframes hmFlash{from{filter:brightness(2.2)}to{filter:brightness(1)}}
-.agent-row{
-  display:flex;align-items:center;gap:10px;
-  padding:10px 0;border-bottom:1px solid var(--border);
-  font-size:11px;
-}
-.agent-row:last-child{border-bottom:none}
-.agent-dot{
-  width:6px;height:6px;border-radius:50%;flex-shrink:0;
-  animation:agentPulse 2s ease-in-out infinite;
-}
-@keyframes agentPulse{
-  0%,100%{opacity:1;transform:scale(1)}
-  50%{opacity:0.5;transform:scale(0.7)}
-}
-.agent-name{color:var(--text-2);flex:1}
-.agent-status{
-  font-family:var(--font-mono);
-  color:var(--text-3);font-size:10px;
-}
-
-/* ── BENTO GRID ── */
-.bento-section{padding:0 var(--gutter) var(--section-gap)}
-.bento-inner{max-width:var(--shell);margin:0 auto}
-.bento-grid{
-  display:grid;
-  grid-template-columns:repeat(12,1fr);
-  grid-auto-rows:auto;
-  gap:12px;
-  margin-top:64px;
-}
-.bento-card{
-  background:var(--carbon);
-  border:1px solid var(--border);
-  border-radius:12px;
-  padding:28px;
-  overflow:hidden;
-  position:relative;
-  transition:border-color 0.3s,transform 0.3s var(--ease-out),box-shadow 0.3s;
-  grid-column:span 4;grid-row:span 4;
-}
-.bento-card::before{
-  content:'';position:absolute;inset:0;border-radius:12px;
-  background:radial-gradient(340px circle at var(--mx,50%) var(--my,50%),rgba(122,158,255,0.16),transparent 65%);
-  opacity:0;transition:opacity 0.3s;
-  pointer-events:none;
-}
-.bento-card:hover::before{opacity:1}
-.bento-card:hover{
-  border-color:var(--border-hover);
-  transform:translateY(-4px);
-  box-shadow:0 32px 64px -16px rgba(0,0,0,0.6),0 0 0 1px var(--border);
-}
-.bento-card.wide{grid-column:span 8}
-.bento-card.tall{grid-row:span 8;display:flex;flex-direction:column}
-.bento-card.short{grid-row:span 3}
-.bc-label{
-  font-size:9px;letter-spacing:0.2em;text-transform:uppercase;
-  color:var(--text-3);font-weight:600;margin-bottom:16px;
-}
-.bc-title{
-  font-size:22px;font-weight:700;letter-spacing:-0.02em;
-  line-height:1.2;margin-bottom:8px;
-}
-.bc-sub{
-  font-size:13px;color:var(--text-2);line-height:1.6;
-}
-.bc-icon{
-  width:40px;height:40px;border-radius:8px;
-  display:flex;align-items:center;justify-content:center;
-  margin-bottom:20px;font-size:18px;
-  border:1px solid var(--border);
-}
-/* ponytail: inner glows removed for color discipline — add back if cards need visual hierarchy */
-
-/* glass layer */
-.glass-layer{
-  position:relative;overflow:hidden;
-}
-.glass-layer::after{
-  content:'';
-  position:absolute;top:0;left:-100%;width:60%;height:100%;
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.03),transparent);
-  transform:skewX(-20deg);
-  transition:left 0.7s var(--ease-out);
-  pointer-events:none;
-}
-.glass-layer:hover::after{left:150%}
-
-/* ── RESEARCH PAPERS ── */
-/* ── HORIZONTAL SCROLL ── */
-.hscroll-section{
-  padding:0 0 var(--section-gap);
-  overflow:hidden;
-  position:relative;
-}
-.hscroll-label{
-  padding:0 var(--gutter);max-width:var(--shell);margin:0 auto 64px;
-}
-.hscroll-track-wrap{overflow:hidden}
-.hscroll-track{
-  display:flex;gap:20px;
-  padding:0 var(--gutter) 0 max(var(--gutter),calc((100vw - var(--shell))/2 + var(--gutter)));
-  width:max-content;
-  animation:scrollTrack 40s linear infinite;
-}
-.hscroll-track:hover{animation-play-state:paused}
-@keyframes scrollTrack{
-  from{transform:translateX(0)}
-  to{transform:translateX(-50%)}
-}
-.hs-card{
-  flex-shrink:0;width:320px;min-height:212px;
-  display:flex;flex-direction:column;
-  background:var(--carbon);
-  border:1px solid var(--border);
-  border-radius:10px;padding:28px;
-  transition:border-color 0.3s,transform 0.3s;
-  text-decoration:none;
-  color:inherit;
-}
-.hs-foot{
-  margin-top:auto;padding-top:18px;
-  display:flex;align-items:center;justify-content:space-between;
-  border-top:1px solid var(--border);
-  font-family:var(--font-mono);font-size:10px;letter-spacing:0.12em;
-  text-transform:uppercase;color:var(--text-3);
-}
-.hs-arrow{color:var(--text-4);transition:color 0.3s,transform 0.3s}
-.hs-card:hover .hs-arrow{color:var(--gold);transform:translate(2px,-2px)}
-.hs-card:hover{
-  border-color:var(--border-hover);
-  transform:translateY(-4px);
-  text-decoration:none;
-}
-.hs-num{
-  font-size:10px;letter-spacing:0.2em;
-  color:var(--text-3);margin-bottom:16px;
-  font-family:var(--font-mono);
-}
-.hs-title{
-  font-size:17px;font-weight:600;
-  letter-spacing:-0.01em;margin-bottom:8px;
-  color:var(--text-1);
-}
-.hs-desc{
-  font-size:12px;color:var(--text-2);line-height:1.6;
-}
-
-/* ── WORLD MAP ── */
-.world-section{padding:0 var(--gutter) var(--section-gap)}
-.world-inner{max-width:var(--shell);margin:0 auto}
-.world-map-wrap{
-  position:relative;max-width:var(--panel);margin:64px auto 0;
-  border:1px solid var(--border);
-  border-radius:12px;overflow:hidden;
-  background:var(--carbon);
-  padding:40px;
-}
-#world-canvas{width:100%;height:600px;display:block;cursor:grab;touch-action:pan-y}
-#world-canvas:active{cursor:grabbing}
-
-/* ── TERMINAL SECTION ── */
-.terminal-section{padding:0 var(--gutter) var(--section-gap)}
-.terminal-inner{max-width:var(--shell);margin:0 auto}
-.terminal-window{
-  border:1px solid var(--border);
-  border-radius:10px;overflow:hidden;
-  max-width:var(--panel);margin:64px auto 0;
-  box-shadow:0 64px 128px -32px rgba(0,0,0,0.8);
-  position:relative;
-}
-/* CRT scanlines live on the window, not the body — the body scrolls, and an
-   overlay inside it would scroll away with the content */
-.terminal-window::after{
-  content:'';position:absolute;inset:0;pointer-events:none;z-index:2;
-  background:repeating-linear-gradient(0deg,rgba(255,255,255,0.028) 0 1px,transparent 1px 3px);
-  animation:crtFlicker 4s linear infinite;
-}
-.terminal-bar{
-  background:var(--surface-2);
-  padding:12px 20px;
-  display:flex;align-items:center;gap:8px;
-  border-bottom:1px solid var(--border);
-}
-.term-dot{width:10px;height:10px;border-radius:50%}
-.terminal-title{
-  font-size:11px;letter-spacing:0.1em;
-  color:var(--text-3);margin-left:8px;
-  font-family:var(--font-mono);
-}
-.terminal-body{
-  background:var(--carbon);
-  padding:32px;
-  font-family:var(--font-mono);
-  font-size:14px;line-height:2;
-  /* fixed height: the feed loops forever, and with min-height it grew past the
-     box and shunted the whole page down, then snapped back on every reset */
-  height:340px;
-  overflow-y:auto;
-  scrollbar-width:none;
-  position:relative;
-}
-.terminal-body::-webkit-scrollbar{display:none}
-@keyframes crtFlicker{
-  0%,91%,94%,100%{opacity:1}
-  92%{opacity:0.55}
-  93%{opacity:0.85}
-}
-.term-line{color:var(--text-3)}
-.term-prompt{color:var(--blue)}
-.term-cmd{color:var(--text-1)}
-.term-out{color:var(--text-1)}
-.term-ok{color:var(--green)}
-.term-cursor{
-  display:inline-block;width:8px;height:14px;
-  background:var(--blue);vertical-align:middle;
-  animation:termBlink 1s step-end infinite;
-}
-@keyframes termBlink{0%,100%{opacity:1}50%{opacity:0}}
-
-/* ── STATS SECTION ── */
-.stats-section{padding:0 var(--gutter) var(--section-gap)}
-.stats-inner{max-width:var(--shell);margin:0 auto}
-.stats-grid{
-  display:grid;grid-template-columns:repeat(4,1fr);gap:1px;
-  background:var(--border);
-  border:1px solid var(--border);
-  border-radius:8px;overflow:hidden;
-  margin-top:64px;
-}
-.stat-cell{
-  background:var(--carbon);
-  padding:40px 32px;
-  position:relative;overflow:hidden;
-  transition:background 0.3s;
-}
-.stat-cell:hover{background:var(--carbon)}
-.stat-cell::before{
-  content:'';position:absolute;top:0;left:0;right:0;height:2px;
-  background:var(--blue);
-  transform:scaleX(0);transform-origin:left;
-  transition:transform 0.5s var(--ease-out);
-}
-.stat-cell:hover::before{transform:scaleX(1)}
-.stat-cell:hover .stat-num{
-  animation:statPop 0.4s var(--ease-spring);
-  color:var(--blue);
-}
-@keyframes statPop{
-  0%{transform:scale(1)}
-  50%{transform:scale(1.08)}
-  100%{transform:scale(1)}
-}
-.stat-num{
-  font-size:clamp(36px,4vw,56px);
-  font-weight:800;letter-spacing:-0.04em;
-  line-height:1;color:var(--white);
-  transition:color 0.3s;
-}
-.stat-unit{
-  font-size:0.45em;font-weight:500;
-  color:var(--blue);vertical-align:super;
-}
-.stat-label{
-  font-size:11px;letter-spacing:0.08em;text-transform:uppercase;
-  color:var(--text-3);margin-top:12px;font-weight:500;
-  transition:color 0.3s;
-}
-.stat-cell:hover .stat-label{color:var(--text-2)}
-.stat-sub{
-  font-size:12px;color:var(--text-3);margin-top:6px;line-height:1.5;
-  transition:color 0.3s;
-}
-.stat-cell:hover .stat-sub{color:var(--text-3)}
-.stat-live{
-  position:absolute;top:16px;right:16px;
-  font-size:8px;letter-spacing:0.15em;text-transform:uppercase;
-  color:var(--text-3);
-  display:flex;align-items:center;gap:4px;
-}
-.stat-live-dot{
-  width:4px;height:4px;border-radius:50%;
-  background:#00FF88;
-  animation:livePulse 1.5s ease-in-out infinite;
-  box-shadow:0 0 8px rgba(0,255,136,0.6);
-}
-@keyframes livePulse{
-  0%,100%{opacity:1;box-shadow:0 0 8px rgba(0,255,136,0.6)}
-  50%{opacity:0.3;box-shadow:0 0 2px rgba(0,255,136,0.2)}
-}
-@keyframes statGlow{
-  0%{transform:scale(0.8)}
-  50%{transform:scale(1.05)}
-  100%{transform:scale(1)}
-}
-
-/* ── FORCE GRAPH ── */
-.graph-section{padding:0 var(--gutter) var(--section-gap)}
-.graph-inner{max-width:var(--shell);margin:0 auto}
-.graph-legend{
-  display:flex;align-items:center;gap:22px;flex-wrap:wrap;
-  margin-top:28px;font-family:var(--font-mono);font-size:11px;
-  letter-spacing:0.08em;color:var(--text-3);
-}
-.gl-item{display:inline-flex;align-items:center;gap:8px}
-.gl-item i{width:8px;height:8px;border-radius:50%;display:inline-block}
-.gl-hint{margin-left:auto;color:var(--text-4);text-transform:uppercase;letter-spacing:0.15em;font-size:10px}
-@media(max-width:600px){.gl-hint{display:none}}
-#force-canvas{
-  width:100%;max-width:var(--panel);height:420px;
-  border:1px solid var(--border);
-  border-radius:12px;
-  margin:64px auto 0;
-  display:block;
-  cursor:grab;touch-action:pan-y;
-}
-#force-canvas:active{cursor:grabbing}
-
-/* ── FINAL CTA ── */
-.fcta-section{
-  padding:0 var(--gutter) var(--section-gap);
-  text-align:center;
-  position:relative;overflow:hidden;
-}
-.fcta-inner{max-width:640px;margin:0 auto;position:relative;z-index:2}
-.fcta-bg-glow{
-  position:absolute;inset:0;
-  background:radial-gradient(ellipse 60% 80% at 50% 50%,rgba(140,140,140,0.08) 0%,transparent 70%);
-  pointer-events:none;
-}
-.fcta-h2{
-  font-family:var(--font-display);
-  font-size:clamp(36px,5vw,64px);
-  font-weight:400;letter-spacing:-0.03em;
-  line-height:1.05;margin-bottom:24px;
-}
-.fcta-sub{
-  font-size:16px;color:var(--text-2);
-  line-height:1.7;margin-bottom:40px;max-width:65ch;margin-left:auto;margin-right:auto;
-}
-
-/* ── EMAIL FORM ── */
-.signup-form{
-  display:flex;gap:0;max-width:440px;margin:0 auto 24px;
-  border:1px solid var(--border);
-  border-radius:6px;overflow:hidden;
-  transition:border-color 0.3s;
-  background:var(--carbon);
-  position:relative;
-}
-@property --ga{syntax:'<angle>';initial-value:0deg;inherits:false}
-.signup-form::before{
-  content:'';position:absolute;inset:0;border-radius:6px;
-  padding:1px;pointer-events:none;
-  background:conic-gradient(from var(--ga),transparent 0%,var(--gold-hi) 10%,transparent 22%);
-  -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
-  -webkit-mask-composite:xor;
-  mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
-  mask-composite:exclude;
-  animation:spinBorder 4s linear infinite;
-}
-@keyframes spinBorder{to{--ga:360deg}}
-.signup-form:focus-within{
-  border-color:rgba(122,158,255,0.6);
-  box-shadow:0 0 24px rgba(61,123,255,0.2);
-}
-.signup-input{
-  flex:1;padding:14px 16px;
-  background:transparent;border:none;
-  color:var(--white);font-size:14px;
-  font-family:'Inter',system-ui,sans-serif;
-  outline:none;
-}
-.signup-input::placeholder{color:var(--text-3)}
-.signup-btn{
-  margin:5px;padding:10px 22px;
-  background:linear-gradient(180deg,var(--gold-hi),var(--gold));
-  border:1px solid var(--gold-hi);
-  border-radius:999px;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,0.55),0 8px 24px -8px var(--gold-glow);
-  color:var(--on-gold);font-size:13px;font-weight:700;
-  letter-spacing:0.04em;text-transform:uppercase;
-  cursor:pointer;
-  transition:all 0.2s;
-  white-space:nowrap;
-}
-.signup-btn:hover{background:linear-gradient(180deg,#FFDE96,var(--gold-hi))}
-.signup-btn:active{transform:scale(0.96)}
-.signup-note{
-  font-size:12px;color:var(--text-3);
-  margin-bottom:32px;
-}
-
-/* ── FOOTER ── */
-footer{
-  border-top:1px solid var(--border);
-  padding:64px var(--gutter) 40px;
-}
-.footer-inner{max-width:var(--shell);margin:0 auto}
-.footer-top{
-  display:flex;justify-content:space-between;align-items:flex-start;
-  flex-wrap:wrap;gap:48px;padding-bottom:48px;
-  border-bottom:1px solid var(--border);
-}
-.footer-brand .logo-name{
-  font-family:var(--font-display);
-  font-size:26px;font-weight:400;letter-spacing:-0.01em;
-  margin-bottom:12px;
-}
-.footer-brand p{
-  font-size:13px;color:var(--text-3);
-  line-height:1.6;max-width:220px;
-}
-.footer-links h4{
-  font-size:9px;letter-spacing:0.2em;text-transform:uppercase;
-  color:var(--text-3);font-weight:600;margin-bottom:20px;
-}
-.footer-links a{
-  display:block;font-size:13px;font-weight:500;
-  color:var(--text-2);margin-bottom:12px;
-  transition:color 0.2s;
-}
-.footer-links a:hover{color:var(--text-1)}
-.footer-bot{
-  padding-top:32px;display:flex;
-  justify-content:space-between;align-items:center;
-  flex-wrap:wrap;gap:8px;
-  border-top:1px solid var(--border);
-}
-.footer-bot p{font-size:12px;color:var(--text-3)}
-
-/* ── LATEST RESEARCH STRIP ── */
-.research-strip{padding:0 var(--gutter) var(--section-gap)}
-.research-strip-inner{max-width:var(--shell);margin:0 auto}
-.research-strip-grid{
-  display:grid;grid-template-columns:repeat(3,1fr);gap:1px;
-  background:var(--border);border:1px solid var(--border);border-radius:8px;overflow:hidden;
-  margin-top:32px;
-}
-.research-strip-item{
-  background:var(--carbon);padding:28px;
-  display:flex;flex-direction:column;gap:12px;
-  transition:background 0.3s;
-}
-.research-strip-item:hover{background:color-mix(in srgb,var(--carbon) 90%,var(--blue))}
-.rsi-status{
-  font-size:9px;letter-spacing:0.15em;text-transform:uppercase;
-  color:var(--text-3);font-weight:600;
-  display:flex;align-items:center;gap:8px;
-}
-.rsi-status::before{
-  content:'';width:4px;height:4px;border-radius:50%;
-  background:var(--blue);
-}
-.rsi-title{
-  font-family:var(--font-display);
-  font-size:19px;font-weight:400;letter-spacing:-0.01em;
-  line-height:1.3;color:var(--text-1);
-}
-.rsi-meta{
-  font-size:11px;color:var(--text-3);line-height:1.5;
-  margin-top:auto;
-}
-@media(max-width:768px){
-  .research-strip-grid{grid-template-columns:1fr}
-}
-
-/* ── REVEAL ANIMATIONS ── */
-.rv2{
-  opacity:0;transform:translateY(32px);
-  transition:opacity 0.8s var(--ease-out),transform 0.8s var(--ease-out);
-}
-.rv2.in{opacity:1;transform:translateY(0)}
-.rv2[data-d="1"]{transition-delay:0.1s}
-.rv2[data-d="2"]{transition-delay:0.2s}
-.rv2[data-d="3"]{transition-delay:0.3s}
-
-/* ── RESPONSIVE ── */
-@media(max-width:1024px){
-  :root{--section-gap:112px;--gutter:24px}
-  .bloomberg-grid{grid-template-columns:1fr 1fr}
-  .stats-grid{grid-template-columns:repeat(2,1fr)}
-  .bento-grid{grid-template-columns:repeat(6,1fr)}
-  .bento-card.wide{grid-column:span 6}
-  .bento-card{grid-column:span 3}
-}
-@media(max-width:768px){
-  :root{--section-gap:88px;--gutter:20px}
-  .bento-grid{grid-auto-rows:auto}
-  .bento-card,.bento-card.tall,.bento-card.short{grid-row:auto}
-  .nav-links{display:none;position:fixed;top:0;left:0;right:0;bottom:0;
-    background:color-mix(in srgb,var(--black) 97%,transparent);backdrop-filter:blur(24px);
-    flex-direction:column;align-items:center;justify-content:center;
-    gap:28px;z-index:850;margin:0;
-  }
-  .nav-links.open{display:flex}
-  .nav-links a{font-size:20px;color:var(--text-1)}
-  .nav-hamburger{display:flex}
-  .hero-h1{font-size:clamp(26px,7vw,50px)}
-  .hero-metrics{flex-wrap:wrap;gap:24px}
-  .bento-grid{grid-template-columns:1fr 1fr}
-  .bento-card,.bento-card.wide,.bento-card.tall,.bento-card.short{grid-column:span 2}
-  .footer-top{flex-direction:column;gap:32px}
-  .signup-form{flex-direction:column}
-  .signup-btn{padding:12px}
-}
-@media(max-width:480px){
-  .stats-grid{grid-template-columns:1fr}
-  .bento-grid{grid-template-columns:1fr;grid-auto-rows:auto}
-  .bento-card,.bento-card.wide,.bento-card.tall,.bento-card.short{grid-column:span 1;grid-row:auto}
-  .hero-metrics{flex-direction:column;gap:16px}
-}
-@media(prefers-reduced-motion:reduce){
-  *,*::before,*::after{animation:none!important;transition:none!important}
-  .rv2{opacity:1;transform:none}
-}
-
-/* ── SMOOTH THEME TRANSITION ── */
-html{transition:background 0.5s,color 0.5s}
-html body,html nav,html footer,.bento-card,.bb-cell,.stat-cell,.hs-card,.terminal-window{
-  transition:background 0.5s,color 0.5s,border-color 0.5s,box-shadow 0.5s;
-}
-
-/* ── 3D TILT ON CARDS ── */
-.bento-card,.hs-card,.card{
-  transform-style:preserve-3d;
-  will-change:transform;
-}
-
-/* ── ANIMATED GRADIENT BORDER ── */
-@property --angle{syntax:'<angle>';initial-value:0deg;inherits:false}
-.hs-card{
-  position:relative;
-  background:var(--carbon);
-  border-radius:12px;
-}
-.hs-card::before{
-  content:'';position:absolute;inset:-1px;border-radius:13px;
-  background:conic-gradient(from var(--angle),transparent 0%,var(--blue) 12%,transparent 25%);
-  z-index:-1;opacity:0;
-  transition:opacity 0.5s;
-  animation:borderSpin 4s linear infinite paused;
-}
-.hs-card:hover::before{opacity:1;animation-play-state:running}
-.hs-card::after{
-  content:'';position:absolute;inset:0;border-radius:12px;
-  background:var(--carbon);z-index:-1;
-}
-@keyframes borderSpin{to{--angle:360deg}}
-
-/* ── TERMINAL STATUS BAR (persistent chrome) ── */
-.statusline{
-  position:fixed;bottom:0;left:0;right:0;z-index:600;
-  height:26px;display:flex;align-items:center;justify-content:space-between;
-  gap:16px;padding:0 16px;
-  font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;
-  color:var(--text-3);
-  background:color-mix(in srgb,var(--black) 80%,transparent);
-  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
-  border-top:1px solid var(--border);
-  opacity:0;transform:translateY(100%);
-  transition:opacity 0.5s var(--ease-out),transform 0.5s var(--ease-out);
-  pointer-events:none;
-}
-.statusline.show{opacity:1;transform:translateY(0)}
-.sl-live{display:inline-flex;align-items:center;gap:7px;color:var(--text-2);white-space:nowrap}
-.sl-dot{width:5px;height:5px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:livePulse 1.5s ease-in-out infinite;flex-shrink:0}
-.sl-mid{color:var(--text-2);text-transform:uppercase;letter-spacing:0.14em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.sl-right{color:var(--text-3);white-space:nowrap}
-.sl-right b{color:var(--text-2);font-weight:500}
-@media(max-width:767px){.statusline{display:none}}
-
-/* ── SECTION SCROLL DOTS ── */
-#section-dots{
-  position:fixed;right:24px;top:50%;transform:translateY(-50%);
-  z-index:800;display:flex;flex-direction:column;gap:12px;
-  opacity:0;transition:opacity 0.5s;pointer-events:none;
-}
-#section-dots.visible{opacity:1;pointer-events:auto}
-.sd-dot{
-  width:8px;height:8px;border-radius:50%;
-  background:var(--text-4);border:none;padding:0;cursor:pointer;
-  transition:all 0.3s var(--ease-out);
-  position:relative;
-}
-.sd-dot.active{
-  background:var(--blue);
-  box-shadow:0 0 12px var(--blue);
-  transform:scale(1.4);
-}
-.sd-dot::after{
-  content:attr(data-label);position:absolute;right:20px;top:50%;transform:translateY(-50%);
-  font-size:10px;color:var(--text-3);white-space:nowrap;
-  opacity:0;transition:opacity 0.2s;pointer-events:none;
-}
-.sd-dot:hover::after{opacity:1}
-
-
-/* ── STAGGERED CARD ENTRANCE ── */
-.bento-card{
-  opacity:0;transform:translateY(24px);
-  transition:opacity 0.6s var(--ease-out),transform 0.6s var(--ease-out),border-color 0.3s,box-shadow 0.3s;
-}
-.bento-card.in{opacity:1;transform:translateY(0)}
-.bento-card:nth-child(1).in{transition-delay:0s}
-.bento-card:nth-child(2).in{transition-delay:0.08s}
-.bento-card:nth-child(3).in{transition-delay:0.16s}
-.bento-card:nth-child(4).in{transition-delay:0.24s}
-.bento-card:nth-child(5).in{transition-delay:0.32s}
-.bento-card:nth-child(6).in{transition-delay:0.40s}
-
-/* ── FADE EFFECTS ── */
-.fade-in-up{
-  opacity:0;transform:translateY(20px);
-  transition:opacity 0.7s var(--ease-out),transform 0.7s var(--ease-out);
-}
-.fade-in-up.in{opacity:1;transform:none}
-.fade-in{
-  opacity:0;transition:opacity 0.8s var(--ease-out);
-}
-.fade-in.in{opacity:1}
-
-/* ── SMOOTH STAT COUNTERS ── */
-.stat-num span,.stat-unit,.hero-metric .n,.bb-val{
-  font-family:var(--font-mono);
-  font-variant-numeric:tabular-nums;
-  font-feature-settings:'tnum' 1;
-}
-
-/* ── SCROLL-DRIVEN PARALLAX (animates `translate`, so it never fights
-   the transform-based reveals and hover tilts) ── */
-@supports (animation-timeline: view()) {
-  .bento-card,.stat-cell{
-    animation:viewDrift linear both;
-    animation-timeline:view();
-    animation-range:entry 0% exit 100%;
-  }
-  .bento-card:nth-child(even){--drift:36px}
-  .bento-card:nth-child(odd){--drift:18px}
-  .stat-cell:nth-child(even){--drift:24px}
-  .stat-cell:nth-child(odd){--drift:12px}
-}
-@keyframes viewDrift{
-  from{translate:0 var(--drift,24px)}
-  to{translate:0 calc(-1 * var(--drift,24px))}
-}
-</style>
 </head>
 <body>
 
 <!-- SKIP LINK -->
-<a href="#dashboard" class="skip-link">Skip to main content</a>
-
-<!-- LOADER -->
-<div id="loader">
-  <div class="loader-quant">QUANTHQ</div>
-  <div class="loader-logo">Initializing Research Network</div>
-  <div class="loader-bar-wrap"><div class="loader-bar" id="lbar"></div></div>
-</div>
+<a href="#main-content" class="skip-link">Skip to main content</a>
 
 <!-- SCROLL PROGRESS -->
 <div id="scroll-prog"></div>
 
-<!-- TERMINAL STATUS BAR -->
-<div class="statusline" id="statusline" aria-hidden="true">
-  <span class="sl-live"><span class="sl-dot"></span>SYS ONLINE · 124 NODES · LAT 8μs</span>
-  <span class="sl-mid" id="sl-section">HOME</span>
-  <span class="sl-right" id="sl-clock">UTC --:--:-- · SPX <b>—</b></span>
-</div>
-
-<!-- SECTION DOTS -->
-<div id="section-dots">
-  <button class="sd-dot active" data-target="hero" data-label="Home" aria-label="Go to hero"></button>
-  <button class="sd-dot" data-target="dashboard" data-label="Intelligence" aria-label="Go to dashboard"></button>
-  <button class="sd-dot" data-target="research" data-label="Ecosystem" aria-label="Go to research"></button>
-  <button class="sd-dot" data-target="network" data-label="Network" aria-label="Go to network"></button>
-  <button class="sd-dot" data-target="terminal" data-label="Terminal" aria-label="Go to terminal"></button>
-  <button class="sd-dot" data-target="join" data-label="Join" aria-label="Go to join"></button>
-</div>
-
 <!-- BACKGROUND -->
-
 <div class="bg-aurora"></div>
 <div class="bg-grid" aria-hidden="true"></div>
 <div class="nebula-blob nb1" aria-hidden="true"></div>
 <div class="nebula-blob nb2" aria-hidden="true"></div>
 
-<!-- NAV -->
-<nav id="nav">
-  <div class="nav-inner">
-    <a href="/" class="nav-logo">
-      <svg width="28" height="28" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="flex-shrink:0;color:var(--white)">
-        <rect x="3" y="3" width="22" height="22" rx="3" stroke="currentColor" stroke-width="2.2" fill="none"/>
-        <text x="7.5" y="19.5" font-family="Inter,system-ui,sans-serif" font-weight="800" font-size="10.5" fill="currentColor">HQ</text>
-        <rect x="22" y="22" width="9" height="9" rx="2" fill="#3D7BFF"/>
-      </svg>
-      QuantHQ
-    </a>
-    <div class="nav-links" id="nav-links">
-      <a href="/about/">About</a>
-      <a href="/research/">Research</a>
-      <a href="/blog/">Blog</a>
-      <a href="/community/">Community</a>
-      <a href="/contact/">Contact</a>
-    </div>
-    <button class="nav-hamburger" id="nav-hamburger" aria-label="Toggle menu">
-      <span></span><span></span><span></span>
-    </button>
-    <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light mode">
-      <svg class="tt-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-      <svg class="tt-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-    </button>
-    <a href="#join" class="nav-cta">Join →</a>
-  </div>
-</nav>
+<HomeNav />
 
-<header>
-<!-- CINEMATIC OVERLAYS -->
 <div class="vignette" aria-hidden="true"></div>
 <div class="grain" aria-hidden="true"></div>
-
-<!-- TICKER TAPE -->
-<div class="tape" aria-hidden="true">
-  <div class="tape-track" id="tape-track"></div>
-</div>
-</header>
 
 <main id="main-content">
 <!-- HERO -->
@@ -1519,17 +86,8 @@ html body,html nav,html footer,.bento-card,.bb-cell,.stat-cell,.hs-card,.termina
   <canvas class="hero-canvas" id="hero-canvas" aria-hidden="true"></canvas>
   <div class="hero-spot" aria-hidden="true"></div>
   <div class="hero-floor" aria-hidden="true"></div>
-  <div class="hud" aria-hidden="true">
-    <div class="hud-corner hud-tl"></div>
-    <div class="hud-corner hud-tr"></div>
-    <div class="hud-corner hud-bl"></div>
-    <div class="hud-corner hud-br"></div>
-    <div class="hud-read hud-read-l"><span class="hud-dot"></span>SYS ONLINE · 124 NODES · LAT 8μs</div>
-    <div class="hud-read hud-read-r" id="hud-clock">UTC --:--:--</div>
-    <div class="hud-scroll">SCROLL<br>↓</div>
-  </div>
   <div class="hero-inner">
-    <div class="hero-eyebrow">AI Research Institution</div>
+    <div class="hero-eyebrow">Open Research Institution</div>
     <h1 class="hero-h1" id="hero-h1">
       <span class="hl"><span class="hl-in">Quant</span></span>
       <span class="hl"><span class="hl-in muted">intelligence</span></span>
@@ -1538,388 +96,193 @@ html body,html nav,html footer,.bento-card,.bb-cell,.stat-cell,.hs-card,.termina
     </h1>
     <p class="hero-description rv">QuantHQ is an open research institution for quantitative finance, financial AI, and systematic investing.</p>
     <div class="hero-ctas">
-      <a href="#join" class="btn-primary">Join Us →</a>
-      <a href="/research/" class="btn-ghost">View Research</a>
+      <a href="/research/" class="btn-primary">Read the research →</a>
+      <a href="#join" class="btn-ghost">Join the community</a>
     </div>
     <div class="hero-metrics">
       <div class="hero-metric">
-        <div class="n" data-count="3">0</div>
-        <div class="l">Research Papers</div>
+        <div class="n" data-count={allResearch.length}>0</div>
+        <div class="l">Published papers</div>
       </div>
       <div class="hero-metric">
-        <div class="n" data-count="4">0</div>
-        <div class="l">Blog Posts</div>
+        <div class="n" data-count={allPosts.length}>0</div>
+        <div class="l">Published articles</div>
       </div>
       <div class="hero-metric">
-        <div class="n" data-count="4">0</div>
-        <div class="l">Open-Source Projects</div>
+        <div class="n" data-count={openSourceCount}>0</div>
+        <div class="l">Open-source projects</div>
       </div>
     </div>
   </div>
 </section>
-<noscript>
-  <div class="fixed inset-0 bg-[var(--bg)] flex items-center justify-center z-50">
-    <p class="text-[var(--text-3)]">This site requires JavaScript for the best experience</p>
-  </div>
-</noscript>
 
-<!-- LATEST RESEARCH -->
-<section class="research-strip">
+<!-- FEATURED RESEARCH -->
+<section class="research-strip" id="research">
   <div class="research-strip-inner">
     <div class="rv2 section-head">
-      <div class="section-label">Latest Research</div>
-      <h2 class="section-h2">From the<br>institution.</h2>
+      <div class="section-label">Featured Research</div>
+      <h2 class="section-h2">Preprints and<br>technical reports.</h2>
+      <div class="section-sub fade-in-up">Reproducible work on factor investing, financial AI, and macro regimes — methods and code published alongside the results.</div>
     </div>
-    <div class="research-strip-grid rv2" data-d="1">
-      {research.map(paper => (
+
+    <a href={`/research/${leadPaper.id}/`} class="lead-paper rv2" data-d="1">
+      <div class="lead-paper-body">
+        <div class="rsi-status">{leadPaper.data.status.replace('-', ' ')}</div>
+        <h3 class="lead-paper-title">{leadPaper.data.title}</h3>
+        <p class="lead-paper-abstract">{leadPaper.data.abstract}</p>
+        <div class="lead-paper-meta">
+          <span>{leadPaper.data.authors.join(', ')}</span>
+          <span>·</span>
+          <span>{monthYear(leadPaper.data.date)}</span>
+        </div>
+        <div class="lead-paper-tags">
+          {leadPaper.data.tags.map((t) => <span class="tag-chip">{t}</span>)}
+        </div>
+        <span class="lead-paper-cta">Read paper →</span>
+      </div>
+    </a>
+
+    <div class="research-strip-grid rv2" data-d="2">
+      {secondaryPapers.map((paper) => (
         <a href={`/research/${paper.id}/`} class="research-strip-item">
           <div class="rsi-status">{paper.data.status.replace('-', ' ')}</div>
           <div class="rsi-title">{paper.data.title}</div>
-          <div class="rsi-meta">
-            {paper.data.authors.join(', ')} · {paper.data.date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+          <div class="rsi-meta">{paper.data.authors.join(', ')} · {monthYear(paper.data.date)}</div>
+        </a>
+      ))}
+      <a href="/research/" class="research-strip-item rsi-all">
+        <div class="rsi-status">Archive</div>
+        <div class="rsi-title">All {allResearch.length} research papers</div>
+        <div class="rsi-meta">Search and filter the full archive →</div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- WHAT WE BUILD -->
+<section class="bento-section" id="build">
+  <div class="bento-inner">
+    <div class="rv2 section-head">
+      <div class="section-label">What we do</div>
+      <h2 class="section-h2">Research, tools,<br>and a community.</h2>
+    </div>
+    <div class="build-grid">
+      <a href="/research/" class="bento-card build-card rv2">
+        <div class="bc-label">Research</div>
+        <div class="bc-title">Reproducible<br>quant research</div>
+        <div class="bc-sub">Preprints and technical reports on factor decay, LLM-extracted signals, and regime classification — published with data sources and methodology.</div>
+        <span class="build-link">Read the archive →</span>
+      </a>
+      <a href="https://github.com/quanthq" target="_blank" rel="noopener" class="bento-card build-card rv2" data-d="1">
+        <div class="bc-label">Open source</div>
+        <div class="bc-title">Tools you<br>can run</div>
+        <div class="bc-sub">Factor pipelines, a walk-forward backtest engine with realistic costs, and a cross-sectional signal scanner. Released rather than shelved.</div>
+        <span class="build-link">Browse on GitHub →</span>
+      </a>
+      <a href="/community/" class="bento-card build-card rv2" data-d="2">
+        <div class="bc-label">Community</div>
+        <div class="bc-title">Researchers<br>working in the open</div>
+        <div class="bc-sub">Weekly paper discussions, open-source contribution, and collaboration across quants, engineers, and students.</div>
+        <span class="build-link">Meet the community →</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ACTIVE PROJECTS -->
+<section class="projects-section" id="projects">
+  <div class="projects-inner">
+    <div class="rv2 section-head">
+      <div class="section-label">Active Projects</div>
+      <h2 class="section-h2">What we're<br>building.</h2>
+      <div class="section-sub fade-in-up">{projects.length} tracked projects — open-source tools, research code, and infrastructure.</div>
+    </div>
+    <div class="projects-grid rv2" data-d="1">
+      {featuredProjects.map((p) => (
+        <a
+          href={p.href}
+          class="project-card"
+          target={p.href.startsWith('http') ? '_blank' : undefined}
+          rel={p.href.startsWith('http') ? 'noopener' : undefined}
+        >
+          <div class="pc-head">
+            <span class={`pc-status pc-${p.status.toLowerCase().replace(' ', '-')}`}>{p.status}</span>
+            <span class="pc-arrow">↗</span>
           </div>
+          <div class="pc-title">{p.name}</div>
+          <div class="pc-desc">{p.blurb}</div>
+          <div class="pc-foot">Updated {monthYear(new Date(p.updated))}</div>
         </a>
       ))}
     </div>
-  </div>
-</section>
-
-<!-- DASHBOARD / BLOOMBERG TERMINAL -->
-<section class="dashboard-section" id="dashboard">
-  <div class="ds-inner">
-    <div class="ds-header rv2 section-head">
-      <div class="section-label">Intelligence Layer</div>
-      <h2 class="section-h2">Bloomberg-grade<br>signal intelligence.</h2>
-      <div class="section-sub fade-in-up">Live quant dashboard. Every number moves. Every signal computed in real time.</div>
-    </div>
-    <div class="bloomberg-grid rv2" data-d="1">
-      <!-- Row 1: Metrics -->
-      <div class="bb-cell">
-        <div class="bb-label">SPX <span id="spx-time"></span></div>
-        <div class="bb-val" id="spx-val">5,847</div>
-        <div class="bb-change up" id="spx-chg">+0.42%</div>
-        <div class="bb-chart-line">
-          <svg viewBox="0 0 200 48" preserveAspectRatio="none">
-            <polyline id="spx-line" fill="none" stroke="rgba(61,123,255,0.85)" stroke-width="1.5" points=""/>
-          </svg>
-        </div>
-      </div>
-      <div class="bb-cell">
-        <div class="bb-label">VIX</div>
-        <div class="bb-val" id="vix-val">16.3</div>
-        <div class="bb-change down" id="vix-chg">-2.1%</div>
-        <div class="bb-chart-line">
-          <svg viewBox="0 0 200 48" preserveAspectRatio="none">
-            <polyline id="vix-line" fill="none" stroke="rgba(255,68,102,0.5)" stroke-width="1.5" points=""/>
-          </svg>
-        </div>
-      </div>
-      <div class="bb-cell span2">
-        <div class="bb-label">Market Heatmap — Sector Performance</div>
-        <div class="mini-heatmap" id="heatmap"></div>
-      </div>
-
-      <!-- Row 2: Tickers + Agents -->
-      <div class="bb-cell span2 tall" style="display:flex;flex-direction:column">
-        <div class="bb-label">Signal Feed <span style="color:var(--green)">● LIVE</span></div>
-        <div id="ticker-feed" style="flex:1;display:flex;flex-direction:column;justify-content:space-evenly"></div>
-      </div>
-      <div class="bb-cell span2">
-        <div class="bb-label">Active Research Agents</div>
-        <div id="agent-feed"></div>
-      </div>
-      <div class="bb-cell span2">
-        <div class="bb-label">Factor Attribution — Today</div>
-        <div id="factor-bars"></div>
-      </div>
+    <div class="lab-strip rv2" data-d="2">
+      <p>The interactive dashboard, network globe, knowledge graph, and pipeline terminal live in the lab. All figures there use sample data.</p>
+      <a href="/lab/" class="lab-link">Explore the lab →</a>
     </div>
   </div>
 </section>
 
-<!-- BENTO RESEARCH ECOSYSTEM -->
-<section class="bento-section" id="research">
-  <div class="bento-inner">
+<!-- LATEST WRITING -->
+<section class="writing-section" id="writing">
+  <div class="writing-inner">
     <div class="rv2 section-head">
-      <div class="section-label">Research Ecosystem</div>
-      <h2 class="section-h2">Every surface.<br>Alive.</h2>
-      <div class="section-sub fade-in-up">From factor research to live deployment. Every tool a quant needs, in one place.</div>
+      <div class="section-label">Latest Writing</div>
+      <h2 class="section-h2">Notes from<br>the work.</h2>
     </div>
-    <div class="bento-grid">
-      <div class="bento-card wide tall glass-layer glow-blue rv2">
-        <div class="bc-label">Core</div>
-        <div class="bc-title" style="font-size:28px">AI Factor<br>Research Engine</div>
-        <div class="bc-sub" style="margin-top:12px">Ask in plain English. Get rigorous factor attribution across 8,000+ instruments. Every signal with source, confidence, and alpha estimate.</div>
-        <div style="margin-top:24px;display:flex;flex-direction:column;justify-content:space-evenly;flex:1" id="factor-list"></div>
-      </div>
-      <div class="bento-card glass-layer glow-violet rv2" data-d="1">
-        <div class="bc-label">Network</div>
-        <div class="bc-title">Researcher Directory</div>
-        <div class="bc-sub">Find collaborators by strategy style, market focus, or research domain.</div>
-        <div style="margin-top:20px;display:flex;flex-direction:column;gap:6px">
-          <div style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--surface-2);border-radius:6px;border:1px solid var(--border)">
-            <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#3A3A3A,#5C5C5C);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">AC</div>
-            <div>
-              <div style="font-size:12px;font-weight:600;color:var(--text-1)">Alex Chen</div>
-              <div style="font-size:10px;color:var(--text-3)">Momentum · Equities</div>
-            </div>
+    <div class="writing-list rv2" data-d="1">
+      {latestPosts.map((post) => (
+        <a href={`/blog/${post.id}/`} class="writing-item">
+          <div class="wi-meta">
+            <span class="wi-cat">{post.data.category}</span>
+            <span>{monthYear(post.data.date)}</span>
+            {post.data.readingTime && <span>{post.data.readingTime}</span>}
           </div>
-          <div style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--surface-2);border-radius:6px;border:1px solid var(--border)">
-            <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#2B0ABF,#6B1FD0);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">PR</div>
-            <div>
-              <div style="font-size:12px;font-weight:600;color:var(--text-1)">Priya R.</div>
-              <div style="font-size:10px;color:var(--text-3)">NLP · Alt-Data</div>
-            </div>
-          </div>
-          <div style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--surface-2);border-radius:6px;border:1px solid var(--border)">
-            <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#0A2A7A,#0F4CC8);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">JK</div>
-            <div>
-              <div style="font-size:12px;font-weight:600;color:var(--text-1)">James K.</div>
-              <div style="font-size:10px;color:var(--text-3)">Macro · Fixed Income</div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="bento-card glass-layer rv2" data-d="2">
-        <div class="bc-label">Backtest</div>
-        <div class="bc-title">Walk-Forward<br>Validation</div>
-        <div class="bc-sub">Walk-forward testing with realistic costs. Share tearsheets to the community in one click.</div>
-        <div style="margin-top:20px;background:color-mix(in srgb,var(--green) 6%,transparent);border:1px solid color-mix(in srgb,var(--green) 18%,transparent);border-radius:6px;padding:12px">
-          <div style="font-size:10px;letter-spacing:0.1em;color:var(--text-3);text-transform:uppercase;margin-bottom:8px">Latest Backtest</div>
-          <div style="font-size:22px;font-weight:700;color:var(--green);letter-spacing:-0.02em">Sharpe 1.84</div>
-          <div style="font-size:11px;color:var(--text-3);margin-top:4px">Momentum × Quality · 1Y OOS</div>
-        </div>
-      </div>
-      <div class="bento-card short glass-layer glow-cyan rv2">
-        <div class="bc-label">Live</div>
-        <div class="bc-title">Alpha Signal<br>Feed</div>
-        <div class="bc-sub">124 live signals. Updated continuously. Confidence-ranked across every asset class.</div>
-        <div style="margin-top:20px;display:flex;gap:6px;flex-wrap:wrap">
-          <span style="font-size:10px;padding:3px 8px;background:var(--surface-2);border:1px solid var(--border);border-radius:100px;color:var(--blue)">NVDA ↑ 2.8%</span>
-          <span style="font-size:10px;padding:3px 8px;background:var(--surface-2);border:1px solid var(--border);border-radius:100px;color:var(--blue)">BTC ↑ 3.1%</span>
-          <span style="font-size:10px;padding:3px 8px;background:color-mix(in srgb,var(--red) 8%,transparent);border:1px solid color-mix(in srgb,var(--red) 18%,transparent);border-radius:100px;color:var(--red)">TSLA ↓ 1.6%</span>
-          <span style="font-size:10px;padding:3px 8px;background:var(--surface-2);border:1px solid var(--border);border-radius:100px;color:var(--blue)">AAPL ↑ 2.4%</span>
-        </div>
-      </div>
-      <div class="bento-card short glass-layer rv2" data-d="1">
-        <div class="bc-label">Publish</div>
-        <div class="bc-title">Research<br>Archive</div>
-        <div class="bc-sub">Publish findings. Build scientific reputation. Co-author with the top minds in the network.</div>
-      </div>
-      <div class="bento-card short glass-layer rv2" data-d="2">
-        <div class="bc-label">Community</div>
-        <div class="bc-title">Live<br>Discussion</div>
-        <div class="bc-sub">Real-time debate. Market commentary. Strategy discussion. Macro regime calls.</div>
-      </div>
+          <div class="wi-title">{post.data.title}</div>
+          <div class="wi-desc">{post.data.description}</div>
+        </a>
+      ))}
+    </div>
+    <a href="/blog/" class="writing-all">All {allPosts.length} articles →</a>
+  </div>
+</section>
+
+<!-- COMMUNITY -->
+<section class="community-section" id="community">
+  <div class="community-inner rv2 section-head center">
+    <div class="section-label">Community</div>
+    <h2 class="section-h2">Join researchers and<br>engineers working in the open.</h2>
+    <div class="section-sub fade-in-up">Weekly paper discussions, open-source projects, and practical quantitative finance research.</div>
+    <div class="community-ctas">
+      <a href="https://discord.gg/quanthq" target="_blank" rel="noopener" class="btn-primary">Join Discord</a>
+      <a href="https://github.com/quanthq" target="_blank" rel="noopener" class="btn-ghost">Follow on GitHub</a>
     </div>
   </div>
 </section>
 
-<!-- RESEARCH PAPERS -->
-<!-- HORIZONTAL SCROLL — PROJECTS -->
-<section class="hscroll-section">
-  <div class="hscroll-label rv2 section-head">
-    <div class="section-label">Active Projects</div>
-    <h2 class="section-h2">What we're<br>building.</h2>
-    <div class="section-sub fade-in-up">Open-source tools, research frameworks, and production infrastructure.</div>
-  </div>
-  <div class="hscroll-track-wrap">
-    <div class="hscroll-track" id="htrack"></div>
-  </div>
-</section>
-
-<!-- WORLD MAP -->
-<section class="world-section" id="network">
-  <div class="world-inner">
-    <div class="rv2 section-head center">
-      <div class="section-label">Global Network</div>
-      <h2 class="section-h2">Everywhere<br>intelligence lives.</h2>
-    </div>
-    <div class="world-map-wrap rv2" data-d="1">
-      <canvas id="world-canvas" width="880" height="600" aria-label="Interactive globe showing QuantHQ global research network nodes" role="img"></canvas>
-      <noscript>
-        <p class="text-center text-[var(--text-3)] py-8">Interactive globe requires JavaScript. QuantHQ has research nodes across North America, Europe, and Asia.</p>
-      </noscript>
-    </div>
-  </div>
-</section>
-
-<!-- FORCE GRAPH -->
-<section class="graph-section">
-  <div class="graph-inner">
-    <div class="rv2 section-head">
-      <div class="section-label">Knowledge Network</div>
-      <h2 class="section-h2">A living neural<br>network of ideas.</h2>
-    </div>
-    <div class="graph-legend rv2" data-d="1" aria-hidden="true">
-      <span class="gl-item"><i style="background:var(--blue)"></i>Research</span>
-      <span class="gl-item"><i style="background:var(--violet)"></i>Papers</span>
-      <span class="gl-item"><i style="background:var(--cyan)"></i>Agents</span>
-      <span class="gl-item"><i style="background:var(--text-3)"></i>Signals</span>
-      <span class="gl-hint">Drag a node to explore</span>
-    </div>
-    <canvas id="force-canvas" aria-label="Interactive force-directed knowledge graph" role="img"></canvas>
-    <noscript>
-      <p class="text-center text-[var(--text-3)] py-8">Interactive knowledge graph requires JavaScript. QuantHQ connects research papers, agents, and signals in a living neural network of ideas.</p>
-    </noscript>
-  </div>
-</section>
-
-<!-- TERMINAL -->
-<section class="terminal-section" id="terminal">
-  <div class="terminal-inner">
-    <div class="rv2 section-head">
-      <div class="section-label">Research Pipeline</div>
-      <h2 class="section-h2">Everything runs<br>here.</h2>
-      <div class="section-sub fade-in-up">Full research pipeline from data ingestion to factor deployment. Every step reproducible.</div>
-    </div>
-    <div class="terminal-window rv2" data-d="1">
-      <div class="terminal-bar">
-        <div class="term-dot" style="background:#FF5F57"></div>
-        <div class="term-dot" style="background:#FFBD2E"></div>
-        <div class="term-dot" style="background:#28C840"></div>
-        <div class="terminal-title">quanthq / research-pipeline · main</div>
-      </div>
-      <div class="terminal-body" id="terminal-body">
-        <div class="term-line">─────────────────────────────────────────────</div>
-        <div class="term-line">  QuantHQ Research Pipeline v2.4.1</div>
-        <div class="term-line">─────────────────────────────────────────────</div>
-        <div id="term-lines"></div>
-        <span class="term-prompt">$ </span><span id="term-input" class="term-cmd"></span><span class="term-cursor"></span><span id="term-hint" style="color:var(--text-3)">  click here, type 'help'</span>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- STATS -->
-<section class="stats-section">
-  <div class="stats-inner">
-    <div class="rv2 section-head center">
-      <div class="section-label">Research Metrics</div>
-      <h2 class="section-h2">Numbers that<br>never sleep.</h2>
-      <div class="section-sub fade-in-up">Real-time metrics from our global research network. Every number is computed live.</div>
-    </div>
-    <div class="stats-grid rv2" data-d="1">
-      <div class="stat-cell">
-        <div class="stat-live"><div class="stat-live-dot"></div>Live</div>
-        <div class="stat-num"><span data-count="124">0</span></div>
-        <div class="stat-label">Research Nodes Online</div>
-        <div class="stat-sub">Active researchers contributing to the network right now</div>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-live"><div class="stat-live-dot"></div>Live</div>
-        <div class="stat-num"><span data-count="3">0</span></div>
-        <div class="stat-label">Research Papers</div>
-        <div class="stat-sub">Peer-reviewed papers, preprints, and technical reports</div>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-live"><div class="stat-live-dot"></div>Live</div>
-        <div class="stat-num"><span data-count="43">0</span></div>
-        <div class="stat-label">Experiments Running</div>
-        <div class="stat-sub">Live backtests and model training pipelines active</div>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-live"><div class="stat-live-dot"></div>Live</div>
-        <div class="stat-num"><span data-count="8000">0</span><span class="stat-unit">+</span></div>
-        <div class="stat-label">Instruments Covered</div>
-        <div class="stat-sub">Equities, crypto, FX, rates, and commodity factors</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- FINAL CTA -->
-<!-- MEGA MARQUEE -->
-<div class="mega-marquee" aria-hidden="true">
-  <div class="mega-track" id="mega-track">RESEARCH&nbsp;<b>·</b>&nbsp;BUILD&nbsp;<b>·</b>&nbsp;PUBLISH&nbsp;<b>·</b>&nbsp;REPEAT&nbsp;<b>·</b>&nbsp;RESEARCH&nbsp;<b>·</b>&nbsp;BUILD&nbsp;<b>·</b>&nbsp;PUBLISH&nbsp;<b>·</b>&nbsp;REPEAT&nbsp;<b>·</b>&nbsp;</div>
-</div>
-
+<!-- EMAIL SIGNUP -->
 <section class="fcta-section" id="join">
   <div class="fcta-bg-glow"></div>
   <div class="fcta-inner rv2 section-head center">
-    <div class="section-label">Free Early Access</div>
-    <h2 class="fcta-h2">Enter the<br><span class="grad-text">institution.</span></h2>
-    <div class="fcta-sub fade-in-up">Shape the community. Build your network. Get Alpha Toolkit access from day one.</div>
+    <div class="section-label">Mailing list</div>
+    <h2 class="fcta-h2">Get QuantHQ<br><span class="grad-text">research updates.</span></h2>
+    <div class="fcta-sub fade-in-up">New papers, tool releases, and community events. Occasional updates — no spam, unsubscribe anytime.</div>
     <form class="signup-form" id="signup-form" onsubmit="return false">
       <input type="email" class="signup-input" placeholder="you@example.com" required aria-label="Email address">
-      <button type="submit" class="signup-btn">Get Access</button>
+      <button type="submit" class="signup-btn">Subscribe</button>
     </form>
-    <div class="signup-note">No credit card required. No waitlist theater. · <a href="https://linkedin.com/company/quanthq" target="_blank" rel="noopener" style="color:var(--text-2)">Follow on LinkedIn →</a></div>
+    <div class="signup-note">Roughly one email a month. · <a href="https://linkedin.com/company/quanthq" target="_blank" rel="noopener" style="color:var(--text-2)">Follow on LinkedIn →</a></div>
   </div>
 </section>
 </main>
 
-<!-- FOOTER -->
-<footer>
-  <div class="footer-inner">
-    <div class="footer-top">
-      <div class="footer-brand">
-        <div class="logo-name">QuantHQ</div>
-        <p>The digital research institution for quantitative finance.</p>
-      </div>
-      <div class="footer-links">
-        <h4>Explore</h4>
-        <a href="/research/">Research</a>
-        <a href="/blog/">Blog</a>
-        <a href="/community/">Community</a>
-        <a href="https://linkedin.com/company/quanthq" target="_blank" rel="noopener">LinkedIn</a>
-      </div>
-      <div class="footer-links">
-        <h4>Institution</h4>
-        <a href="/about/">About</a>
-        <a href="/contact/">Contact</a>
-        <a href="#join">Join</a>
-      </div>
-    </div>
-    <div class="footer-bot">
-      <p>QuantHQ © 2026 — Where quant minds build intelligence.</p>
-      <p style="color:var(--text-3);font-family:var(--font-mono)">v2.4.1 · 124 nodes online</p>
-    </div>
-  </div>
-</footer>
+<HomeFooter />
 
 <CommandPalette />
 
 <script>
 const reduced = matchMedia('(prefers-reduced-motion:reduce)').matches;
 
-/* ── LOADER ── */
-(function(){
-  const bar = document.getElementById('lbar');
-  const loader = document.getElementById('loader');
-  // Cap total loader time at ~600ms
-  const start = performance.now();
-  const iv = setInterval(() => {
-    const p = Math.min(100, ((performance.now() - start) / 500) * 100);
-    bar.style.width = p + '%';
-    if (p >= 100) {
-      clearInterval(iv);
-      loader.classList.add('hide');
-      document.querySelector('.bgfx-grain')?.classList.add('active');
-      setTimeout(()=>{loader.style.display='none'},600);
-    }
-  }, 40);
-})();
-
-/* ── HAMBURGER MENU ── */
-const hamburger = document.getElementById('nav-hamburger');
-const navLinks = document.getElementById('nav-links');
-if (hamburger && navLinks) {
-  hamburger.addEventListener('click', () => {
-    const open = navLinks.classList.toggle('open');
-    hamburger.classList.toggle('active', open);
-    document.body.style.overflow = open ? 'hidden' : '';
-  });
-  // Close on nav link click
-  navLinks.querySelectorAll('a').forEach(a => {
-    a.addEventListener('click', () => {
-      navLinks.classList.remove('open');
-      hamburger.classList.remove('active');
-      document.body.style.overflow = '';
-    });
-  });
-}
-
-/* ── CONSOLIDATED SCROLL HANDLER ── */
+/* ── SCROLL: progress bar, nav state, heading parallax ── */
 const sp = document.getElementById('scroll-prog');
 const navEl = document.getElementById('nav');
 const parallaxH2 = [...document.querySelectorAll('.section-h2')];
@@ -1932,7 +295,7 @@ function onScroll() {
   for (const el of parallaxH2) {
     const r = el.parentElement.getBoundingClientRect();
     if (r.bottom < 0 || r.top > innerHeight) continue;
-    el.style.transform = `translateY(${(r.top + r.height/2 - innerHeight/2) * 0.07}px)`;
+    el.style.transform = `translateY(${(r.top + r.height/2 - innerHeight/2) * 0.035}px)`;
   }
   ticking = false;
 }
@@ -1964,10 +327,19 @@ const rio = new IntersectionObserver(es => es.forEach(e => {
 document.querySelectorAll('.rv2').forEach(el => rio.observe(el));
 if (!reduced) setTimeout(() => scrambleIn(document.querySelector('.hero-eyebrow')), 500);
 
+/* ── FADE-IN-UP ── */
+const fadeObserver = new IntersectionObserver(es => es.forEach(e => {
+  if (e.isIntersecting) { e.target.classList.add('in'); fadeObserver.unobserve(e.target); }
+}), {threshold:0, rootMargin:'0px 0px -40px 0px'});
+document.querySelectorAll('.fade-in-up,.fade-in,.rv').forEach(el => fadeObserver.observe(el));
+
 /* ── STAT COUNTERS — odometer roll from 0 to target when scrolled into view ── */
 const fmtN = n => Math.round(n).toLocaleString('en-US');
 document.querySelectorAll('[data-count]').forEach(el => { el.textContent = fmtN(+el.dataset.count); });
-function animCount(el) {
+const cio = new IntersectionObserver(es => es.forEach(e => {
+  if (!e.isIntersecting) return;
+  const el = e.target;
+  cio.unobserve(el);
   if (reduced) return;
   const target = +el.dataset.count, t0 = performance.now(), dur = 1100;
   (function tick(now){
@@ -1976,713 +348,8 @@ function animCount(el) {
     if (p < 1) requestAnimationFrame(tick);
     else { el.textContent = fmtN(target); el.style.animation = 'statGlow 0.6s ease-out'; }
   })(t0);
-}
-const cio = new IntersectionObserver(es => es.forEach(e => {
-  if (!e.isIntersecting) return;
-  animCount(e.target);
-  cio.unobserve(e.target);
 }), {threshold:0.5});
 document.querySelectorAll('[data-count]').forEach(el => cio.observe(el));
-
-/* ── VELOCITY MARQUEE — base drift + scroll energy + skew ── */
-(function(){
-  const track = document.getElementById('mega-track');
-  if (!track || reduced) return;
-  track.classList.add('js-driven');
-  const half = track.scrollWidth / 2;         // content is duplicated -> one loop
-  let pos = 0, last = scrollY, vel = 0, visible = true;
-  addEventListener('scroll', () => { vel += Math.abs(scrollY - last) * 0.9; last = scrollY; }, {passive:true});
-  new IntersectionObserver(es => { visible = es[0].isIntersecting; }, {threshold:0}).observe(track.parentElement);
-  (function frame(){
-    if (visible) {
-      pos -= 1.1 + vel;                        // base speed + scroll velocity
-      if (pos <= -half) pos += half;           // seamless wrap
-      const skew = Math.max(-6, Math.min(6, -vel * 0.4));
-      track.style.transform = `translateX(${pos}px) skewX(${skew}deg)`;
-    }
-    vel *= 0.88;
-    requestAnimationFrame(frame);
-  })();
-})();
-
-/* ── BG PARTICLE CANVAS removed ── */
-
-/* ── FLOATING OBJECTS removed ── */
-
-/* ── BLOOMBERG DASHBOARD ── */
-// Mini sparkline generator
-function makePoints(n, base, variance) {
-  let v = base, pts = [];
-  for (let i=0; i<n; i++) {
-    v += (Math.random()-.48)*variance;
-    pts.push(Math.max(base*0.9, Math.min(base*1.1, v)));
-  }
-  return pts;
-}
-function toSVGPoints(arr, w, h) {
-  const min = Math.min(...arr), max = Math.max(...arr), range = max-min||1;
-  return arr.map((v,i) => `${i/(arr.length-1)*w},${h-(v-min)/range*h}`).join(' ');
-}
-let spxData = makePoints(40, 5847, 12);
-let vixData = makePoints(40, 16.3, 0.4);
-let sparkDrawing = false; // pause polyline swaps while the draw-in animation runs
-function tweenNum(el, to, fmt) {
-  const from = parseFloat(el.textContent.replace(/,/g,'')) || to;
-  if (reduced || from === to) { el.textContent = fmt(to); return; }
-  const start = performance.now(), dur = 400;
-  (function step(now) {
-    const t = Math.min((now - start) / dur, 1), e = 1 - Math.pow(1 - t, 3);
-    el.textContent = fmt(from + (to - from) * e);
-    if (t < 1) requestAnimationFrame(step);
-  })(start);
-}
-function updateCharts() {
-  spxData.push(spxData[spxData.length-1]+(Math.random()-.48)*8); spxData.shift();
-  vixData.push(vixData[vixData.length-1]+(Math.random()-.48)*0.3); vixData.shift();
-  const spxV = spxData[spxData.length-1];
-  const vixV = vixData[vixData.length-1];
-  tweenNum(document.getElementById('spx-val'), spxV, v => Math.round(v).toLocaleString('en-US'));
-  tweenNum(document.getElementById('vix-val'), vixV, v => v.toFixed(1));
-  document.getElementById('spx-time').textContent = new Date().toLocaleTimeString('en-US',{hour12:false});
-  const spxPct = ((spxV/spxData[0]-1)*100).toFixed(2);
-  const vixPct = ((vixV/vixData[0]-1)*100).toFixed(2);
-  const spxEl = document.getElementById('spx-chg');
-  spxEl.textContent = (spxPct>=0?'+':'')+spxPct+'%';
-  spxEl.className = 'bb-change '+(spxPct>=0?'up':'down');
-  const vixEl = document.getElementById('vix-chg');
-  vixEl.textContent = (vixPct>=0?'+':'')+vixPct+'%';
-  vixEl.className = 'bb-change '+(vixPct>=0?'up':'down');
-  if (!sparkDrawing) {
-    document.getElementById('spx-line').setAttribute('points', toSVGPoints(spxData,200,48));
-    document.getElementById('vix-line').setAttribute('points', toSVGPoints(vixData,200,48));
-  }
-}
-updateCharts();
-if (!reduced) setInterval(updateCharts, 1800);
-
-// Draw-in: sparklines trace themselves when the dashboard first scrolls into view
-if (!reduced) {
-  const sparkIO = new IntersectionObserver(es => {
-    if (!es[0].isIntersecting) return;
-    sparkIO.disconnect();
-    sparkDrawing = true;
-    const lines = ['spx-line','vix-line'].map(id => document.getElementById(id));
-    lines.forEach(l => {
-      const len = l.getTotalLength();
-      l.style.strokeDasharray = len;
-      l.style.strokeDashoffset = len;
-      l.style.transition = 'stroke-dashoffset 1.2s var(--ease-out)';
-      requestAnimationFrame(() => requestAnimationFrame(() => l.style.strokeDashoffset = 0));
-    });
-    setTimeout(() => {
-      lines.forEach(l => { l.style.strokeDasharray = l.style.strokeDashoffset = l.style.transition = ''; });
-      sparkDrawing = false;
-    }, 1350);
-  }, {threshold: 0.3});
-  sparkIO.observe(document.querySelector('.bloomberg-grid'));
-}
-
-// Heatmap — color-mix over theme vars so cells read in both modes
-const hmColors = [60,40,20].map(p=>`color-mix(in srgb,var(--green) ${p}%,transparent)`)
-  .concat(['var(--border-hover)'], [20,40,60].map(p=>`color-mix(in srgb,var(--red) ${p}%,transparent)`));
-const hmEl = document.getElementById('heatmap');
-const sectors = ['Tech','Fin','Health','Energy','Cons','Util','Mat','RE','Comm','Ind','XLRE','ARKK','IWM','QQQ','SPY','DIA','TLT','GLD'];
-const hmPcts = [2.4, 1.5, 0.6, 0.1, -0.6, -1.5, -2.4];
-for (let i=0; i<21; i++) {
-  const c = document.createElement('div');
-  c.className = 'hm-cell';
-  const ci = Math.floor(Math.random()*hmColors.length);
-  c.style.background = hmColors[ci];
-  c.style.animationDelay = (Math.random()*3)+'s';
-  c.style.animationDuration = (2+Math.random()*3)+'s';
-  c.title = sectors[i%sectors.length];
-  c.dataset.sector = sectors[i%sectors.length];
-  c.dataset.pct = (hmPcts[ci] + (Math.random()-0.5)*0.6).toFixed(1);
-  hmEl.appendChild(c);
-}
-// click a cell → sector detail strip
-const hmDetail = document.createElement('div');
-hmDetail.className = 'hm-detail';
-hmEl.after(hmDetail);
-hmEl.addEventListener('click', e => {
-  const cell = e.target.closest('.hm-cell');
-  if (!cell) return;
-  const was = cell.classList.contains('sel');
-  hmEl.querySelectorAll('.sel').forEach(c => c.classList.remove('sel'));
-  if (was) { hmDetail.textContent = ''; return; }
-  cell.classList.add('sel');
-  const p = +cell.dataset.pct;
-  hmDetail.textContent = `${cell.dataset.sector.toUpperCase()} · ${p>=0?'+':''}${p}% today · ${Math.floor(Math.random()*40+12)} instruments tracked`;
-});
-// hover previews a sector in the detail strip (a pinned click wins)
-hmEl.addEventListener('mouseover', e => {
-  const cell = e.target.closest('.hm-cell');
-  if (!cell || hmEl.querySelector('.sel')) return;
-  const p = +cell.dataset.pct;
-  hmDetail.textContent = `${cell.dataset.sector.toUpperCase()} · ${p>=0?'+':''}${p}% today`;
-});
-hmEl.addEventListener('mouseleave', () => {
-  if (!hmEl.querySelector('.sel')) hmDetail.textContent = '';
-});
-// live repricing: one random cell re-colors with a flash every few seconds
-if (!reduced) setInterval(() => {
-  const c = hmEl.children[Math.floor(Math.random()*hmEl.children.length)];
-  const ci = Math.floor(Math.random()*hmColors.length);
-  c.style.background = hmColors[ci];
-  c.dataset.pct = (hmPcts[ci] + (Math.random()-0.5)*0.6).toFixed(1);
-  c.classList.remove('hm-flash');
-  void c.offsetWidth;
-  c.classList.add('hm-flash');
-}, 2400);
-
-// Ticker feed
-const tickers = [
-  {sym:'NVDA',price:'131.42',chg:'+2.8%',dir:'up'},
-  {sym:'AAPL',price:'212.18',chg:'+1.4%',dir:'up'},
-  {sym:'MSFT',price:'448.62',chg:'+0.4%',dir:'up'},
-  {sym:'META',price:'562.90',chg:'+1.9%',dir:'up'},
-  {sym:'TSLA',price:'189.34',chg:'-1.6%',dir:'down'},
-  {sym:'BTC',price:'68,420',chg:'+3.1%',dir:'up'},
-  {sym:'ETH',price:'3,840',chg:'+2.2%',dir:'up'},
-  {sym:'VIX',price:'16.3',chg:'-2.1%',dir:'down'},
-];
-const tf = document.getElementById('ticker-feed');
-tf.innerHTML = tickers.map(t=>`
-  <div class="ticker-row" data-sym="${t.sym}">
-    <span class="ticker-sym">${t.sym}</span>
-    <span class="ticker-price">${t.price}</span>
-    <span class="ticker-chg ${t.dir}">${t.chg}</span>
-  </div>`).join('');
-// Build ticker rows once, then update only changed values
-const tickerRows = {};
-tickers.forEach(t => {
-  const row = tf.querySelector(`[data-sym="${t.sym}"]`);
-  if (row) tickerRows[t.sym] = row;
-});
-// Re-grab after initial render
-if (!reduced) {
-  setInterval(()=>{
-    const t = tickers[Math.floor(Math.random()*tickers.length)];
-    const pct = parseFloat(t.chg)+(Math.random()-.5)*0.2;
-    t.chg = (pct>=0?'+':'')+pct.toFixed(1)+'%';
-    t.dir = pct>=0?'up':'down';
-    // Update only the changed row's chg span efficiently
-    const row = tf.querySelector(`.ticker-row[data-sym="${t.sym}"] .ticker-chg`);
-    if (row) {
-      row.textContent = t.chg;
-      row.className = 'ticker-chg ' + t.dir;
-      const tr = row.closest('.ticker-row');
-      tr.classList.remove('flash-up','flash-down');
-      void tr.offsetWidth;
-      tr.classList.add(t.dir === 'up' ? 'flash-up' : 'flash-down');
-    } else {
-      // fallback: rebuild
-      tf.innerHTML = tickers.map(t=>`
-        <div class="ticker-row" data-sym="${t.sym}">
-          <span class="ticker-sym">${t.sym}</span>
-          <span class="ticker-price">${t.price}</span>
-          <span class="ticker-chg ${t.dir}">${t.chg}</span>
-        </div>`).join('');
-    }
-  }, 2200);
-}
-
-// Agent feed — dot color keyed to status
-const agentColors = {running:'var(--green)',training:'var(--violet)',idle:'var(--text-4)'};
-const agents = [
-  {name:'alpha-extractor-v3',status:'running'},
-  {name:'regime-classifier',status:'training'},
-  {name:'earnings-nlp-agent',status:'idle'},
-  {name:'backtest-engine-5d',status:'running'},
-  {name:'signal-ranker',status:'running'},
-].map(a=>({...a,color:agentColors[a.status]}));
-document.getElementById('agent-feed').innerHTML = agents.map(a=>`
-  <div class="agent-row">
-    <div class="agent-dot" style="background:${a.color}"></div>
-    <span class="agent-name">${a.name}</span>
-    <span class="agent-status">[${a.status}]</span>
-  </div>`).join('');
-
-// Factor bars
-const factors = [
-  {name:'momentum_3m',val:0.72},
-  {name:'earnings_rev',val:0.91},
-  {name:'quality_score',val:0.68},
-  {name:'short_interest',val:0.43},
-  {name:'sentiment_nlp',val:0.56},
-];
-document.getElementById('factor-bars').innerHTML = factors.map(f=>`
-  <div style="margin-bottom:8px">
-    <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-3);margin-bottom:3px;letter-spacing:0.05em">
-      <span>${f.name}</span><span>${f.val.toFixed(2)}</span>
-    </div>
-    <div style="height:3px;background:var(--border);border-radius:2px;overflow:hidden">
-      <div style="height:100%;width:${f.val*100}%;background:var(--blue);border-radius:2px;transition:width 1s var(--ease-out)"></div>
-    </div>
-  </div>`).join('');
-
-// Bento factor list — green for positive loadings, red for negative
-document.getElementById('factor-list').innerHTML = [
-  {n:'momentum_3m',v:'+0.72'},
-  {n:'earnings_revision',v:'+0.91'},
-  {n:'quality_score',v:'+0.68'},
-  {n:'short_interest_δ',v:'-0.43'},
-  {n:'value_spread',v:'+0.55'},
-  {n:'sentiment_nlp',v:'+0.77'},
-  {n:'insider_flow',v:'+0.49'},
-  {n:'vol_carry',v:'-0.31'},
-  {n:'analyst_dispersion',v:'+0.38'},
-  {n:'liquidity_shock',v:'-0.22'},
-].map(f=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:11px">
-  <span style="color:var(--text-3);font-family:var(--font-mono)">${f.n}</span>
-  <span style="color:${f.v.startsWith('-')?'var(--red)':'var(--green)'};font-weight:600;font-family:var(--font-mono)">${f.v}</span>
-</div>`).join('');
-
-/* ── HORIZONTAL SCROLL CARDS ── */
-const hsProjects = [
-  {num:'01', title:'Alpha Extraction Pipeline', desc:'End-to-end factor research system: ingestion → attribution → signal → ranking.', tag:'Open Source', href:'https://github.com/quanthq/alpha-extraction'},
-  {num:'02', title:'LLM Earnings NLP Factor', desc:'GPT-4 class semantic delta across consecutive earnings calls. Live OOS testing.', tag:'Live', href:'/research/llm-earnings-sentiment-alpha/'},
-  {num:'03', title:'Regime Classification HMM', desc:'Hidden Markov model conditioned factor rotation. Yield curve + credit spread inputs.', tag:'Research', href:'/research/yield-curve-regime-classifier/'},
-  {num:'04', title:'Cross-Sectional Signal Scanner', desc:'Ranks 8,000+ instruments by factor confluence score. Refreshes every 4 hours.', tag:'Live', href:'https://github.com/quanthq/signal-scanner'},
-  {num:'05', title:'Community Backtest Engine', desc:'Walk-forward with realistic slippage. Shareable tearsheets. Benchmark comparison.', tag:'Open Source', href:'https://github.com/quanthq/backtest-engine'},
-  {num:'06', title:'AI Research Assistant', desc:'Asks and answers quant research questions with full source attribution.', tag:'Beta', href:'https://github.com/quanthq/ai-assistant'},
-  {num:'07', title:'Volatility Surface Modeler', desc:'Local vol calibration from live options data. Arbitrage-free interpolation.', tag:'Research', href:'https://github.com/quanthq/vol-surface'},
-  {num:'08', title:'Macro Regime Tracker', desc:'Real-time regime classification across 12 macro factors. Factor rotation signals.', tag:'Live', href:'https://github.com/quanthq/macro-tracker'},
-];
-const track = document.getElementById('htrack');
-const double = [...hsProjects, ...hsProjects];
-track.innerHTML = double.map(p=>`
-  <a href="${p.href}" class="hs-card" target="_blank" rel="noopener">
-    <div class="hs-num">${p.num}</div>
-    <div class="hs-title">${p.title}</div>
-    <div class="hs-desc">${p.desc}</div>
-    <div class="hs-foot"><span>${p.tag}</span><span class="hs-arrow">↗</span></div>
-  </a>`).join('');
-
-/* canvases can't use CSS vars — resolve ink per frame from the active theme */
-const isLight = () => document.documentElement.classList.contains('light');
-const canvasInk = () => isLight() ? '15,23,42' : '255,255,255';
-
-/* ── INTERACTIVE GLOBE (canvas port of 21st.dev Interactive Globe) ── */
-const wCanvas = document.getElementById('world-canvas');
-const wCtx = wCanvas.getContext('2d');
-const GLOBE_H = 600;
-const CITIES = [
-  {name:'New York',lat:40.7,lon:-74.0},{name:'San Francisco',lat:37.8,lon:-122.4},
-  {name:'Chicago',lat:41.9,lon:-87.6},{name:'São Paulo',lat:-23.5,lon:-46.6},
-  {name:'London',lat:51.5,lon:-0.1},{name:'Zurich',lat:47.4,lon:8.5},
-  {name:'Dubai',lat:25.2,lon:55.3},{name:'Mumbai',lat:19.1,lon:72.9},
-  {name:'Singapore',lat:1.35,lon:103.8},{name:'Hong Kong',lat:22.3,lon:114.2},
-  {name:'Tokyo',lat:35.7,lon:139.7},{name:'Sydney',lat:-33.9,lon:151.2},
-];
-const ARCS = [[0,4],[4,5],[4,6],[6,7],[7,8],[8,9],[9,10],[8,11],[0,3],[1,0],[2,0],[5,10]];
-function ll2xyz(lat, lon) {
-  const la = lat*Math.PI/180, lo = lon*Math.PI/180;
-  return [Math.cos(la)*Math.cos(lo), Math.sin(la), Math.cos(la)*Math.sin(lo)];
-}
-const CITY_PTS = CITIES.map(c => ll2xyz(c.lat, c.lon));
-// Fibonacci-distributed sphere dots
-const SPHERE_DOTS = [];
-for (let i = 0; i < 900; i++) {
-  const ph = Math.acos(1 - 2*(i+0.5)/900), th = Math.PI*(1+Math.sqrt(5))*i;
-  SPHERE_DOTS.push([Math.sin(ph)*Math.cos(th), Math.cos(ph), Math.sin(ph)*Math.sin(th)]);
-}
-let gRotY = -1.2, gRotX = -0.25, gDragging = false, gLastX = 0, gLastY = 0;
-function gProject(p, R, cx, cy) {
-  const cosY = Math.cos(gRotY), sinY = Math.sin(gRotY);
-  const x1 = p[0]*cosY - p[2]*sinY, z1 = p[0]*sinY + p[2]*cosY;
-  const cosX = Math.cos(gRotX), sinX = Math.sin(gRotX);
-  const y2 = p[1]*cosX - z1*sinX, z2 = p[1]*sinX + z1*cosX;
-  return [cx + x1*R, cy - y2*R, z2];
-}
-function gArcPoint(a, b, t) {
-  const lift = 1 + 0.28*Math.sin(Math.PI*t);
-  const x = a[0]+(b[0]-a[0])*t, y = a[1]+(b[1]-a[1])*t, z = a[2]+(b[2]-a[2])*t;
-  const l = Math.hypot(x, y, z) || 1;
-  return [x/l*lift, y/l*lift, z/l*lift];
-}
-function drawGlobe() {
-  const W = wCanvas.offsetWidth;
-  if (wCanvas.width !== W) wCanvas.width = W;
-  if (wCanvas.height !== GLOBE_H) wCanvas.height = GLOBE_H;
-  wCtx.clearRect(0, 0, W, GLOBE_H);
-  const R = Math.min(W, GLOBE_H)*0.42, cx = W/2, cy = GLOBE_H/2;
-  const t = Date.now()/1000;
-  const ink = canvasInk();
-  if (!gDragging) gRotY += 0.0022; // auto-rotate when idle
-  // sphere dots, depth-shaded
-  for (const d of SPHERE_DOTS) {
-    const [sx, sy, z] = gProject(d, R, cx, cy);
-    if (z <= 0.02) continue;
-    wCtx.fillStyle = `rgba(${ink},${0.18 + z*0.5})`;
-    wCtx.fillRect(sx, sy, 2, 2);
-  }
-  // arcs with traveling particles
-  ARCS.forEach((arc, k) => {
-    const A = CITY_PTS[arc[0]], B = CITY_PTS[arc[1]];
-    wCtx.beginPath();
-    let started = false;
-    for (let s = 0; s <= 32; s++) {
-      const [sx, sy, z] = gProject(gArcPoint(A, B, s/32), R, cx, cy);
-      if (z > 0) {
-        if (!started) { wCtx.moveTo(sx, sy); started = true; }
-        else wCtx.lineTo(sx, sy);
-      } else started = false;
-    }
-    wCtx.strokeStyle = `rgba(${ink},0.28)`;
-    wCtx.lineWidth = 1;
-    wCtx.stroke();
-    const [px, py, pz] = gProject(gArcPoint(A, B, (t*0.12 + k*0.37) % 1), R, cx, cy);
-    if (pz > 0) {
-      wCtx.beginPath(); wCtx.arc(px, py, 1.8, 0, Math.PI*2);
-      wCtx.fillStyle = isLight() ? 'rgba(37,99,235,0.95)' : 'rgba(123,162,255,0.95)'; wCtx.fill();
-    }
-  });
-  // city markers with pulse rings + labels
-  CITIES.forEach((c, i) => {
-    const [sx, sy, z] = gProject(CITY_PTS[i], R, cx, cy);
-    if (z <= 0) return;
-    const pulse = Math.sin(t*2 + i)*0.5 + 0.5;
-    wCtx.beginPath(); wCtx.arc(sx, sy, 2.5, 0, Math.PI*2);
-    wCtx.fillStyle = `rgba(${ink},0.95)`; wCtx.fill();
-    wCtx.beginPath(); wCtx.arc(sx, sy, 4 + pulse*5, 0, Math.PI*2);
-    wCtx.strokeStyle = `rgba(${ink},${0.35*(1-pulse)})`;
-    wCtx.lineWidth = 1; wCtx.stroke();
-    if (z > 0.35) {
-      wCtx.font = '9px Inter,sans-serif';
-      wCtx.fillStyle = `rgba(${ink},${0.65*z})`;
-      wCtx.fillText(c.name.toUpperCase(), sx + 8, sy + 3);
-    }
-  });
-}
-wCanvas.addEventListener('pointerdown', e => {
-  gDragging = true; gLastX = e.clientX; gLastY = e.clientY;
-  wCanvas.setPointerCapture(e.pointerId);
-});
-wCanvas.addEventListener('pointermove', e => {
-  if (!gDragging) return;
-  gRotY += (e.clientX - gLastX)*0.005;
-  gRotX = Math.max(-0.9, Math.min(0.9, gRotX - (e.clientY - gLastY)*0.003));
-  gLastX = e.clientX; gLastY = e.clientY;
-});
-wCanvas.addEventListener('pointerup', () => { gDragging = false; });
-wCanvas.addEventListener('pointercancel', () => { gDragging = false; });
-if (!reduced) {
-  let wActive = false, wAnimId;
-  function wLoop() {
-    if (!wActive) return;
-    drawGlobe();
-    wAnimId = requestAnimationFrame(wLoop);
-  }
-  const wObserver = new IntersectionObserver(entries => {
-    const vis = entries[0].isIntersecting;
-    if (vis && !wActive) { wActive = true; wLoop(); }
-    else if (!vis) { wActive = false; cancelAnimationFrame(wAnimId); }
-  }, {threshold: 0.05});
-  wObserver.observe(wCanvas);
-} else {
-  drawGlobe();
-}
-
-/* ── FORCE-DIRECTED GRAPH ── */
-const fc = document.getElementById('force-canvas');
-const fctx = fc.getContext('2d');
-let fW, fH;
-// node palette per theme: Research=blue, Paper=violet, Agent=cyan, Signal=neutral
-const nodePalette = () => isLight()
-  ? ['rgba(37,99,235,0.85)','rgba(109,40,217,0.85)','rgba(8,145,178,0.85)','rgba(15,23,42,0.45)']
-  : ['rgba(122,158,255,0.9)','rgba(178,150,255,0.9)','rgba(0,255,240,0.75)','rgba(255,255,255,0.45)'];
-let fNodes = [], fEdges = [];
-function initForce() {
-  fW = fc.width = fc.offsetWidth; fH = fc.height = 420;
-  fNodes = Array.from({length:36}, (_,i) => ({
-    x: fW/2 + (Math.random()-.5)*fW*0.7,
-    y: fH/2 + (Math.random()-.5)*fH*0.7,
-    vx:0, vy:0,
-    r: 4+Math.random()*4.5,
-    type: Math.floor(Math.random()*4),
-    label: ['Momentum','Earnings NLP','Signal Ranker','Alpha Factor','Quality Score','Regime HMM','Backtest','LLM Agent','Quant Researcher','Factor Attribution','Sharpe Calc','Risk Model','VaR Engine','Portfolio Opt','Alt Data','Sentiment','Volatility','Order Flow','Cross-Section','Walk-Forward','Publication','Network Effect','Collaboration','Co-Author','Peer Review','Replication','Alpha Decay','Half-Life','Transaction Cost','Turnover','Capacity','Skewness','Kurtosis','Tail Risk','Drawdown','Recovery'][i],
-  }));
-  fEdges = [];
-  for (let i=0;i<fNodes.length;i++) for (let j=i+1;j<fNodes.length;j++) {
-    if (Math.random()<0.12) fEdges.push([i,j]);
-  }
-}
-function stepForce() {
-  const k = 80, repK = 4000, damping = 0.88;
-  for (let i=0;i<fNodes.length;i++) {
-    if (i === fDrag) continue; // dragged node follows the pointer, not physics
-    let fx=0,fy=0;
-    // repulsion
-    for (let j=0;j<fNodes.length;j++) {
-      if(i===j)continue;
-      const dx=fNodes[i].x-fNodes[j].x, dy=fNodes[i].y-fNodes[j].y;
-      const d=Math.max(1,Math.hypot(dx,dy));
-      fx+=repK*dx/d/d; fy+=repK*dy/d/d;
-    }
-    // spring attraction on edges
-    fEdges.forEach(([a,b])=>{
-      if(a===i||b===i){
-        const other=a===i?b:a;
-        const dx=fNodes[i].x-fNodes[other].x, dy=fNodes[i].y-fNodes[other].y;
-        const d=Math.max(1,Math.hypot(dx,dy));
-        fx-=k*(d-100)*dx/d; fy-=k*(d-100)*dy/d;
-      }
-    });
-    // center gravity
-    fx += (fW/2-fNodes[i].x)*0.015;
-    fy += (fH/2-fNodes[i].y)*0.015;
-    fNodes[i].vx=(fNodes[i].vx+fx*0.001)*damping;
-    fNodes[i].vy=(fNodes[i].vy+fy*0.001)*damping;
-    fNodes[i].x+=fNodes[i].vx; fNodes[i].y+=fNodes[i].vy;
-    fNodes[i].x=Math.max(20,Math.min(fW-20,fNodes[i].x));
-    fNodes[i].y=Math.max(20,Math.min(fH-20,fNodes[i].y));
-  }
-}
-let fMouseX = -1, fMouseY = -1, fHoverNode = -1, fDrag = -1;
-fc.addEventListener('pointerdown', e => {
-  const rect = fc.getBoundingClientRect();
-  const x = e.clientX - rect.left, y = e.clientY - rect.top;
-  for (let i=0; i<fNodes.length; i++) {
-    if (Math.hypot(fNodes[i].x-x, fNodes[i].y-y) < 14) {
-      fDrag = i;
-      fc.setPointerCapture(e.pointerId);
-      e.preventDefault();
-      break;
-    }
-  }
-});
-fc.addEventListener('pointermove', e => {
-  const rect = fc.getBoundingClientRect();
-  fMouseX = e.clientX - rect.left;
-  fMouseY = e.clientY - rect.top;
-  if (fDrag >= 0) {
-    const n = fNodes[fDrag];
-    n.x = Math.max(20, Math.min(fW-20, fMouseX));
-    n.y = Math.max(20, Math.min(fH-20, fMouseY));
-    n.vx = n.vy = 0;
-    fHoverNode = fDrag;
-    return;
-  }
-  fHoverNode = -1;
-  for (let i=0; i<fNodes.length; i++) {
-    const d = Math.hypot(fNodes[i].x-fMouseX, fNodes[i].y-fMouseY);
-    if (d < 12) { fHoverNode = i; break; }
-  }
-});
-fc.addEventListener('pointerup', () => { fDrag = -1; });
-fc.addEventListener('pointercancel', () => { fDrag = -1; });
-fc.addEventListener('mouseleave', () => { fMouseX=-1; fMouseY=-1; fHoverNode=-1; });
-
-function drawForce() {
-  fctx.clearRect(0,0,fW,fH);
-  stepForce();
-  const ink = canvasInk();
-  const palette = nodePalette();
-
-  // Draw edges with hover highlighting
-  fEdges.forEach(([a,b])=>{
-    const na=fNodes[a],nb=fNodes[b];
-    const isHovered = fHoverNode === a || fHoverNode === b;
-    fctx.strokeStyle = isHovered ? `rgba(${ink},0.45)` : `rgba(${ink},0.16)`;
-    fctx.lineWidth = isHovered ? 1.5 : 0.9;
-    fctx.beginPath();fctx.moveTo(na.x,na.y);fctx.lineTo(nb.x,nb.y);fctx.stroke();
-  });
-
-  // Draw nodes with hover effects + label tooltip
-  fNodes.forEach((n,i)=>{
-    const c=palette[n.type];
-    const isHovered = fHoverNode === i;
-    const scale = isHovered ? 1.6 : 1;
-    const glowRadius = isHovered ? n.r*8 : n.r*4;
-
-    // Glow
-    const grad=fctx.createRadialGradient(n.x,n.y,n.r,n.x,n.y,glowRadius);
-    grad.addColorStop(0,c.replace(/[\d.]+\)$/,'0.20)'));
-    grad.addColorStop(1,'transparent');
-    fctx.beginPath();fctx.arc(n.x,n.y,glowRadius,0,Math.PI*2);
-    fctx.fillStyle=grad;fctx.fill();
-
-    // Node
-    fctx.beginPath();fctx.arc(n.x,n.y,n.r*scale,0,Math.PI*2);
-    fctx.fillStyle=c;fctx.fill();
-
-    // Highlight ring + label on hover
-    if (isHovered) {
-      fctx.strokeStyle = `rgba(${ink},0.6)`;
-      fctx.lineWidth = 1.5;
-      fctx.beginPath();fctx.arc(n.x,n.y,n.r*scale+2,0,Math.PI*2);
-      fctx.stroke();
-
-      // Tooltip label
-      const label = n.label;
-      const padding = 8;
-      fctx.font = '600 11px Inter, system-ui, sans-serif';
-      const tw = fctx.measureText(label).width;
-      const bx = Math.min(n.x - tw/2 - padding, fW - tw - padding*2 - 4);
-      const by = n.y - n.r*scale - 36;
-      const bxClamped = Math.max(4, bx);
-      const byClamped = Math.max(4, by);
-
-      // Tooltip background
-      fctx.fillStyle = isLight() ? 'rgba(255,255,255,0.95)' : 'rgba(9,13,21,0.92)';
-      fctx.beginPath();
-      fctx.roundRect(bxClamped, byClamped, tw + padding*2, 24, 4);
-      fctx.fill();
-
-      // Tooltip border
-      fctx.strokeStyle = `rgba(${ink},0.3)`;
-      fctx.lineWidth = 1;
-      fctx.beginPath();
-      fctx.roundRect(bxClamped, byClamped, tw + padding*2, 24, 4);
-      fctx.stroke();
-
-      // Tooltip text
-      fctx.fillStyle = c;
-      fctx.fillText(label, bxClamped + padding, byClamped + 16);
-    }
-  });
-}
-if (!reduced) {
-  initForce();
-
-  // Pause force graph when off-screen
-  let fActive = false;
-  let fAnimId;
-  function fLoop() {
-    if (!fActive) return;
-    drawForce();
-    fAnimId = requestAnimationFrame(fLoop);
-  }
-  const fObserver = new IntersectionObserver(entries => {
-    const vis = entries[0].isIntersecting;
-    if (vis && !fActive) { fActive = true; fLoop(); }
-    else if (!vis) { fActive = false; cancelAnimationFrame(fAnimId); }
-  }, {threshold: 0.05});
-  fObserver.observe(fc);
-
-  // reassigning canvas.width wipes the bitmap; if the loop is paused (off-screen)
-  // nothing would repaint it, leaving a blank panel until you scroll away and back.
-  addEventListener('resize', ()=>{ initForce(); if (!fActive) drawForce(); }, {passive:true});
-}
-
-/* ── TERMINAL ── */
-const termLines = [
-  {type:'cmd', text:'./launch-pipeline.sh --env=prod'},
-  {type:'out', text:'► Connecting to research cluster...'},
-  {type:'ok',  text:'✓ 124 nodes online'},
-  {type:'cmd', text:'python run_factors.py --universe=sp500'},
-  {type:'out', text:'► Loading 8,412 instruments...'},
-  {type:'out', text:'► Computing momentum factors (3m, 6m, 12m)...'},
-  {type:'ok',  text:'✓ Factor attribution complete in 1.2s'},
-  {type:'cmd', text:'backtest --strategy=momentum_quality --walk-forward'},
-  {type:'out', text:'► Running 5-year walk-forward validation...'},
-  {type:'out', text:'► Sharpe: 1.84 | Max DD: -4.2% | Calmar: 2.1'},
-  {type:'ok',  text:'✓ Publishing tearsheet to community...'},
-  {type:'cmd', text:'agents start --all'},
-  {type:'out', text:'► alpha-extractor-v3 [running]'},
-  {type:'out', text:'► regime-classifier    [training]'},
-  {type:'out', text:'► signal-ranker         [running]'},
-  {type:'ok',  text:'✓ All agents operational. Generating alpha.'},
-];
-const tl = document.getElementById('term-lines');
-let ti = 0;
-let termUserMode = false; // once the visitor types, the demo loop stops
-function typeTermLine() {
-  if (termUserMode) return;
-  if (ti >= termLines.length) { ti = 0; tl.innerHTML = ''; }
-  const line = termLines[ti++];
-  const el = document.createElement('div');
-  const classes = {cmd:'term-cmd',out:'term-out',ok:'term-ok'};
-  const prefixes = {cmd:'<span class="term-prompt">$ </span>',out:'  ',ok:'  '};
-  el.innerHTML = prefixes[line.type] + `<span class="${classes[line.type]}">${line.text}</span>`;
-  tl.appendChild(el);
-  tl.parentElement.scrollTop = tl.parentElement.scrollHeight;
-  setTimeout(typeTermLine, 600+Math.random()*800);
-}
-if (!reduced) setTimeout(typeTermLine, 1200);
-
-/* ── TERMINAL: VISITOR COMMANDS ── */
-const termBody = document.getElementById('terminal-body');
-const termInput = document.getElementById('term-input');
-const termHint = document.getElementById('term-hint');
-const TERM_CMDS = {
-  help: [
-    'available commands:',
-    '  agents      list active research agents',
-    '  backtest    run a demo walk-forward backtest',
-    '  factors     show factor attribution',
-    '  clear       clear the terminal',
-  ],
-  agents: [
-    '► alpha-extractor-v3   [running]',
-    '► regime-classifier    [training]',
-    '► earnings-nlp-agent   [idle]',
-    '► backtest-engine-5d   [running]',
-    '► signal-ranker        [running]',
-  ],
-  backtest: [
-    '► Running 5-year walk-forward validation...',
-    '► Sharpe: 1.84 | Max DD: -4.2% | Calmar: 2.1',
-    '✓ Tearsheet published to community',
-  ],
-  factors: [
-    '► momentum_3m +0.72 | earnings_rev +0.91 | quality +0.68',
-    '✓ Factor attribution complete in 1.2s',
-  ],
-};
-termBody.setAttribute('tabindex', '0');
-termBody.setAttribute('aria-label', "Interactive demo terminal. Type 'help' for commands.");
-termBody.style.cursor = 'text';
-termBody.addEventListener('keydown', e => {
-  if (e.metaKey || e.ctrlKey || e.altKey) return;
-  if (e.key.length === 1) {
-    termUserMode = true;
-    termHint.textContent = '';
-    termInput.textContent += e.key;
-  } else if (e.key === 'Backspace') {
-    termInput.textContent = termInput.textContent.slice(0, -1);
-  } else if (e.key === 'Enter') {
-    const cmd = termInput.textContent.trim().toLowerCase();
-    termInput.textContent = '';
-    if (!cmd) return;
-    const echo = document.createElement('div');
-    echo.innerHTML = '<span class="term-prompt">$ </span><span class="term-cmd"></span>';
-    echo.querySelector('.term-cmd').textContent = cmd;
-    tl.appendChild(echo);
-    if (cmd === 'clear') { tl.innerHTML = ''; termBody.scrollTop = 0; return; }
-    (TERM_CMDS[cmd] || [`command not found: ${cmd} — try 'help'`]).forEach(text => {
-      const d = document.createElement('div');
-      d.className = text.startsWith('✓') ? 'term-ok' : 'term-out';
-      d.textContent = '  ' + text;
-      tl.appendChild(d);
-    });
-    // the body is a fixed-height scroller — keep the newest output in view
-    termBody.scrollTop = termBody.scrollHeight;
-  } else return;
-  e.preventDefault();
-});
-
-/* ── EMAIL FORM ── */
-const signupForm = document.getElementById('signup-form');
-if (signupForm) {
-  signupForm.addEventListener('submit', e => {
-    e.preventDefault();
-    const input = signupForm.querySelector('.signup-input');
-    const btn = signupForm.querySelector('.signup-btn');
-    const email = input.value.trim();
-    if (!email) return;
-    // Show success state
-    btn.textContent = '✓ You\'re in!';
-    btn.style.background = 'var(--green)';
-    btn.style.color = '#04060B';
-    input.disabled = true;
-    btn.disabled = true;
-    // Show note update
-    const note = document.querySelector('.signup-note');
-    if (note) note.textContent = `We'll reach out to ${email} when we launch.`;
-  });
-}
 
 /* ── WORD-BY-WORD HEADING REVEAL ── */
 document.querySelectorAll('.section-h2').forEach(h => {
@@ -2718,150 +385,34 @@ if (magBtn && !reduced) {
   }, {passive:true});
 }
 
-/* ── SPARKLINE CROSSHAIR + TOOLTIP ── */
-function sparkHover(lineId, data, fmt) {
-  const line = document.getElementById(lineId);
-  const wrap = line.closest('.bb-chart-line');
-  const svg = line.ownerSVGElement;
-  const vline = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-  vline.setAttribute('y1', 0); vline.setAttribute('y2', 48);
-  vline.style.stroke = 'var(--text-2)';
-  vline.setAttribute('stroke-width', '0.75');
-  vline.style.opacity = 0;
-  svg.appendChild(vline);
-  const tip = document.createElement('div');
-  tip.className = 'spark-tip';
-  wrap.appendChild(tip);
-  wrap.addEventListener('mousemove', e => {
-    const r = wrap.getBoundingClientRect();
-    const frac = Math.max(0, Math.min(1, (e.clientX - r.left)/r.width));
-    const idx = Math.round(frac*(data.length-1));
-    const x = idx/(data.length-1)*200;
-    vline.setAttribute('x1', x); vline.setAttribute('x2', x);
-    vline.style.opacity = 1;
-    tip.textContent = fmt(data[idx]);
-    tip.style.left = (frac*100)+'%';
-    tip.style.opacity = 1;
-  }, {passive:true});
-  wrap.addEventListener('mouseleave', () => { vline.style.opacity = 0; tip.style.opacity = 0; });
-}
-sparkHover('spx-line', spxData, v => v.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ','));
-sparkHover('vix-line', vixData, v => v.toFixed(1));
-
-/* ── TICKER TAPE ── */
-const tapeTrack = document.getElementById('tape-track');
-if (tapeTrack) {
-  const tapeItem = t => `<span class="tape-item"><span class="tape-sym">${t.sym}</span><span class="tape-px">${t.price}</span><span class="tape-chg ${t.dir}">${t.chg}</span></span>`;
-  tapeTrack.innerHTML = [...tickers, ...tickers].map(tapeItem).join('');
-  if (!reduced) setInterval(() => {
-    // nudge one random symbol so the tape feels live
-    const items = tapeTrack.querySelectorAll('.tape-item');
-    const i = Math.floor(Math.random()*tickers.length);
-    const t = tickers[i];
-    const delta = (Math.random()-0.48)*0.4;
-    const chg = (parseFloat(t.chg) + delta);
-    t.chg = (chg>=0?'+':'')+chg.toFixed(1)+'%';
-    t.dir = chg>=0?'up':'down';
-    [items[i], items[i+tickers.length]].forEach(el => {
-      if (!el) return;
-      const c = el.querySelector('.tape-chg');
-      c.textContent = t.chg;
-      c.className = 'tape-chg '+t.dir;
-    });
-  }, 2600);
-}
-
-/* ── HUD + STATUS-BAR CLOCK ── */
-const hudClock = document.getElementById('hud-clock');
-const slClock = document.getElementById('sl-clock');
-{
-  const tickClock = () => {
-    const d = new Date();
-    const t = d.toISOString().slice(11,19);
-    const spx = spxData[spxData.length-1].toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',');
-    if (hudClock) hudClock.textContent = 'UTC ' + t + ' · SPX ' + spx;
-    if (slClock) slClock.innerHTML = 'UTC ' + t + ' · SPX <b>' + spx + '</b>';
-  };
-  tickClock();
-  setInterval(tickClock, 1000);
-}
-
-/* ── STATUS BAR: show between the hero and the footer (yields to both) ── */
-const statusline = document.getElementById('statusline');
-const slSection = document.getElementById('sl-section');
-if (statusline) {
-  let heroVis = true, footVis = false;
-  const apply = () => statusline.classList.toggle('show', !heroVis && !footVis);
-  const hs = document.getElementById('hero');
-  const ft = document.querySelector('footer');
-  if (hs) new IntersectionObserver(es => { heroVis = es[0].isIntersecting; apply(); }, {threshold:0}).observe(hs);
-  if (ft) new IntersectionObserver(es => { footVis = es[0].isIntersecting; apply(); }, {threshold:0}).observe(ft);
-}
-
-/* ── HERO METRIC FLICKER removed ── */
-
-/* ── THEME TOGGLE ── */
-document.getElementById('theme-toggle')?.addEventListener('click', () => {
-  const light = document.documentElement.classList.toggle('light');
-  localStorage.theme = light ? 'light' : 'dark';
-  if (reduced) drawGlobe(); // static canvases need one repaint in the new palette
-});
-
-/* ── PARALLAX ON SCROLL (merged into consolidated handler) ── */
+/* ── CARD POINTER GLOW ── */
 if (!reduced) {
-  const heroInner = document.querySelector('.hero-inner');
-  const origOnScroll = onScroll;
-  window.onScroll = function() {
-    origOnScroll();
-    if (heroInner) heroInner.style.transform = `translateY(${scrollY*0.15}px)`;
-  };
-  if (heroInner) heroInner.style.transform = 'translateY(0)';
-}
-
-/* ── COUNT-UP ANIMATION ── */
-function countUp(el, target) {
-  const dur = 1800;
-  const start = performance.now();
-  const fmt = n => n.toLocaleString();
-  function step(now) {
-    const t = Math.min((now - start) / dur, 1);
-    const ease = 1 - Math.pow(1 - t, 3);
-    el.textContent = fmt(Math.round(ease * target));
-    if (t < 1) requestAnimationFrame(step);
-  }
-  requestAnimationFrame(step);
-}
-const countObserver = new IntersectionObserver(es => es.forEach(e => {
-  if (!e.isIntersecting) return;
-  const el = e.target;
-  const target = +el.dataset.count;
-  if (target) countUp(el, target);
-  countObserver.unobserve(el);
-}), {threshold:0.5});
-document.querySelectorAll('[data-count]').forEach(el => countObserver.observe(el));
-
-/* ── 3D TILT ON CARDS ── */
-if (!reduced) {
-  document.querySelectorAll('.bento-card, .hs-card').forEach(card => {
+  document.querySelectorAll('.bento-card,.project-card').forEach(card => {
     card.addEventListener('mousemove', e => {
       const r = card.getBoundingClientRect();
-      const x = (e.clientX - r.left) / r.width;
-      const y = (e.clientY - r.top) / r.height;
-      const tiltX = (y - 0.5) * -8;
-      const tiltY = (x - 0.5) * 8;
-      card.style.transform = `perspective(600px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) translateY(-4px)`;
       card.style.setProperty('--mx', e.clientX - r.left + 'px');
       card.style.setProperty('--my', e.clientY - r.top + 'px');
     }, {passive:true});
-    card.addEventListener('mouseleave', () => {
-      card.style.transform = '';
-    });
   });
 }
 
-/* ── HERO: clip-reveal is CSS-driven; disable it under reduced-motion ── */
-if (reduced) {
-  document.querySelectorAll('.hero-h1 .hl-in').forEach(el => { el.style.animation = 'none'; el.style.transform = 'none'; });
+/* ── EMAIL FORM ── */
+const signupForm = document.getElementById('signup-form');
+if (signupForm) {
+  signupForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const input = signupForm.querySelector('.signup-input');
+    const btn = signupForm.querySelector('.signup-btn');
+    const email = input.value.trim();
+    if (!email) return;
+    btn.textContent = '✓ Subscribed';
+    btn.style.background = 'var(--green)';
+    btn.style.color = '#04060B';
+    input.disabled = true;
+    btn.disabled = true;
+    const note = document.querySelector('.signup-note');
+    if (note) note.textContent = `We'll send updates to ${email}.`;
+  });
 }
 
 /* ── HERO: cursor-reactive light + constellation particle field ── */
@@ -2935,12 +486,11 @@ if (reduced) {
   function stop(){ running = false; if (raf) cancelAnimationFrame(raf); }
 
   resize();
-  addEventListener('resize', () => { resize(); if (reduced) { /* draw one static frame */ } }, { passive: true });
+  addEventListener('resize', resize, { passive: true });
   hero.addEventListener('pointermove', e => { const r = hero.getBoundingClientRect(); mouse.x = e.clientX - r.left; mouse.y = e.clientY - r.top; }, { passive: true });
   hero.addEventListener('pointerleave', () => { mouse.x = mouse.y = -9999; });
 
   if (reduced) { // one static frame, no animation loop
-    ctx.clearRect(0,0,W,H);
     const dot = isLight() ? '15,23,42' : '150,180,255';
     for (const n of nodes) { ctx.fillStyle = `rgba(${dot},0.4)`; ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI*2); ctx.fill(); }
   } else {
@@ -2950,45 +500,10 @@ if (reduced) {
   }
 })();
 
-/* ── FADE-IN-UP OBSERVER ── */
-const fadeObserver = new IntersectionObserver(es => es.forEach(e => {
-  if (e.isIntersecting) { e.target.classList.add('in'); fadeObserver.unobserve(e.target); }
-}), {threshold:0, rootMargin:'0px 0px -40px 0px'});
-document.querySelectorAll('.fade-in-up,.fade-in').forEach(el => fadeObserver.observe(el));
-
-/* ── SECTION SCROLL DOTS ── */
-const sections = ['hero','dashboard','research','network','terminal','join'];
-const dots = document.querySelectorAll('.sd-dot');
-const dotsContainer = document.getElementById('section-dots');
-const sectionObserver = new IntersectionObserver(es => {
-  es.forEach(e => {
-    if (e.isIntersecting) {
-      const idx = sections.indexOf(e.target.id);
-      if (idx >= 0) {
-        dots.forEach((d,i) => d.classList.toggle('active', i === idx));
-        if (slSection) slSection.textContent = dots[idx]?.dataset.label || '';
-      }
-    }
-  });
-}, {threshold:0.3});
-sections.forEach(id => {
-  const el = document.getElementById(id) || document.querySelector(`.${id}`);
-  if (el) sectionObserver.observe(el);
-});
-dots.forEach(d => d.addEventListener('click', () => {
-  const t = document.getElementById(d.dataset.target);
-  if (t) t.scrollIntoView({behavior:'smooth'});
-}));
-setTimeout(() => {
-  if (scrollY > innerHeight * 0.5) dotsContainer.classList.add('visible');
-}, 2000);
-const dotsVisibilityObserver = new IntersectionObserver(es => {
-  es.forEach(e => {
-    dotsContainer.classList.toggle('visible', !e.isIntersecting);
-  });
-}, {threshold:0});
-const heroSection = document.getElementById('hero') || document.querySelector('.hero');
-if (heroSection) dotsVisibilityObserver.observe(heroSection);
+/* ── HERO: clip-reveal is CSS-driven; disable it under reduced-motion ── */
+if (reduced) {
+  document.querySelectorAll('.hero-h1 .hl-in').forEach(el => { el.style.animation = 'none'; el.style.transform = 'none'; });
+}
 </script>
 </body>
 </html>
