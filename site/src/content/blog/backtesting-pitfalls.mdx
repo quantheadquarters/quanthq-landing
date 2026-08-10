@@ -7,22 +7,47 @@ description: "Lookahead bias, survivorship, cost models, overfitting, and regime
 readingTime: "9 min read"
 ---
 
+## Introduction
+
+Backtesting is the foundation of quantitative strategy development, but it's also where most quant research goes wrong. Here are the five most common pitfalls that inflate your Sharpe ratio and how to avoid them.
+
 ## 1. Lookahead bias
 
-Using data that wasn't available at decision time. Point-in-time databases are non-negotiable.
+Using data that wasn't available at decision time is the most common backtesting error. Point-in-time databases are non-negotiable for reliable backtesting.
+
+**How to catch it:** Offset your signal data by at least one trading day and verify results still hold.
 
 ## 2. Survivorship bias
 
-Backtesting on today's index constituents overstates returns by 1–2% annually.
+Backtesting on today's index constituents overstates returns by 1–2% annually. Delisted and acquired companies are systematically excluded from your historical universe.
+
+**How to catch it:** Use historical index composition rather than current constituents.
 
 ## 3. Unrealistic cost models
 
-Flat cost-per-trade assumptions break down for anything beyond small size. Model spread, impact, and borrow.
+Flat cost-per-trade assumptions break down for anything beyond small size. Model spread, impact, and borrow based on order size and market conditions.
+
+**How to catch it:** Implement tiered cost models and test sensitivity across realistic trading ranges.
 
 ## 4. Overfitting
 
-If you tested 100 variants and report the best one, your Sharpe is a statistic of the maximum, not the strategy. Use deflated Sharpe ratios.
+If you tested 100 variants and report the best one, your Sharpe is a statistic of the maximum, not the strategy. Use deflated Sharpe ratios to account for multiple testing.
+
+**How to catch it:** Use out-of-sample validation and report performance on holdout periods.
 
 ## 5. Regime blindness
 
 A strategy validated in one volatility regime often dies in the next. Walk-forward across regime boundaries or don't ship it.
+
+**How to catch it:** Test your strategy across different market regimes (high volatility, low volatility, trending, range-bound).
+
+## Related Reading
+
+- [Earnings Revision Momentum Decay in the Post-2023 Regime](/research/earnings-revision-momentum-decay/) — discusses regime-aware backtesting
+- [Yield Curve Inversion as a Regime Classifier for Equity Factor Rotation](/research/yield-curve-regime-classifier/) — regime detection methodology
+- [LLM-Extracted Earnings Sentiment as an Alpha Factor](/research/llm-earnings-sentiment-alpha/) — out-of-sample validation
+
+## Further Reading
+
+- [Deflated Sharpe Ratios: How to Account for Multiple Testing](/blog/deflated-sharpe-ratios/) — methodology for correcting selection bias
+- Our related methodology articles on walk-forward validation and transaction-cost modelling are coming soon.

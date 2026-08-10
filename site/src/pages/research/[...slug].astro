@@ -1,6 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import { getCollection, render } from 'astro:content';
+import JsonLd from '../../components/JsonLd.astro';
 
 export async function getStaticPaths() {
   const papers = await getCollection('research');
@@ -8,17 +9,73 @@ export async function getStaticPaths() {
 }
 const { paper } = Astro.props;
 const { Content } = await render(paper);
+const canonicalUrl = new URL(`/research/${paper.id}/`, Astro.site ?? 'https://quanthq.in').href;
 const bibtex = `@article{quanthq${paper.data.date.getFullYear()}${paper.id.split('-')[0]},
   title={${paper.data.title}},
   author={${paper.data.authors.join(' and ')}},
   year={${paper.data.date.getFullYear()}}${paper.data.doi ? `,\n  doi={${paper.data.doi}}` : ''}
 }`;
+
+const articleSchema = {
+  "@context": "https://schema.org",
+  "@type": "ScholarlyArticle",
+  "@id": canonicalUrl,
+  "headline": paper.data.title,
+  "description": paper.data.abstract,
+  "datePublished": paper.data.date.toISOString(),
+  "dateModified": paper.data.date.toISOString(),
+  "author": paper.data.authors.map(author => ({
+    "@type": "Person",
+    "name": author
+  })),
+  "publisher": {
+    "@type": "Organization",
+    "name": "QuantHQ",
+    "url": "https://quanthq.in/"
+  },
+  "url": canonicalUrl,
+  "mainEntityOfPage": canonicalUrl,
+  ...(paper.data.codeRepository && { "codeRepository": paper.data.codeRepository })
+};
+
+const breadcrumbSchema = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Home",
+      "item": "https://quanthq.in/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Research",
+      "item": "https://quanthq.in/research/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": paper.data.title,
+      "item": canonicalUrl
+    }
+  ]
+};
 ---
 <Base title={`${paper.data.title} — QuantHQ Research`} description={paper.data.abstract.slice(0, 155)}>
+  <JsonLd data={articleSchema} />
+  <JsonLd data={breadcrumbSchema} />
   <article class="px-8 pt-20 pb-10">
     <div class="max-w-3xl mx-auto">
-      <a href="/research/" class="text-[12px] text-[var(--text-3)] hover:text-[var(--text-1)] transition-colors">← All research</a>
-      <div class="mt-8 flex flex-wrap gap-2">
+      <nav class="flex items-center gap-2 text-[12px] text-[var(--text-3)] mb-6" aria-label="Breadcrumb">
+        <a href="/" class="hover:text-[var(--text-1)] transition-colors">Home</a>
+        <span class="text-[var(--border)]">/</span>
+        <a href="/research/" class="hover:text-[var(--text-1)] transition-colors">Research</a>
+        <span class="text-[var(--border)]">/</span>
+        <span class="text-[var(--text-2)] truncate max-w-[200px]">{paper.data.title}</span>
+      </nav>
+      <div class="flex flex-wrap gap-2">
         {paper.data.tags.map((t) => (
           <span class="text-[9px] uppercase tracking-[0.2em] px-2.5 py-1 rounded-full border border-accent-20 text-[var(--accent)] font-semibold">{t}</span>
         ))}

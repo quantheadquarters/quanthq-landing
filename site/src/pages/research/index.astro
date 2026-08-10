@@ -1,6 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import { getCollection } from 'astro:content';
+import JsonLd from '../../components/JsonLd.astro';
 const papers = (await getCollection('research')).sort((a, b) => +b.data.date - +a.data.date);
 const featured = papers.find((p) => p.data.featured);
 const rest = papers.filter((p) => p !== featured);
@@ -12,13 +13,25 @@ const searchIndex = papers.map((p) => ({
   authors: p.data.authors.join(' '),
   tags: p.data.tags,
 }));
+
+const itemListSchema = {
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  "itemListElement": papers.map((paper, index) => ({
+    "@type": "ListItem",
+    "position": index + 1,
+    "name": paper.data.title,
+    "url": `https://quanthq.in/research/${paper.id}/`
+  }))
+};
 ---
-<Base title="Research — QuantHQ">
+<Base title="Quantitative Finance Research Papers | QuantHQ" description="Read QuantHQ research papers, preprints, and technical reports on factor investing, financial AI, NLP, macro regimes, and systematic strategies.">
+  <JsonLd data={itemListSchema} />
   <section class="px-8 pt-20 pb-8">
     <div class="max-w-[var(--shell)] mx-auto">
       <div class="section-label mb-6">Scientific Archive</div>
       <h1 class="text-[clamp(56px,9vw,120px)] display-title leading-none">Research</h1>
-      <p class="mt-5 text-[var(--text-2)] max-w-md">Peer-reviewed work. Preprints. Technical reports.</p>
+      <p class="mt-5 text-[var(--text-2)] max-w-md">Peer-reviewed work. Preprints. Technical reports. Explore our research on factor investing, financial AI, NLP, macro regimes, and systematic trading strategies.</p>
 
       <input
         id="paper-search"

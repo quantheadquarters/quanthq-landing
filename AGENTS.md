@@ -11,6 +11,7 @@ All npm commands run from `site/`, not the repo root.
 - `npm run build` — production build → `site/dist/`
 - `npm run preview` — preview production build
 - No tests, no lint, no typecheck. **`npm run build` is the only correctness gate** — run it before calling any change done.
+- `site/package-lock.json` is gitignored — CI runs `npm ci` fresh (lockfile not committed)
 
 ## Architecture
 - `site/src/pages/index.astro` (~2950 lines) — homepage is **standalone**: own layout, CSS, JS, nav, footer. Does NOT use Base.astro.

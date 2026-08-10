@@ -1,0 +1,195 @@
+---
+title: "Regime Detection for Factor Rotation: A Practical Guide"
+author: "QuantHQ Team"
+date: 2026-07-08
+category: "Quantitative Finance"
+description: "Market regimes change, and so should your factor exposures. Learn practical techniques for regime detection and how to apply them to systematic factor rotation strategies."
+readingTime: "12 min read"
+---
+
+## Introduction
+
+Factor strategies that perform well in one market regime often fail in another. Momentum dominates in trending markets, while value shines in mean-reverting environments. Regime-aware factor rotation can dramatically improve risk-adjusted returns.
+
+## What Are Market Regimes?
+
+Market regimes are persistent states characterized by distinct statistical properties:
+- **Volatility regimes:** High vs low volatility
+- **Trend regimes:** Trending vs range-bound
+- **Macro regimes:** Growth vs recession, inflationary vs deflationary
+- **Liquidity regimes:** Abundant vs constrained liquidity
+
+## Regime Detection Methods
+
+### 1. Statistical Methods
+
+**Hidden Markov Models (HMM)**
+- Model the market as a finite state machine
+- States transition with estimated probabilities
+- Emissions are observable market variables
+
+**Advantages:** Handles uncertainty, estimates transition probabilities
+**Disadvantages:** Requires tuning, sensitive to initialization
+
+**Example:** Use yield curve shape (2-year vs 10-year rates) as emission to classify inversion vs normalization regimes.
+
+### 2. Economic Indicators
+
+**Leading Indicators:**
+- Yield curve spread
+- Credit spreads
+- PMI readings
+- Housing starts
+
+**Coincident Indicators:**
+- GDP growth
+- Industrial production
+- Retail sales
+
+**Lagging Indicators:**
+- Unemployment rate
+- CPI inflation
+- Corporate earnings
+
+### 3. Market-Based Signals
+
+**Volatility-Based:**
+- VIX levels and changes
+- Realized volatility
+- Cross-sectional dispersion
+
+**Trend-Based:**
+- Moving average cross-overs
+- Trend strength metrics
+- Market breadth
+
+**Correlation-Based:**
+- Asset class correlations
+- Factor correlations
+- Cross-asset dispersion
+
+## Factor Rotation Framework
+
+### Step 1: Define Factor Universe
+
+Common factors:
+- **Value:** Book-to-market, earnings yield
+- **Momentum:** Price momentum, earnings revision
+- **Quality:** Profitability, debt ratios
+- **Low Volatility:** Beta, idiosyncratic risk
+- **Size:** Market cap, liquidity
+
+### Step 2: Identify Regime-Specific Factor Performance
+
+For each regime, determine which factors historically outperformed:
+
+| Regime | Dominant Factors | Underperforming Factors |
+|--------|------------------|------------------------|
+| High Volatility | Quality, Low Volatility | Value, Momentum |
+| Low Volatility | Momentum, Value | Low Volatility |
+| Inversion | Momentum, Quality | Value |
+| Normalization | Value, Low Volatility | Momentum |
+
+### Step 3: Construct Regime-Conditioned Portfolio
+
+1. Detect current regime
+2. Allocate to dominant factors for that regime
+3. Hedge or reduce exposure to underperforming factors
+4. Rebalance on regime change (monthly/quarterly)
+
+## Practical Implementation
+
+### Hidden Markov Model for Yield Curve Regimes
+
+```python
+from hmmlearn import hmm
+import numpy as np
+
+# Prepare data: yield curve spread (10-year - 2-year)
+spread = ten_year - two_year
+
+# Fit HMM with 2 states
+model = hmm.GaussianHMM(n_components=2, covariance_type="diag")
+model.fit(spread.reshape(-1, 1))
+
+# Predict regime
+regime = model.predict(spread[-1].reshape(1, -1))[0]
+```
+
+### Simple Threshold-Based Regime Classification
+
+```python
+def classify_regime(yield_curve_spread):
+    """Classify regime based on yield curve spread."""
+    if yield_curve_spread < 0:
+        return "inversion"
+    elif yield_curve_spread < 50:  # bps
+        return "flat"
+    else:
+        return "normalization"
+```
+
+### Factor Rotation Logic
+
+```python
+def factor_rotation(regime):
+    """Return factor weights based on regime."""
+    if regime == "inversion":
+        return {"momentum": 0.4, "quality": 0.4, "value": 0.1, "low_vol": 0.1}
+    elif regime == "normalization":
+        return {"momentum": 0.1, "quality": 0.2, "value": 0.4, "low_vol": 0.3}
+    else:
+        return {"momentum": 0.25, "quality": 0.25, "value": 0.25, "low_vol": 0.25}
+```
+
+## Evaluation and Validation
+
+### Backtesting Considerations
+
+- **Walk-forward validation:** Train regime model on historical data, test on forward period
+- **Regime lag:** Regime detection has lag; account for signal delay
+- **Transaction costs:** Frequent rebalancing increases costs
+- **Regime stability:** Evaluate how often regimes change
+
+### Performance Metrics
+
+- **Sharpe ratio:** Risk-adjusted returns
+- **Regime-specific returns:** Performance in each regime
+- **Drawdown:** Maximum drawdown during regime transitions
+- **Turnover:** Trading frequency and costs
+
+## Common Pitfalls
+
+### Overfitting Regime Definitions
+
+Too many regimes = overfitting. Start with 2-3 regimes:
+- Volatility regimes (high/low)
+- Trend regimes (trending/range)
+- Macro regimes (expansion/recession)
+
+### Ignoring Transition Costs
+
+Regime changes often coincide with market stress:
+- Higher transaction costs during transitions
+- Wider bid-ask spreads
+- Reduced liquidity
+
+### Look-Ahead Bias
+
+Ensure regime detection doesn't use future information:
+- Use only data available at decision time
+- Point-in-time data for economic indicators
+- Realistic signal delays
+
+## Related Reading
+
+- [Yield Curve Inversion as a Regime Classifier for Equity Factor Rotation](/research/yield-curve-regime-classifier/) — HMM-based regime detection with factor rotation
+- [Earnings Revision Momentum Decay in the Post-2023 Regime](/research/earnings-revision-momentum-decay/) — regime-aware factor implementation
+- [Five Backtesting Pitfalls That Fake Your Sharpe](/blog/backtesting-pitfalls/) — validation methodology
+
+## Further Reading
+
+Upcoming articles will cover:
+- Multivariate regime detection
+- Dynamic factor models
+- Regime-aware risk management

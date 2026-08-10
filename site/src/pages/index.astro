@@ -1,25 +1,37 @@
 ---
 import { getCollection } from 'astro:content';
 import CommandPalette from '../components/CommandPalette.astro';
+import JsonLd from '../components/JsonLd.astro';
 const research = (await getCollection('research'))
   .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
   .slice(0, 3);
+const canonicalUrl = new URL(Astro.url.pathname, Astro.site ?? 'https://quanthq.in').href;
+
+const organizationSchema = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "@id": "https://quanthq.in/#organization",
+  "name": "QuantHQ",
+  "url": "https://quanthq.in/",
+  "logo": "https://quanthq.in/logo.jpeg",
+  "sameAs": [
+    "https://linkedin.com/company/quanthq",
+    "https://github.com/quanthq",
+    "https://discord.gg/quanthq"
+  ]
+};
 ---
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>QuantHQ — AI Research Institution for Quantitative Finance</title>
-<link rel="icon" id="favicon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 34'%3E%3Crect x='3' y='3' width='22' height='22' rx='3' fill='none' stroke='white' stroke-width='2.2'/%3E%3Ctext x='7.5' y='19.5' font-family='sans-serif' font-weight='800' font-size='10.5' fill='white'%3EHQ%3C/text%3E%3Crect x='22' y='22' width='9' height='9' rx='2' fill='white'/%3E%3C/svg%3E">
-<script>
-const FAVICON_DARK="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 34'%3E%3Crect x='3' y='3' width='22' height='22' rx='3' fill='none' stroke='white' stroke-width='2.2'/%3E%3Ctext x='7.5' y='19.5' font-family='sans-serif' font-weight='800' font-size='10.5' fill='white'%3EHQ%3C/text%3E%3Crect x='22' y='22' width='9' height='9' rx='2' fill='white'/%3E%3C/svg%3E";
-const FAVICON_LIGHT="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 34'%3E%3Crect x='3' y='3' width='22' height='22' rx='3' fill='none' stroke='black' stroke-width='2.2'/%3E%3Ctext x='7.5' y='19.5' font-family='sans-serif' font-weight='800' font-size='10.5' fill='black'%3EHQ%3C/text%3E%3Crect x='22' y='22' width='9' height='9' rx='2' fill='black'/%3E%3C/svg%3E";
-if(localStorage.theme==='light'){document.documentElement.classList.add('light');document.getElementById('favicon').href=FAVICON_LIGHT}
-</script>
-<meta name="description" content="QuantHQ is a digital research institution. Where quant researchers, engineers, mathematicians, and AI scientists build the future of quantitative finance.">
-<meta property="og:title" content="QuantHQ — AI Research Institution for Quantitative Finance">
-<meta property="og:description" content="A living research ecosystem for quant researchers, engineers, mathematicians, and AI scientists building the future of quantitative finance.">
+<title>QuantHQ | Quantitative Finance & Financial AI Research</title>
+<link rel="icon" type="image/png" sizes="96x96" href="/favicon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<meta name="description" content="QuantHQ is an open research institution for quantitative finance and financial AI. Explore reproducible factor research, backtesting methods, and open-source tools.">
+<meta property="og:title" content="QuantHQ | Quantitative Finance & Financial AI Research">
+<meta property="og:description" content="QuantHQ is an open research institution for quantitative finance and financial AI. Explore reproducible factor research, backtesting methods, and open-source tools.">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
 <meta property="og:url" content="https://quanthq.in/">
@@ -27,8 +39,10 @@ if(localStorage.theme==='light'){document.documentElement.classList.add('light')
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:image" content="https://quanthq.in/og.png">
-<meta name="twitter:title" content="QuantHQ — AI Research Institution">
-<meta name="twitter:description" content="A living research ecosystem for quant researchers, engineers, and AI scientists.">
+<meta name="twitter:title" content="QuantHQ | Quantitative Finance & Financial AI Research">
+<meta name="twitter:description" content="QuantHQ is an open research institution for quantitative finance and financial AI. Explore reproducible factor research, backtesting methods, and open-source tools.">
+<link rel="canonical" href={canonicalUrl} />
+<JsonLd data={organizationSchema} />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
@@ -531,6 +545,12 @@ html.light .hero-floor{opacity:0.25}
 .hero-h1 .hl:nth-child(4) .hl-in{animation-delay:0.71s}
 .hero-h1 .muted{color:var(--text-3)}
 .hero-h1 em{font-style:italic}
+.hero-description{
+  font-size:17px;color:var(--text-2);
+  line-height:1.6;max-width:600px;
+  margin:24px auto 0;opacity:0;
+  animation:heroFadeUp 0.8s var(--ease-out) 1.2s both;
+}
 @keyframes heroLineUp{
   from{transform:translateY(110%)}
   to{transform:translateY(0)}
@@ -605,7 +625,7 @@ html.light .hero-floor{opacity:0.25}
 }
 .btn-ghost:active{transform:scale(0.96)}
 .hero-metrics{
-  margin-top:64px;display:flex;gap:48px;justify-content:center;
+  margin-top:48px;display:flex;gap:48px;justify-content:center;
   opacity:0;animation:heroFadeUp 0.8s var(--ease-out) 1.5s both;
 }
 .hero-metric .n{
@@ -649,6 +669,9 @@ html.light .hero-floor{opacity:0.25}
 .section-sub{
   font-size:16px;color:var(--text-2);
   line-height:1.7;max-width:65ch;
+}
+.section-head{
+  margin-bottom:32px;
 }
 /* centred variant — replaces the per-section inline text-align/margin patches */
 .section-head.center{text-align:center}
@@ -880,6 +903,8 @@ html.light .hm-cell{animation:none}
   border:1px solid var(--border);
   border-radius:10px;padding:28px;
   transition:border-color 0.3s,transform 0.3s;
+  text-decoration:none;
+  color:inherit;
 }
 .hs-foot{
   margin-top:auto;padding-top:18px;
@@ -893,6 +918,7 @@ html.light .hm-cell{animation:none}
 .hs-card:hover{
   border-color:var(--border-hover);
   transform:translateY(-4px);
+  text-decoration:none;
 }
 .hs-num{
   font-size:10px;letter-spacing:0.2em;
@@ -1197,7 +1223,7 @@ footer{
 .research-strip-grid{
   display:grid;grid-template-columns:repeat(3,1fr);gap:1px;
   background:var(--border);border:1px solid var(--border);border-radius:8px;overflow:hidden;
-  margin-top:48px;
+  margin-top:32px;
 }
 .research-strip-item{
   background:var(--carbon);padding:28px;
@@ -1476,6 +1502,7 @@ html body,html nav,html footer,.bento-card,.bb-cell,.stat-cell,.hs-card,.termina
   </div>
 </nav>
 
+<header>
 <!-- CINEMATIC OVERLAYS -->
 <div class="vignette" aria-hidden="true"></div>
 <div class="grain" aria-hidden="true"></div>
@@ -1484,7 +1511,9 @@ html body,html nav,html footer,.bento-card,.bb-cell,.stat-cell,.hs-card,.termina
 <div class="tape" aria-hidden="true">
   <div class="tape-track" id="tape-track"></div>
 </div>
+</header>
 
+<main id="main-content">
 <!-- HERO -->
 <section class="hero" id="hero">
   <canvas class="hero-canvas" id="hero-canvas" aria-hidden="true"></canvas>
@@ -1507,33 +1536,39 @@ html body,html nav,html footer,.bento-card,.bb-cell,.stat-cell,.hs-card,.termina
       <span class="hl"><span class="hl-in">for the</span></span>
       <span class="hl"><span class="hl-in grad-text"><em>obsessed</em></span></span>
     </h1>
+    <p class="hero-description rv">QuantHQ is an open research institution for quantitative finance, financial AI, and systematic investing.</p>
     <div class="hero-ctas">
       <a href="#join" class="btn-primary">Join Us →</a>
       <a href="/research/" class="btn-ghost">View Research</a>
     </div>
     <div class="hero-metrics">
       <div class="hero-metric">
-        <div class="n" data-count="124">0</div>
-        <div class="l">Research Nodes</div>
+        <div class="n" data-count="3">0</div>
+        <div class="l">Research Papers</div>
       </div>
       <div class="hero-metric">
-        <div class="n" data-count="582">0</div>
-        <div class="l">Published Findings</div>
+        <div class="n" data-count="4">0</div>
+        <div class="l">Blog Posts</div>
       </div>
       <div class="hero-metric">
-        <div class="n" data-count="43">0</div>
-        <div class="l">Experiments Live</div>
+        <div class="n" data-count="4">0</div>
+        <div class="l">Open-Source Projects</div>
       </div>
     </div>
   </div>
 </section>
+<noscript>
+  <div class="fixed inset-0 bg-[var(--bg)] flex items-center justify-center z-50">
+    <p class="text-[var(--text-3)]">This site requires JavaScript for the best experience</p>
+  </div>
+</noscript>
 
 <!-- LATEST RESEARCH -->
 <section class="research-strip">
   <div class="research-strip-inner">
-    <div class="rv2">
+    <div class="rv2 section-head">
       <div class="section-label">Latest Research</div>
-      <div class="section-h2">From the<br>institution.</div>
+      <h2 class="section-h2">From the<br>institution.</h2>
     </div>
     <div class="research-strip-grid rv2" data-d="1">
       {research.map(paper => (
@@ -1552,9 +1587,9 @@ html body,html nav,html footer,.bento-card,.bb-cell,.stat-cell,.hs-card,.termina
 <!-- DASHBOARD / BLOOMBERG TERMINAL -->
 <section class="dashboard-section" id="dashboard">
   <div class="ds-inner">
-    <div class="ds-header rv2">
+    <div class="ds-header rv2 section-head">
       <div class="section-label">Intelligence Layer</div>
-      <div class="section-h2">Bloomberg-grade<br>signal intelligence.</div>
+      <h2 class="section-h2">Bloomberg-grade<br>signal intelligence.</h2>
       <div class="section-sub fade-in-up">Live quant dashboard. Every number moves. Every signal computed in real time.</div>
     </div>
     <div class="bloomberg-grid rv2" data-d="1">
@@ -1604,9 +1639,9 @@ html body,html nav,html footer,.bento-card,.bb-cell,.stat-cell,.hs-card,.termina
 <!-- BENTO RESEARCH ECOSYSTEM -->
 <section class="bento-section" id="research">
   <div class="bento-inner">
-    <div class="rv2">
+    <div class="rv2 section-head">
       <div class="section-label">Research Ecosystem</div>
-      <div class="section-h2">Every surface.<br>Alive.</div>
+      <h2 class="section-h2">Every surface.<br>Alive.</h2>
       <div class="section-sub fade-in-up">From factor research to live deployment. Every tool a quant needs, in one place.</div>
     </div>
     <div class="bento-grid">
@@ -1682,9 +1717,9 @@ html body,html nav,html footer,.bento-card,.bb-cell,.stat-cell,.hs-card,.termina
 <!-- RESEARCH PAPERS -->
 <!-- HORIZONTAL SCROLL — PROJECTS -->
 <section class="hscroll-section">
-  <div class="hscroll-label rv2">
+  <div class="hscroll-label rv2 section-head">
     <div class="section-label">Active Projects</div>
-    <div class="section-h2">What we're<br>building.</div>
+    <h2 class="section-h2">What we're<br>building.</h2>
     <div class="section-sub fade-in-up">Open-source tools, research frameworks, and production infrastructure.</div>
   </div>
   <div class="hscroll-track-wrap">
@@ -1697,10 +1732,13 @@ html body,html nav,html footer,.bento-card,.bb-cell,.stat-cell,.hs-card,.termina
   <div class="world-inner">
     <div class="rv2 section-head center">
       <div class="section-label">Global Network</div>
-      <div class="section-h2">Everywhere<br>intelligence lives.</div>
+      <h2 class="section-h2">Everywhere<br>intelligence lives.</h2>
     </div>
     <div class="world-map-wrap rv2" data-d="1">
       <canvas id="world-canvas" width="880" height="600" aria-label="Interactive globe showing QuantHQ global research network nodes" role="img"></canvas>
+      <noscript>
+        <p class="text-center text-[var(--text-3)] py-8">Interactive globe requires JavaScript. QuantHQ has research nodes across North America, Europe, and Asia.</p>
+      </noscript>
     </div>
   </div>
 </section>
@@ -1708,9 +1746,9 @@ html body,html nav,html footer,.bento-card,.bb-cell,.stat-cell,.hs-card,.termina
 <!-- FORCE GRAPH -->
 <section class="graph-section">
   <div class="graph-inner">
-    <div class="rv2">
+    <div class="rv2 section-head">
       <div class="section-label">Knowledge Network</div>
-      <div class="section-h2">A living neural<br>network of ideas.</div>
+      <h2 class="section-h2">A living neural<br>network of ideas.</h2>
     </div>
     <div class="graph-legend rv2" data-d="1" aria-hidden="true">
       <span class="gl-item"><i style="background:var(--blue)"></i>Research</span>
@@ -1720,15 +1758,18 @@ html body,html nav,html footer,.bento-card,.bb-cell,.stat-cell,.hs-card,.termina
       <span class="gl-hint">Drag a node to explore</span>
     </div>
     <canvas id="force-canvas" aria-label="Interactive force-directed knowledge graph" role="img"></canvas>
+    <noscript>
+      <p class="text-center text-[var(--text-3)] py-8">Interactive knowledge graph requires JavaScript. QuantHQ connects research papers, agents, and signals in a living neural network of ideas.</p>
+    </noscript>
   </div>
 </section>
 
 <!-- TERMINAL -->
 <section class="terminal-section" id="terminal">
   <div class="terminal-inner">
-    <div class="rv2">
+    <div class="rv2 section-head">
       <div class="section-label">Research Pipeline</div>
-      <div class="section-h2">Everything runs<br>here.</div>
+      <h2 class="section-h2">Everything runs<br>here.</h2>
       <div class="section-sub fade-in-up">Full research pipeline from data ingestion to factor deployment. Every step reproducible.</div>
     </div>
     <div class="terminal-window rv2" data-d="1">
@@ -1754,7 +1795,7 @@ html body,html nav,html footer,.bento-card,.bb-cell,.stat-cell,.hs-card,.termina
   <div class="stats-inner">
     <div class="rv2 section-head center">
       <div class="section-label">Research Metrics</div>
-      <div class="section-h2">Numbers that<br>never sleep.</div>
+      <h2 class="section-h2">Numbers that<br>never sleep.</h2>
       <div class="section-sub fade-in-up">Real-time metrics from our global research network. Every number is computed live.</div>
     </div>
     <div class="stats-grid rv2" data-d="1">
@@ -1766,9 +1807,9 @@ html body,html nav,html footer,.bento-card,.bb-cell,.stat-cell,.hs-card,.termina
       </div>
       <div class="stat-cell">
         <div class="stat-live"><div class="stat-live-dot"></div>Live</div>
-        <div class="stat-num"><span data-count="582">0</span></div>
-        <div class="stat-label">Published Findings</div>
-        <div class="stat-sub">Peer-reviewed papers, tearsheets, and factor reports</div>
+        <div class="stat-num"><span data-count="3">0</span></div>
+        <div class="stat-label">Research Papers</div>
+        <div class="stat-sub">Peer-reviewed papers, preprints, and technical reports</div>
       </div>
       <div class="stat-cell">
         <div class="stat-live"><div class="stat-live-dot"></div>Live</div>
@@ -1796,7 +1837,7 @@ html body,html nav,html footer,.bento-card,.bb-cell,.stat-cell,.hs-card,.termina
   <div class="fcta-bg-glow"></div>
   <div class="fcta-inner rv2 section-head center">
     <div class="section-label">Free Early Access</div>
-    <div class="fcta-h2">Enter the<br><span class="grad-text">institution.</span></div>
+    <h2 class="fcta-h2">Enter the<br><span class="grad-text">institution.</span></h2>
     <div class="fcta-sub fade-in-up">Shape the community. Build your network. Get Alpha Toolkit access from day one.</div>
     <form class="signup-form" id="signup-form" onsubmit="return false">
       <input type="email" class="signup-input" placeholder="you@example.com" required aria-label="Email address">
@@ -1805,6 +1846,7 @@ html body,html nav,html footer,.bento-card,.bb-cell,.stat-cell,.hs-card,.termina
     <div class="signup-note">No credit card required. No waitlist theater. · <a href="https://linkedin.com/company/quanthq" target="_blank" rel="noopener" style="color:var(--text-2)">Follow on LinkedIn →</a></div>
   </div>
 </section>
+</main>
 
 <!-- FOOTER -->
 <footer>
@@ -2198,24 +2240,24 @@ document.getElementById('factor-list').innerHTML = [
 
 /* ── HORIZONTAL SCROLL CARDS ── */
 const hsProjects = [
-  {num:'01', title:'Alpha Extraction Pipeline', desc:'End-to-end factor research system: ingestion → attribution → signal → ranking.', tag:'Open Source'},
-  {num:'02', title:'LLM Earnings NLP Factor', desc:'GPT-4 class semantic delta across consecutive earnings calls. Live OOS testing.', tag:'Live'},
-  {num:'03', title:'Regime Classification HMM', desc:'Hidden Markov model conditioned factor rotation. Yield curve + credit spread inputs.', tag:'Research'},
-  {num:'04', title:'Cross-Sectional Signal Scanner', desc:'Ranks 8,000+ instruments by factor confluence score. Refreshes every 4 hours.', tag:'Live'},
-  {num:'05', title:'Community Backtest Engine', desc:'Walk-forward with realistic slippage. Shareable tearsheets. Benchmark comparison.', tag:'Open Source'},
-  {num:'06', title:'AI Research Assistant', desc:'Asks and answers quant research questions with full source attribution.', tag:'Beta'},
-  {num:'07', title:'Volatility Surface Modeler', desc:'Local vol calibration from live options data. Arbitrage-free interpolation.', tag:'Research'},
-  {num:'08', title:'Macro Regime Tracker', desc:'Real-time regime classification across 12 macro factors. Factor rotation signals.', tag:'Live'},
+  {num:'01', title:'Alpha Extraction Pipeline', desc:'End-to-end factor research system: ingestion → attribution → signal → ranking.', tag:'Open Source', href:'https://github.com/quanthq/alpha-extraction'},
+  {num:'02', title:'LLM Earnings NLP Factor', desc:'GPT-4 class semantic delta across consecutive earnings calls. Live OOS testing.', tag:'Live', href:'/research/llm-earnings-sentiment-alpha/'},
+  {num:'03', title:'Regime Classification HMM', desc:'Hidden Markov model conditioned factor rotation. Yield curve + credit spread inputs.', tag:'Research', href:'/research/yield-curve-regime-classifier/'},
+  {num:'04', title:'Cross-Sectional Signal Scanner', desc:'Ranks 8,000+ instruments by factor confluence score. Refreshes every 4 hours.', tag:'Live', href:'https://github.com/quanthq/signal-scanner'},
+  {num:'05', title:'Community Backtest Engine', desc:'Walk-forward with realistic slippage. Shareable tearsheets. Benchmark comparison.', tag:'Open Source', href:'https://github.com/quanthq/backtest-engine'},
+  {num:'06', title:'AI Research Assistant', desc:'Asks and answers quant research questions with full source attribution.', tag:'Beta', href:'https://github.com/quanthq/ai-assistant'},
+  {num:'07', title:'Volatility Surface Modeler', desc:'Local vol calibration from live options data. Arbitrage-free interpolation.', tag:'Research', href:'https://github.com/quanthq/vol-surface'},
+  {num:'08', title:'Macro Regime Tracker', desc:'Real-time regime classification across 12 macro factors. Factor rotation signals.', tag:'Live', href:'https://github.com/quanthq/macro-tracker'},
 ];
 const track = document.getElementById('htrack');
 const double = [...hsProjects, ...hsProjects];
 track.innerHTML = double.map(p=>`
-  <div class="hs-card">
+  <a href="${p.href}" class="hs-card" target="_blank" rel="noopener">
     <div class="hs-num">${p.num}</div>
     <div class="hs-title">${p.title}</div>
     <div class="hs-desc">${p.desc}</div>
     <div class="hs-foot"><span>${p.tag}</span><span class="hs-arrow">↗</span></div>
-  </div>`).join('');
+  </a>`).join('');
 
 /* canvases can't use CSS vars — resolve ink per frame from the active theme */
 const isLight = () => document.documentElement.classList.contains('light');
@@ -2762,7 +2804,6 @@ if (statusline) {
 document.getElementById('theme-toggle')?.addEventListener('click', () => {
   const light = document.documentElement.classList.toggle('light');
   localStorage.theme = light ? 'light' : 'dark';
-  document.getElementById('favicon').href = light ? FAVICON_LIGHT : FAVICON_DARK;
   if (reduced) drawGlobe(); // static canvases need one repaint in the new palette
 });
 

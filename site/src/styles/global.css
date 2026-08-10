@@ -349,3 +349,16 @@ main > section + section { content-visibility: auto; contain-intrinsic-size: aut
 .border-accent2-50 { border-color: color-mix(in srgb, var(--accent2) 50%, transparent); }
 .bg-ink-85 { background: color-mix(in srgb, var(--bg) 85%, transparent); }
 .bg-ink-97 { background: color-mix(in srgb, var(--bg) 97%, transparent); }
+
+/* accessibility utilities */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}

@@ -1,0 +1,92 @@
+---
+title: "Deflated Sharpe Ratios: How to Account for Multiple Testing"
+author: "QuantHQ Team"
+date: 2026-07-01
+category: "Tutorials"
+description: "If you test 100 factor variants and report the best one, your Sharpe is inflated. Learn how to use deflated Sharpe ratios to correct for multiple testing bias."
+readingTime: "8 min read"
+---
+
+## Introduction
+
+The Sharpe ratio is the standard metric for evaluating risk-adjusted returns, but it has a fatal flaw: if you test multiple variants of a strategy and report the best one, your Sharpe is inflated by selection bias. Deflated Sharpe ratios correct for this multiple testing problem.
+
+## The Multiple Testing Problem
+
+When you test multiple variants of a strategy, you're essentially searching for the one that performed best by chance. The more variants you test, the higher the probability that the best performer is a statistical fluke.
+
+**Example:** Test 100 random strategies. Even if all have true Sharpe of 0, one will likely have a backtest Sharpe of 1.5+ by chance. Reporting that 1.5 as if it were real is selection bias.
+
+## The Deflated Sharpe Formula
+
+The deflated Sharpe ratio (DSR) adjusts the observed Sharpe for the number of trials:
+
+```
+DSR = Φ^-1(Φ(SR) * (1 - Φ(Φ^-1(1 - 1/N))))
+```
+
+Where:
+- SR is the observed Sharpe ratio
+- N is the number of independent trials
+- Φ is the standard normal CDF
+- Φ^-1 is the standard normal quantile function
+
+## Implementation
+
+Here's a simple Python implementation:
+
+```python
+from scipy.stats import norm
+import numpy as np
+
+def deflated_sharpe(sr, n_trials):
+    """Calculate deflated Sharpe ratio."""
+    # Convert SR to probability
+    p = norm.cdf(sr)
+    # Adjust for multiple testing
+    adjusted_p = p * (1 - norm.cdf(norm.ppf(1 - 1/n_trials)))
+    # Convert back to Sharpe
+    dsr = norm.ppf(adjusted_p)
+    return dsr
+```
+
+## When to Use Deflated Sharpe
+
+Use DSR whenever you:
+- Test multiple parameter variants
+- Try different factor combinations
+- Experiment with different lookback windows
+- Compare multiple strategy versions
+
+## Practical Example
+
+You test 50 variants of a momentum factor with different lookback windows. The best variant has a Sharpe of 1.8. Is this real?
+
+```python
+observed_sr = 1.8
+n_trials = 50
+dsr = deflated_sharpe(observed_sr, n_trials)
+print(f"Deflated Sharpe: {dsr:.2f}")
+# Output: Deflated Sharpe: 1.45
+```
+
+The deflated Sharpe of 1.45 is still good, but the 0.35 difference represents selection bias.
+
+## Limitations
+
+- Assumes independent trials (in practice, variants are often correlated)
+- Doesn't account for data snooping across time
+- Requires estimating the number of "effective" trials
+- Still sensitive to look-ahead bias and other validation errors
+
+## Related Reading
+
+- [Five Backtesting Pitfalls That Fake Your Sharpe](/blog/backtesting-pitfalls/) — covers overfitting and multiple testing
+- [Earnings Revision Momentum Decay in the Post-2023 Regime](/research/earnings-revision-momentum-decay/) — uses walk-forward validation to avoid selection bias
+
+## Further Reading
+
+Our upcoming articles will cover:
+- Effective number of trials estimation
+- Bayesian adjustment for selection bias
+- Portfolio-level Sharpe deflation

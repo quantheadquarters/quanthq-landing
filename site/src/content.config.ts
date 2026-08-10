@@ -14,6 +14,7 @@ const research = defineCollection({
     pdf: z.string().optional(),
     github: z.string().optional(),
     doi: z.string().optional(),
+    codeRepository: z.string().optional(),
     tags: z.array(z.string()).default([]),
     featured: z.boolean().default(false),
   }),

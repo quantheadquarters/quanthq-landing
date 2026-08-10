@@ -1,6 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import { getCollection } from 'astro:content';
+import JsonLd from '../../components/JsonLd.astro';
 const posts = (await getCollection('blog')).sort((a, b) => +b.data.date - +a.data.date);
 const categories = [...new Set(posts.map(p => p.data.category))];
 const searchIndex = posts.map(p => ({
@@ -18,12 +19,24 @@ const catColor = (c) => ({
   'Opinion': 'var(--accent2)',
   'Tutorials': 'var(--accent2)',
 }[c] || 'var(--accent)');
+
+const itemListSchema = {
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  "itemListElement": posts.map((post, index) => ({
+    "@type": "ListItem",
+    "position": index + 1,
+    "name": post.data.title,
+    "url": `https://quanthq.in/blog/${post.id}/`
+  }))
+};
 ---
-<Base title="Blog — QuantHQ">
+<Base title="Quant Finance & Financial AI Blog | QuantHQ" description="Practical guides and essays on quantitative research, backtesting, financial AI, factor investing, and systematic trading.">
+  <JsonLd data={itemListSchema} />
   <section class="px-8 pt-20 pb-8">
     <div class="max-w-[var(--shell)] mx-auto">
       <div class="section-label mb-6">Writing</div>
-      <h1 class="text-[clamp(56px,9vw,120px)] display-title leading-none">Blogs</h1>
+      <h1 class="text-[clamp(56px,9vw,120px)] display-title leading-none">Quant Finance and Financial AI Blog</h1>
       <p class="mt-5 text-[var(--text-2)] max-w-md">Approachable writing on AI, engineering, and quantitative finance.</p>
       <input id="blog-search" type="search" placeholder="Search articles…"
         class="mt-9 w-full max-w-lg px-5 py-3.5 rounded-lg bg-[var(--card-bg)] border border-[var(--border)] text-sm text-[var(--text)] placeholder:text-[var(--text-3)] focus:border-accent-40 focus:outline-none" />
