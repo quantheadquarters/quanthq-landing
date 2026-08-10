@@ -1,509 +1,420 @@
 ---
 import { getCollection } from 'astro:content';
-import CommandPalette from '../components/CommandPalette.astro';
-import HomeFooter from '../components/HomeFooter.astro';
-import HomeNav from '../components/HomeNav.astro';
+import Base from '../layouts/Base.astro';
 import JsonLd from '../components/JsonLd.astro';
-import { projects, openSourceCount } from '../data/projects.ts';
-import '../styles/home.css';
+import KnowledgeGraph from '../components/KnowledgeGraph.astro';
+import { links, JOIN_URL } from '../data/links.ts';
 
-const allResearch = (await getCollection('research')).sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
-const [leadPaper, ...restPapers] = allResearch;
-const secondaryPapers = restPapers.slice(0, 2);
+import { reading } from '../data/reading.ts';
+
+// Papers we recommend, not papers we wrote — the pinned ones lead.
+const pickedReading = [...reading].filter((r) => r.pinned).slice(0, 3);
 
 const allPosts = (await getCollection('blog')).sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
-const latestPosts = allPosts.slice(0, 3);
-
-const featuredProjects = projects.filter((p) => p.featured).slice(0, 4);
+const latestPosts = allPosts.slice(0, 4);
 
 const monthYear = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
 
-const canonicalUrl = new URL(Astro.url.pathname, Astro.site ?? 'https://quanthq.in').href;
+const title = 'QuantHQ | The community layer for quantitative finance';
+const description =
+  'An open community for quantitative finance. Read the research, argue about it, and publish your own — methods and data sources included.';
 
 const organizationSchema = {
-  "@context": "https://schema.org",
-  "@type": "Organization",
-  "@id": "https://quanthq.in/#organization",
-  "name": "QuantHQ",
-  "url": "https://quanthq.in/",
-  "logo": "https://quanthq.in/logo.jpeg",
-  "sameAs": [
-    "https://linkedin.com/company/quanthq",
-    "https://github.com/quanthq",
-    "https://discord.gg/quanthq"
-  ]
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  '@id': 'https://quanthq.in/#organization',
+  name: 'QuantHQ',
+  url: 'https://quanthq.in/',
+  logo: 'https://quanthq.in/logo.jpeg',
+  description,
+  sameAs: [links.linkedinGroup, links.github],
 };
+
+// What a visitor actually gets. Three, each with a destination that exists.
+const value = [
+  {
+    n: '01',
+    title: 'A reading list, not a link dump',
+    body: `${reading.length} papers that are actually worth the evening — from the equilibrium arguments the field rests on to what deep learning has really established about price formation. Each one says why it made the list.`,
+    href: '/research/',
+    cta: 'Open the reading list',
+  },
+  {
+    n: '02',
+    title: 'People reading the same things',
+    body: 'The group is where papers get posted, picked apart, and occasionally demolished. Quants, engineers, and students, mostly arguing about method.',
+    href: JOIN_URL,
+    cta: 'Join the group',
+    external: true,
+  },
+  {
+    n: '03',
+    title: 'Somewhere to put your work',
+    body: 'Written something worth reading — a replication, a negative result, a note on a method that keeps going wrong? Send it over and we will publish it.',
+    href: '/contact/',
+    cta: 'Get in touch',
+  },
+];
 ---
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>QuantHQ | Quantitative Finance & Financial AI Research</title>
-<link rel="icon" type="image/png" sizes="96x96" href="/favicon.png">
-<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-<meta name="description" content="QuantHQ is an open research institution for quantitative finance and financial AI. Explore reproducible factor research, backtesting methods, and open-source tools.">
-<meta property="og:title" content="QuantHQ | Quantitative Finance & Financial AI Research">
-<meta property="og:description" content="QuantHQ is an open research institution for quantitative finance and financial AI. Explore reproducible factor research, backtesting methods, and open-source tools.">
-<meta property="og:type" content="website">
-<meta name="twitter:card" content="summary_large_image">
-<meta property="og:url" content="https://quanthq.in/">
-<meta property="og:image" content="https://quanthq.in/og.png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta name="twitter:image" content="https://quanthq.in/og.png">
-<meta name="twitter:title" content="QuantHQ | Quantitative Finance & Financial AI Research">
-<meta name="twitter:description" content="QuantHQ is an open research institution for quantitative finance and financial AI. Explore reproducible factor research, backtesting methods, and open-source tools.">
-<link rel="canonical" href={canonicalUrl} />
-<JsonLd data={organizationSchema} />
-<script is:inline>if(localStorage.theme==='light')document.documentElement.classList.add('light')</script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
-</head>
-<body>
 
-<!-- SKIP LINK -->
-<a href="#main-content" class="skip-link">Skip to main content</a>
+<Base title={title} description={description}>
+  <JsonLd slot="head" data={organizationSchema} />
 
-<!-- SCROLL PROGRESS -->
-<div id="scroll-prog"></div>
-
-<!-- BACKGROUND -->
-<div class="bg-aurora"></div>
-<div class="bg-grid" aria-hidden="true"></div>
-<div class="nebula-blob nb1" aria-hidden="true"></div>
-<div class="nebula-blob nb2" aria-hidden="true"></div>
-
-<HomeNav />
-
-<div class="vignette" aria-hidden="true"></div>
-<div class="grain" aria-hidden="true"></div>
-
-<main id="main-content">
-<!-- HERO -->
-<section class="hero" id="hero">
-  <canvas class="hero-canvas" id="hero-canvas" aria-hidden="true"></canvas>
-  <div class="hero-spot" aria-hidden="true"></div>
-  <div class="hero-floor" aria-hidden="true"></div>
-  <div class="hero-inner">
-    <div class="hero-eyebrow">Open Research Institution</div>
-    <h1 class="hero-h1" id="hero-h1">
-      <span class="hl"><span class="hl-in">Quant</span></span>
-      <span class="hl"><span class="hl-in muted">intelligence</span></span>
-      <span class="hl"><span class="hl-in">for the</span></span>
-      <span class="hl"><span class="hl-in grad-text"><em>obsessed</em></span></span>
-    </h1>
-    <p class="hero-description rv">QuantHQ is an open research institution for quantitative finance, financial AI, and systematic investing.</p>
-    <div class="hero-ctas">
-      <a href="/research/" class="btn-primary">Read the research →</a>
-      <a href="#join" class="btn-ghost">Join the community</a>
-    </div>
-    <div class="hero-metrics">
-      <div class="hero-metric">
-        <div class="n" data-count={allResearch.length}>0</div>
-        <div class="l">Published papers</div>
-      </div>
-      <div class="hero-metric">
-        <div class="n" data-count={allPosts.length}>0</div>
-        <div class="l">Published articles</div>
-      </div>
-      <div class="hero-metric">
-        <div class="n" data-count={openSourceCount}>0</div>
-        <div class="l">Open-source projects</div>
-      </div>
+  <!-- OPENING CURTAIN — first visit of the session only, and never without JS or
+       under reduced motion. Purely CSS-timed: nothing removes it, so it must end
+       transparent and non-interactive on its own. -->
+  <script is:inline>
+    if (sessionStorage.qhqIntro) document.documentElement.classList.add('intro-done');
+    else { document.documentElement.classList.add('intro-play'); sessionStorage.qhqIntro = '1'; }
+  </script>
+  <div class="intro" aria-hidden="true">
+    <div class="intro-inner">
+      <span class="intro-mark">QuantHQ</span>
+      <span class="intro-rule"></span>
+      <span class="intro-sub">Open research community</span>
     </div>
   </div>
-</section>
 
-<!-- FEATURED RESEARCH -->
-<section class="research-strip" id="research">
-  <div class="research-strip-inner">
-    <div class="rv2 section-head">
-      <div class="section-label">Featured Research</div>
-      <h2 class="section-h2">Preprints and<br>technical reports.</h2>
-      <div class="section-sub fade-in-up">Reproducible work on factor investing, financial AI, and macro regimes — methods and code published alongside the results.</div>
-    </div>
-
-    <a href={`/research/${leadPaper.id}/`} class="lead-paper rv2" data-d="1">
-      <div class="lead-paper-body">
-        <div class="rsi-status">{leadPaper.data.status.replace('-', ' ')}</div>
-        <h3 class="lead-paper-title">{leadPaper.data.title}</h3>
-        <p class="lead-paper-abstract">{leadPaper.data.abstract}</p>
-        <div class="lead-paper-meta">
-          <span>{leadPaper.data.authors.join(', ')}</span>
-          <span>·</span>
-          <span>{monthYear(leadPaper.data.date)}</span>
+  <!-- HERO -->
+  <section class="hero">
+    <div class="shell hero-grid">
+      <div class="hero-copy">
+        <p class="hero-eyebrow">Open research community</p>
+        <h1 class="hero-h1">
+          The community layer for <span class="hero-em">quantitative finance.</span>
+        </h1>
+        <p class="hero-lead">
+          QuantHQ is a place to read quant research, argue about it, and publish your own.
+          Everything we put out shows its working.
+        </p>
+        <div class="hero-ctas">
+          <a href={JOIN_URL} target="_blank" rel="noopener" class="btn btn-solid">Join the community</a>
+          <a href="/research/" class="btn btn-outline">See the reading list</a>
         </div>
-        <div class="lead-paper-tags">
-          {leadPaper.data.tags.map((t) => <span class="tag-chip">{t}</span>)}
-        </div>
-        <span class="lead-paper-cta">Read paper →</span>
+        <p class="hero-meta">
+  Free to join · a {reading.length}-paper reading list · {allPosts.length} articles
+        </p>
       </div>
-    </a>
+      <div class="hero-visual">
+        <KnowledgeGraph height={460} legend={false} />
+        <p class="hero-visual-cap">What we study — drag a node to pull the map apart.</p>
+      </div>
+    </div>
+  </section>
 
-    <div class="research-strip-grid rv2" data-d="2">
-      {secondaryPapers.map((paper) => (
-        <a href={`/research/${paper.id}/`} class="research-strip-item">
-          <div class="rsi-status">{paper.data.status.replace('-', ' ')}</div>
-          <div class="rsi-title">{paper.data.title}</div>
-          <div class="rsi-meta">{paper.data.authors.join(', ')} · {monthYear(paper.data.date)}</div>
-        </a>
-      ))}
-      <a href="/research/" class="research-strip-item rsi-all">
-        <div class="rsi-status">Archive</div>
-        <div class="rsi-title">All {allResearch.length} research papers</div>
-        <div class="rsi-meta">Search and filter the full archive →</div>
-      </a>
-    </div>
-  </div>
-</section>
-
-<!-- WHAT WE BUILD -->
-<section class="bento-section" id="build">
-  <div class="bento-inner">
-    <div class="rv2 section-head">
-      <div class="section-label">What we do</div>
-      <h2 class="section-h2">Research, tools,<br>and a community.</h2>
-    </div>
-    <div class="build-grid">
-      <a href="/research/" class="bento-card build-card rv2">
-        <div class="bc-label">Research</div>
-        <div class="bc-title">Reproducible<br>quant research</div>
-        <div class="bc-sub">Preprints and technical reports on factor decay, LLM-extracted signals, and regime classification — published with data sources and methodology.</div>
-        <span class="build-link">Read the archive →</span>
-      </a>
-      <a href="https://github.com/quanthq" target="_blank" rel="noopener" class="bento-card build-card rv2" data-d="1">
-        <div class="bc-label">Open source</div>
-        <div class="bc-title">Tools you<br>can run</div>
-        <div class="bc-sub">Factor pipelines, a walk-forward backtest engine with realistic costs, and a cross-sectional signal scanner. Released rather than shelved.</div>
-        <span class="build-link">Browse on GitHub →</span>
-      </a>
-      <a href="/community/" class="bento-card build-card rv2" data-d="2">
-        <div class="bc-label">Community</div>
-        <div class="bc-title">Researchers<br>working in the open</div>
-        <div class="bc-sub">Weekly paper discussions, open-source contribution, and collaboration across quants, engineers, and students.</div>
-        <span class="build-link">Meet the community →</span>
-      </a>
-    </div>
-  </div>
-</section>
-
-<!-- ACTIVE PROJECTS -->
-<section class="projects-section" id="projects">
-  <div class="projects-inner">
-    <div class="rv2 section-head">
-      <div class="section-label">Active Projects</div>
-      <h2 class="section-h2">What we're<br>building.</h2>
-      <div class="section-sub fade-in-up">{projects.length} tracked projects — open-source tools, research code, and infrastructure.</div>
-    </div>
-    <div class="projects-grid rv2" data-d="1">
-      {featuredProjects.map((p) => (
-        <a
-          href={p.href}
-          class="project-card"
-          target={p.href.startsWith('http') ? '_blank' : undefined}
-          rel={p.href.startsWith('http') ? 'noopener' : undefined}
-        >
-          <div class="pc-head">
-            <span class={`pc-status pc-${p.status.toLowerCase().replace(' ', '-')}`}>{p.status}</span>
-            <span class="pc-arrow">↗</span>
+  <!-- WHAT YOU GET -->
+  <section class="band">
+    <div class="shell">
+      <div class="kicker rv"><span class="kicker-n">01</span><span class="kicker-rule"></span><span>Why join</span></div>
+      <h2 class="headline headline-rule rv">What you actually get.</h2>
+      <div class="value-grid rv rv-stagger">
+        {value.map((v) => (
+          <div class="value-item">
+            <div class="value-n">{v.n}</div>
+            <h3 class="value-title">{v.title}</h3>
+            <p class="value-body">{v.body}</p>
+            <a
+              href={v.href}
+              class="arrow-link value-cta"
+              target={v.external ? '_blank' : undefined}
+              rel={v.external ? 'noopener' : undefined}
+            >{v.cta}</a>
           </div>
-          <div class="pc-title">{p.name}</div>
-          <div class="pc-desc">{p.blurb}</div>
-          <div class="pc-foot">Updated {monthYear(new Date(p.updated))}</div>
-        </a>
-      ))}
+        ))}
+      </div>
     </div>
-    <div class="lab-strip rv2" data-d="2">
-      <p>The interactive dashboard, network globe, knowledge graph, and pipeline terminal live in the lab. All figures there use sample data.</p>
-      <a href="/lab/" class="lab-link">Explore the lab →</a>
+  </section>
+
+  <!-- READING LIST -->
+  <section class="band">
+    <div class="shell">
+      <div class="kicker rv"><span class="kicker-n">02</span><span class="kicker-rule"></span><span>Reading list</span></div>
+      <h2 class="headline headline-rule rv">Start with these.</h2>
+      <p class="lead rv">
+        Three of the {reading.length} papers on the list. Not summaries — the reason each one is
+        still worth your time.
+      </p>
+      <ul class="reading-list rv rv-stagger">
+        {pickedReading.map((r) => (
+          <li>
+            <a href={r.href} target="_blank" rel="noopener" class="reading-row">
+              <div class="reading-main">
+                <span class="reading-title">{r.title}</span>
+                <span class="reading-note">{r.note}</span>
+                <span class="reading-tags">{r.tags.join(' · ')}</span>
+              </div>
+              <div class="reading-meta">
+                <span class="reading-authors">{r.authors}</span>
+                <span>{r.year}</span>
+              </div>
+            </a>
+          </li>
+        ))}
+      </ul>
+      <a href="/research/" class="arrow-link reading-all rv">All {reading.length} papers</a>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- LATEST WRITING -->
-<section class="writing-section" id="writing">
-  <div class="writing-inner">
-    <div class="rv2 section-head">
-      <div class="section-label">Latest Writing</div>
-      <h2 class="section-h2">Notes from<br>the work.</h2>
+  <!-- WRITING -->
+  <section class="band">
+    <div class="shell">
+      <div class="kicker rv"><span class="kicker-n">03</span><span class="kicker-rule"></span><span>Writing</span></div>
+      <h2 class="headline headline-rule rv">Shorter notes from the work.</h2>
+      <ul class="writing-list rv rv-stagger">
+        {latestPosts.map((post) => (
+          <li>
+            <a href={`/blog/${post.id}/`} class="writing-row">
+              <div class="writing-row-main">
+                <span class="writing-row-title">{post.data.title}</span>
+                <span class="writing-row-desc">{post.data.description}</span>
+              </div>
+              <div class="writing-row-meta">
+                <span>{post.data.category}</span>
+                <span>{monthYear(post.data.date)}</span>
+              </div>
+            </a>
+          </li>
+        ))}
+      </ul>
+      <a href="/blog/" class="arrow-link writing-all rv">All {allPosts.length} articles</a>
     </div>
-    <div class="writing-list rv2" data-d="1">
-      {latestPosts.map((post) => (
-        <a href={`/blog/${post.id}/`} class="writing-item">
-          <div class="wi-meta">
-            <span class="wi-cat">{post.data.category}</span>
-            <span>{monthYear(post.data.date)}</span>
-            {post.data.readingTime && <span>{post.data.readingTime}</span>}
-          </div>
-          <div class="wi-title">{post.data.title}</div>
-          <div class="wi-desc">{post.data.description}</div>
-        </a>
-      ))}
+  </section>
+
+  <!-- WHO IT'S FOR -->
+  <section class="band">
+    <div class="shell">
+      <div class="kicker rv"><span class="kicker-n">04</span><span class="kicker-rule"></span><span>Who it's for</span></div>
+      <h2 class="headline headline-rule rv">You'll probably fit if…</h2>
+      <ul class="fit-list rv rv-stagger">
+        <li class="fit-row">
+          <span class="fit-who">You're starting out</span>
+          <span class="fit-why">A student or career-switcher trying to get into quant, tired of being sold a course. Read what the field actually reads.</span>
+        </li>
+        <li class="fit-row">
+          <span class="fit-who">You can already build</span>
+          <span class="fit-why">An engineer or data scientist who can ship a model but wants to know which published results survive contact with real data.</span>
+        </li>
+        <li class="fit-row">
+          <span class="fit-who">You do this for a living</span>
+          <span class="fit-why">A working quant who wants to argue about method with people outside your own desk.</span>
+        </li>
+      </ul>
     </div>
-    <a href="/blog/" class="writing-all">All {allPosts.length} articles →</a>
-  </div>
-</section>
+  </section>
 
-<!-- COMMUNITY -->
-<section class="community-section" id="community">
-  <div class="community-inner rv2 section-head center">
-    <div class="section-label">Community</div>
-    <h2 class="section-h2">Join researchers and<br>engineers working in the open.</h2>
-    <div class="section-sub fade-in-up">Weekly paper discussions, open-source projects, and practical quantitative finance research.</div>
-    <div class="community-ctas">
-      <a href="https://discord.gg/quanthq" target="_blank" rel="noopener" class="btn-primary">Join Discord</a>
-      <a href="https://github.com/quanthq" target="_blank" rel="noopener" class="btn-ghost">Follow on GitHub</a>
+  <!-- JOIN -->
+  <section class="band join-band">
+    <div class="shell">
+      <div class="kicker rv"><span class="kicker-n">05</span><span class="kicker-rule"></span><span>Join</span></div>
+      <h2 class="headline join-headline headline-rule rv">Come argue about method with us.</h2>
+      <p class="lead rv">
+        The community runs on LinkedIn. It is free, it is public, and nobody is selling you a course.
+      </p>
+      <div class="hero-ctas rv">
+        <a href={JOIN_URL} target="_blank" rel="noopener" class="btn btn-solid">Join the community</a>
+        <a href={links.github} target="_blank" rel="noopener" class="btn btn-outline">Code on GitHub</a>
+      </div>
+      <p class="join-note rv">
+        Curious what the research tooling looks like? The <a href="/lab/">lab</a> has interactive demos —
+        everything there runs on simulated sample data.
+      </p>
     </div>
-  </div>
-</section>
+  </section>
+</Base>
 
-<!-- EMAIL SIGNUP -->
-<section class="fcta-section" id="join">
-  <div class="fcta-bg-glow"></div>
-  <div class="fcta-inner rv2 section-head center">
-    <div class="section-label">Mailing list</div>
-    <h2 class="fcta-h2">Get QuantHQ<br><span class="grad-text">research updates.</span></h2>
-    <div class="fcta-sub fade-in-up">New papers, tool releases, and community events. Occasional updates — no spam, unsubscribe anytime.</div>
-    <form class="signup-form" id="signup-form" onsubmit="return false">
-      <input type="email" class="signup-input" placeholder="you@example.com" required aria-label="Email address">
-      <button type="submit" class="signup-btn">Subscribe</button>
-    </form>
-    <div class="signup-note">Roughly one email a month. · <a href="https://linkedin.com/company/quanthq" target="_blank" rel="noopener" style="color:var(--text-2)">Follow on LinkedIn →</a></div>
-  </div>
-</section>
-</main>
-
-<HomeFooter />
-
-<CommandPalette />
-
-<script>
-const reduced = matchMedia('(prefers-reduced-motion:reduce)').matches;
-
-/* ── SCROLL: progress bar, nav state, heading parallax ── */
-const sp = document.getElementById('scroll-prog');
-const navEl = document.getElementById('nav');
-const parallaxH2 = [...document.querySelectorAll('.section-h2')];
-let ticking = false;
-function onScroll() {
-  const h = document.documentElement;
-  sp.style.width = (scrollY / (h.scrollHeight - h.clientHeight) * 100) + '%';
-  navEl.classList.toggle('scrolled', scrollY > 40);
-  // heading parallax — measure the untransformed parent so it doesn't feed back
-  for (const el of parallaxH2) {
-    const r = el.parentElement.getBoundingClientRect();
-    if (r.bottom < 0 || r.top > innerHeight) continue;
-    el.style.transform = `translateY(${(r.top + r.height/2 - innerHeight/2) * 0.035}px)`;
+<style>
+  /* ── opening curtain ──
+     Only html.intro-play shows it, so no-JS, reduced-motion, print, and every
+     visit after the first render the page with no overlay at all. */
+  .intro { display: none; }
+  :global(html.intro-play) .intro {
+    display: grid; place-items: center;
+    position: fixed; inset: 0; z-index: 300;
+    background: var(--bg);
+    animation: introLift 1.5s cubic-bezier(.76,0,.24,1) forwards;
   }
-  ticking = false;
-}
-addEventListener('scroll', () => {
-  if (!ticking) { requestAnimationFrame(onScroll); ticking = true; }
-}, {passive:true});
-
-/* ── REVEAL ── */
-/* terminal-style decode effect for labels */
-function scrambleIn(el) {
-  const orig = el.textContent;
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$#%/';
-  let f = 0;
-  const iv = setInterval(() => {
-    f++;
-    el.textContent = orig.split('').map((c, i) =>
-      i < f ? c : (c === ' ' ? ' ' : chars[Math.random()*chars.length|0])
-    ).join('');
-    if (f >= orig.length) clearInterval(iv);
-  }, 26);
-}
-const rio = new IntersectionObserver(es => es.forEach(e => {
-  if (e.isIntersecting) {
-    e.target.classList.add('in');
-    if (!reduced) e.target.querySelectorAll('.section-label').forEach(scrambleIn);
-    rio.unobserve(e.target);
+  .intro-inner { display: grid; justify-items: center; gap: 16px; }
+  .intro-mark {
+    font-family: var(--font-display); font-size: clamp(34px, 6vw, 62px);
+    letter-spacing: -0.03em; color: var(--text);
+    animation: introMark .9s cubic-bezier(.22,1,.36,1) backwards;
   }
-}), {threshold:0, rootMargin:'0px 0px -60px 0px'});
-document.querySelectorAll('.rv2').forEach(el => rio.observe(el));
-if (!reduced) setTimeout(() => scrambleIn(document.querySelector('.hero-eyebrow')), 500);
-
-/* ── FADE-IN-UP ── */
-const fadeObserver = new IntersectionObserver(es => es.forEach(e => {
-  if (e.isIntersecting) { e.target.classList.add('in'); fadeObserver.unobserve(e.target); }
-}), {threshold:0, rootMargin:'0px 0px -40px 0px'});
-document.querySelectorAll('.fade-in-up,.fade-in,.rv').forEach(el => fadeObserver.observe(el));
-
-/* ── STAT COUNTERS — odometer roll from 0 to target when scrolled into view ── */
-const fmtN = n => Math.round(n).toLocaleString('en-US');
-document.querySelectorAll('[data-count]').forEach(el => { el.textContent = fmtN(+el.dataset.count); });
-const cio = new IntersectionObserver(es => es.forEach(e => {
-  if (!e.isIntersecting) return;
-  const el = e.target;
-  cio.unobserve(el);
-  if (reduced) return;
-  const target = +el.dataset.count, t0 = performance.now(), dur = 1100;
-  (function tick(now){
-    const p = Math.min(1, (now - t0) / dur);
-    el.textContent = fmtN(target * (1 - Math.pow(1 - p, 3))); // easeOutCubic
-    if (p < 1) requestAnimationFrame(tick);
-    else { el.textContent = fmtN(target); el.style.animation = 'statGlow 0.6s ease-out'; }
-  })(t0);
-}), {threshold:0.5});
-document.querySelectorAll('[data-count]').forEach(el => cio.observe(el));
-
-/* ── WORD-BY-WORD HEADING REVEAL ── */
-document.querySelectorAll('.section-h2').forEach(h => {
-  let idx = 0;
-  const wrap = node => {
-    [...node.childNodes].forEach(ch => {
-      if (ch.nodeType === 3) {
-        const frag = document.createDocumentFragment();
-        ch.textContent.split(/(\s+)/).forEach(tok => {
-          if (!tok) return;
-          if (/^\s+$/.test(tok)) { frag.appendChild(document.createTextNode(tok)); return; }
-          const s = document.createElement('span');
-          s.className = 'wrd';
-          s.style.transitionDelay = (idx++ * 70)+'ms';
-          s.textContent = tok;
-          frag.appendChild(s);
-        });
-        node.replaceChild(frag, ch);
-      } else if (ch.nodeType === 1 && ch.tagName !== 'BR') wrap(ch);
-    });
-  };
-  wrap(h);
-});
-
-/* ── MAGNETIC CTA ── */
-const magBtn = document.querySelector('.hero-ctas .btn-primary');
-if (magBtn && !reduced) {
-  addEventListener('mousemove', e => {
-    const r = magBtn.getBoundingClientRect();
-    const dx = e.clientX - (r.left + r.width/2), dy = e.clientY - (r.top + r.height/2);
-    const d = Math.hypot(dx, dy);
-    magBtn.style.transform = d < 180 ? `translate(${dx*(1-d/180)*0.35}px,${dy*(1-d/180)*0.35}px)` : '';
-  }, {passive:true});
-}
-
-/* ── CARD POINTER GLOW ── */
-if (!reduced) {
-  document.querySelectorAll('.bento-card,.project-card').forEach(card => {
-    card.addEventListener('mousemove', e => {
-      const r = card.getBoundingClientRect();
-      card.style.setProperty('--mx', e.clientX - r.left + 'px');
-      card.style.setProperty('--my', e.clientY - r.top + 'px');
-    }, {passive:true});
-  });
-}
-
-/* ── EMAIL FORM ── */
-const signupForm = document.getElementById('signup-form');
-if (signupForm) {
-  signupForm.addEventListener('submit', e => {
-    e.preventDefault();
-    const input = signupForm.querySelector('.signup-input');
-    const btn = signupForm.querySelector('.signup-btn');
-    const email = input.value.trim();
-    if (!email) return;
-    btn.textContent = '✓ Subscribed';
-    btn.style.background = 'var(--green)';
-    btn.style.color = '#04060B';
-    input.disabled = true;
-    btn.disabled = true;
-    const note = document.querySelector('.signup-note');
-    if (note) note.textContent = `We'll send updates to ${email}.`;
-  });
-}
-
-/* ── HERO: cursor-reactive light + constellation particle field ── */
-(function heroFX(){
-  const hero = document.getElementById('hero');
-  const spot = document.querySelector('.hero-spot');
-  const canvas = document.getElementById('hero-canvas');
-  if (!hero || !canvas) return;
-
-  // pointer-follow light (cheap: just moves a radial-gradient origin)
-  if (spot && !reduced) {
-    hero.addEventListener('pointermove', e => {
-      const r = hero.getBoundingClientRect();
-      spot.style.setProperty('--hx', ((e.clientX - r.left) / r.width * 100) + '%');
-      spot.style.setProperty('--hy', ((e.clientY - r.top) / r.height * 100) + '%');
-    }, { passive: true });
+  .intro-rule {
+    width: min(280px, 46vw); height: 1px; background: var(--border-hover);
+    transform-origin: center; animation: introRule .8s cubic-bezier(.22,1,.36,1) .18s backwards;
+  }
+  .intro-sub {
+    font-family: var(--font-mono); font-size: 10px;
+    letter-spacing: 0.3em; text-transform: uppercase; color: var(--text-3);
+    animation: introMark .8s cubic-bezier(.22,1,.36,1) .3s backwards;
+  }
+  /* the overlay ends fully transparent AND click-through — if this keyframe ever
+     stops running the page must still be usable, hence pointer-events here. */
+  @keyframes introLift {
+    0%, 62% { opacity: 1; clip-path: inset(0 0 0 0); pointer-events: auto; }
+    100% { opacity: 0; clip-path: inset(0 0 100% 0); pointer-events: none; }
+  }
+  @keyframes introMark { from { opacity: 0; transform: translateY(14px); } }
+  @keyframes introRule { from { transform: scaleX(0); } }
+  /* MUST NOT be dropped: global.css disables all animation under reduced motion,
+     which would strand the curtain opaque and make the page unreachable. */
+  @media (prefers-reduced-motion: reduce) {
+    :global(html.intro-play) .intro { display: none; }
+    :global(html.intro-play) { --intro-lead: 0s; }
   }
 
-  const ctx = canvas.getContext('2d');
-  let W, H, DPR, nodes = [], raf = null, running = false;
-  const mouse = { x: -9999, y: -9999 };
-  const isLight = () => document.documentElement.classList.contains('light');
-
-  function resize() {
-    const r = hero.getBoundingClientRect();
-    DPR = Math.min(devicePixelRatio || 1, 2);
-    W = r.width; H = r.height;
-    canvas.width = W * DPR; canvas.height = H * DPR;
-    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-    const count = Math.min(70, Math.round(W * H / 26000));
-    nodes = Array.from({ length: count }, () => ({
-      x: Math.random() * W, y: Math.random() * H,
-      vx: (Math.random() - 0.5) * 0.22, vy: (Math.random() - 0.5) * 0.22,
-      r: 0.8 + Math.random() * 1.4,
-    }));
+  /* ── hero ── */
+  .hero { padding: clamp(56px, 9vh, 104px) 0 clamp(56px, 9vh, 96px); }
+  .hero-grid {
+    display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    gap: clamp(32px, 5vw, 72px); align-items: center;
   }
-  function step() {
-    ctx.clearRect(0, 0, W, H);
-    const light = isLight();
-    const dot = light ? '15,23,42' : '150,180,255';
-    const line = light ? '37,99,235' : '90,130,255';
-    for (const n of nodes) {
-      // gentle drift + soft cursor repulsion
-      const dx = n.x - mouse.x, dy = n.y - mouse.y, d2 = dx*dx + dy*dy;
-      if (d2 < 14000) { const f = (14000 - d2) / 14000 * 0.6; n.vx += dx / Math.sqrt(d2 || 1) * f; n.vy += dy / Math.sqrt(d2 || 1) * f; }
-      n.x += n.vx; n.y += n.vy; n.vx *= 0.96; n.vy *= 0.96;
-      if (n.x < 0 || n.x > W) n.vx *= -1;
-      if (n.y < 0 || n.y > H) n.vy *= -1;
-      n.x = Math.max(0, Math.min(W, n.x)); n.y = Math.max(0, Math.min(H, n.y));
-    }
-    // links
-    for (let i = 0; i < nodes.length; i++) {
-      for (let j = i + 1; j < nodes.length; j++) {
-        const a = nodes[i], b = nodes[j];
-        const dx = a.x - b.x, dy = a.y - b.y, d = Math.hypot(dx, dy);
-        if (d < 128) {
-          ctx.strokeStyle = `rgba(${line},${(1 - d / 128) * 0.16})`;
-          ctx.lineWidth = 0.6;
-          ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
-        }
-      }
-    }
-    // nodes
-    for (const n of nodes) {
-      ctx.fillStyle = `rgba(${dot},0.5)`;
-      ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2); ctx.fill();
-    }
-    raf = requestAnimationFrame(step);
+  .hero-visual { min-width: 0; }
+  .hero-visual-cap {
+    margin-top: 14px; font-family: var(--font-mono);
+    font-size: 11px; letter-spacing: 0.06em; color: var(--text-4);
   }
-  function start(){ if (!running && !reduced) { running = true; step(); } }
-  function stop(){ running = false; if (raf) cancelAnimationFrame(raf); }
-
-  resize();
-  addEventListener('resize', resize, { passive: true });
-  hero.addEventListener('pointermove', e => { const r = hero.getBoundingClientRect(); mouse.x = e.clientX - r.left; mouse.y = e.clientY - r.top; }, { passive: true });
-  hero.addEventListener('pointerleave', () => { mouse.x = mouse.y = -9999; });
-
-  if (reduced) { // one static frame, no animation loop
-    const dot = isLight() ? '15,23,42' : '150,180,255';
-    for (const n of nodes) { ctx.fillStyle = `rgba(${dot},0.4)`; ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI*2); ctx.fill(); }
-  } else {
-    // pause when hero scrolls out of view
-    const io = new IntersectionObserver(es => es.forEach(e => e.isIntersecting ? start() : stop()), { threshold: 0.02 });
-    io.observe(hero);
+  .hero-eyebrow {
+    font-family: var(--font-mono); font-size: 11px;
+    letter-spacing: 0.24em; text-transform: uppercase; color: var(--text-3);
   }
-})();
+  .hero-h1 {
+    margin-top: 26px;
+    font-family: var(--font-display); font-weight: 400;
+    font-size: clamp(40px, 5.4vw, 78px); line-height: 1.0;
+    letter-spacing: -0.03em; color: var(--text);
+  }
+  .hero-em { color: var(--text-3); }
+  .hero-lead {
+    margin-top: 30px; max-width: 54ch;
+    font-size: clamp(17px, 2vw, 21px); line-height: 1.6; color: var(--text-2);
+  }
+  .hero-ctas { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 38px; }
+  .hero-meta {
+    margin-top: 26px; font-family: var(--font-mono);
+    font-size: 12px; letter-spacing: 0.04em; color: var(--text-3);
+  }
 
-/* ── HERO: clip-reveal is CSS-driven; disable it under reduced-motion ── */
-if (reduced) {
-  document.querySelectorAll('.hero-h1 .hl-in').forEach(el => { el.style.animation = 'none'; el.style.transform = 'none'; });
-}
-</script>
-</body>
-</html>
+  /* hero entrance — above the fold, so it runs on load rather than on scroll.
+     Same `rise` keyframe as the .rv-stagger cascade.
+     --intro-lead holds the hero back until the curtain is on its way up, so the
+     two read as one continuous opening rather than two animations. */
+  :global(html.intro-play) { --intro-lead: 0.95s; }
+  :global(html.js) .hero-copy > *,
+  :global(html.js) .hero-visual {
+    animation: rise .8s cubic-bezier(.22,1,.36,1) backwards;
+    animation-delay: var(--intro-lead, 0s);
+  }
+  :global(html.js) .hero-copy > :nth-child(2) { animation-delay: calc(var(--intro-lead, 0s) + .08s); }
+  :global(html.js) .hero-copy > :nth-child(3) { animation-delay: calc(var(--intro-lead, 0s) + .16s); }
+  :global(html.js) .hero-copy > :nth-child(4) { animation-delay: calc(var(--intro-lead, 0s) + .24s); }
+  :global(html.js) .hero-copy > :nth-child(5) { animation-delay: calc(var(--intro-lead, 0s) + .32s); }
+  :global(html.js) .hero-visual {
+    animation-delay: calc(var(--intro-lead, 0s) + .2s); animation-duration: 1s;
+  }
+
+  /* ── value ── */
+  .value-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
+    margin-top: 56px; background: var(--border);
+    border: 1px solid var(--border); border-radius: 14px; overflow: hidden;
+  }
+  .value-item {
+    background: var(--card-bg); padding: 34px 30px 30px;
+    display: flex; flex-direction: column;
+    transition: background 0.25s;
+  }
+  .value-item:hover { background: color-mix(in srgb, var(--text) 3%, var(--card-bg)); }
+  .value-n {
+    font-family: var(--font-mono); font-size: 11px;
+    letter-spacing: 0.15em; color: var(--gold); margin-bottom: 20px;
+  }
+  .value-title { font-size: 19px; font-weight: 600; color: var(--text); letter-spacing: -0.01em; }
+  .value-body { margin-top: 12px; font-size: 15px; line-height: 1.65; color: var(--text-2); }
+  .value-cta { margin-top: 26px; padding-top: 20px; border-top: 1px solid var(--border); }
+
+  /* ── reading list ── */
+  .reading-list, .writing-list, .fit-list { margin-top: 40px; border-top: 1px solid var(--border); }
+  .reading-list li, .writing-list li, .fit-list li { border-bottom: 1px solid var(--border); }
+
+  .reading-row {
+    display: grid; grid-template-columns: 1fr 210px;
+    gap: 10px 32px; align-items: start; padding: 26px 4px;
+    transition: padding-left 0.22s;
+  }
+  .reading-row:hover { padding-left: 12px; }
+
+  /* the row reads as a control, not just shifting text: an accent bar wipes in
+     from the left edge on hover. Shared by both row types. */
+  .reading-row, .writing-row { position: relative; }
+  .reading-row::before, .writing-row::before {
+    content: ''; position: absolute; left: -4px; top: 0; bottom: 0; width: 2px;
+    background: var(--accent); transform: scaleY(0); transform-origin: top;
+    transition: transform 0.28s cubic-bezier(.22,1,.36,1);
+  }
+  .reading-row:hover::before, .writing-row:hover::before { transform: none; }
+  .reading-row:focus-visible::before, .writing-row:focus-visible::before { transform: none; }
+
+  /* the meta column nudges with the row so the whole thing moves as one piece */
+  .reading-meta, .writing-row-meta { transition: transform 0.22s, color 0.22s; }
+  .reading-row:hover .reading-meta,
+  .writing-row:hover .writing-row-meta { transform: translateX(4px); color: var(--text-2); }
+  .reading-main { display: flex; flex-direction: column; gap: 9px; min-width: 0; }
+  .reading-title { font-size: 17.5px; font-weight: 500; color: var(--text-1); line-height: 1.35; }
+  .reading-row:hover .reading-title { color: var(--text); }
+  .reading-note { font-size: 14.5px; line-height: 1.65; color: var(--text-3); max-width: 72ch; }
+  .reading-tags {
+    font-family: var(--font-mono); font-size: 10.5px;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-4);
+  }
+  .reading-meta {
+    display: flex; flex-direction: column; gap: 5px; text-align: right;
+    font-family: var(--font-mono); font-size: 11px;
+    letter-spacing: 0.06em; color: var(--text-3);
+  }
+  .reading-authors { line-height: 1.5; }
+  .reading-all { margin-top: 30px; }
+
+  /* ── who it's for ── */
+  .fit-row {
+    display: grid; grid-template-columns: 260px 1fr;
+    gap: 10px 32px; align-items: baseline; padding: 24px 4px;
+  }
+  .fit-who { font-size: 17px; font-weight: 600; color: var(--text); letter-spacing: -0.01em; }
+  .fit-why { font-size: 15.5px; line-height: 1.65; color: var(--text-2); max-width: 68ch; }
+
+  .writing-row {
+    display: grid; grid-template-columns: 1fr auto;
+    gap: 8px 28px; align-items: baseline; padding: 24px 4px;
+    transition: padding-left 0.22s;
+  }
+  .writing-row:hover { padding-left: 12px; }
+  .writing-row-main { display: flex; flex-direction: column; gap: 7px; }
+  .writing-row-title { font-size: 18px; font-weight: 500; color: var(--text-1); letter-spacing: -0.01em; }
+  .writing-row:hover .writing-row-title { color: var(--text); }
+  .writing-row-desc { font-size: 14.5px; line-height: 1.6; color: var(--text-3); max-width: 68ch; }
+  .writing-row-meta {
+    display: flex; gap: 14px; white-space: nowrap;
+    font-family: var(--font-mono); font-size: 11px;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3);
+  }
+  .writing-all { margin-top: 30px; }
+
+  /* ── join ── */
+  .join-headline { max-width: 20ch; }
+  .join-band .lead { margin-top: 22px; }
+  .join-note { margin-top: 34px; font-size: 14px; color: var(--text-3); }
+  .join-note a { color: var(--text-1); text-decoration: underline; text-underline-offset: 3px; }
+  .join-note a:hover { color: var(--text); }
+
+  @media (max-width: 1000px) {
+    .hero-grid { grid-template-columns: 1fr; gap: 44px; }
+  }
+  @media (max-width: 900px) {
+    .value-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 640px) {
+    .reading-row, .writing-row, .fit-row { grid-template-columns: 1fr; gap: 10px; }
+    .reading-meta { flex-direction: row; gap: 10px; text-align: left; }
+  }
+</style>

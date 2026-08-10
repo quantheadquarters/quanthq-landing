@@ -2,6 +2,8 @@
 import CommandPalette from '../components/CommandPalette.astro';
 import HomeFooter from '../components/HomeFooter.astro';
 import HomeNav from '../components/HomeNav.astro';
+import KnowledgeGraph from '../components/KnowledgeGraph.astro';
+import SignalDashboard from '../components/SignalDashboard.astro';
 import '../styles/home.css';
 
 const canonicalUrl = new URL(Astro.url.pathname, Astro.site ?? 'https://quanthq.in').href;
@@ -24,7 +26,7 @@ const description = 'An interactive demonstration of the QuantHQ research interf
 <meta property="og:image" content="https://quanthq.in/og.png">
 <meta name="twitter:image" content="https://quanthq.in/og.png">
 <link rel="canonical" href={canonicalUrl} />
-<script is:inline>if(localStorage.theme==='light')document.documentElement.classList.add('light')</script>
+<script is:inline>document.documentElement.classList.add('js');if(localStorage.theme==='light')document.documentElement.classList.add('light')</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
@@ -69,46 +71,9 @@ const description = 'An interactive demonstration of the QuantHQ research interf
       <h2 class="section-h2">Market and factor<br>dashboard.</h2>
       <div class="section-sub in">Layout demo. Values are simulated in-browser and refresh every 1.8 seconds.</div>
     </div>
-    <div class="bloomberg-grid">
-      <div class="bb-cell">
-        <div class="bb-label">SPX <span class="bb-sample">sample</span> <span id="spx-time"></span></div>
-        <div class="bb-val" id="spx-val">5,847</div>
-        <div class="bb-change up" id="spx-chg">+0.42%</div>
-        <div class="bb-chart-line">
-          <svg viewBox="0 0 200 48" preserveAspectRatio="none">
-            <polyline id="spx-line" fill="none" stroke="rgba(61,123,255,0.85)" stroke-width="1.5" points=""/>
-          </svg>
-        </div>
-      </div>
-      <div class="bb-cell">
-        <div class="bb-label">VIX <span class="bb-sample">sample</span></div>
-        <div class="bb-val" id="vix-val">16.3</div>
-        <div class="bb-change down" id="vix-chg">-2.1%</div>
-        <div class="bb-chart-line">
-          <svg viewBox="0 0 200 48" preserveAspectRatio="none">
-            <polyline id="vix-line" fill="none" stroke="rgba(255,68,102,0.5)" stroke-width="1.5" points=""/>
-          </svg>
-        </div>
-      </div>
-      <div class="bb-cell span2">
-        <div class="bb-label">Sector heatmap <span class="bb-sample">sample</span></div>
-        <div class="mini-heatmap" id="heatmap"></div>
-      </div>
-
-      <div class="bb-cell span2 tall" style="display:flex;flex-direction:column">
-        <div class="bb-label">Instrument feed <span class="bb-sample">sample</span></div>
-        <div id="ticker-feed" style="flex:1;display:flex;flex-direction:column;justify-content:space-evenly"></div>
-      </div>
-      <div class="bb-cell span2">
-        <div class="bb-label">Research jobs <span class="bb-sample">sample</span></div>
-        <div id="agent-feed"></div>
-      </div>
-      <div class="bb-cell span2">
-        <div class="bb-label">Factor attribution <span class="bb-sample">sample</span></div>
-        <div id="factor-bars"></div>
-      </div>
-    </div>
-    <p class="panel-note">Factor definitions and the attribution method are described in <a href="/research/earnings-revision-momentum-decay/">Earnings Revision Momentum Decay</a>.</p>
+    <SignalDashboard
+      note='Factor definitions and the attribution method are described in <a href="/research/earnings-revision-momentum-decay/">Earnings Revision Momentum Decay</a>.'
+    />
   </div>
 </section>
 
@@ -120,17 +85,7 @@ const description = 'An interactive demonstration of the QuantHQ research interf
       <h2 class="section-h2">Explore connected<br>research topics.</h2>
       <div class="section-sub in">Each node is a topic we work on; edges are topics that appear together in our papers. Drag a node to explore.</div>
     </div>
-    <div class="graph-legend" aria-hidden="true">
-      <span class="gl-item"><i style="background:var(--blue)"></i>Research</span>
-      <span class="gl-item"><i style="background:var(--violet)"></i>Papers</span>
-      <span class="gl-item"><i style="background:var(--cyan)"></i>Methods</span>
-      <span class="gl-item"><i style="background:var(--text-3)"></i>Signals</span>
-      <span class="gl-hint">Drag a node to explore</span>
-    </div>
-    <canvas id="force-canvas" aria-label="Interactive force-directed graph of QuantHQ research topics" role="img"></canvas>
-    <noscript>
-      <p class="text-center text-[var(--text-3)] py-8">The interactive graph requires JavaScript. It links research topics such as momentum, earnings NLP, regime detection, and backtest methodology.</p>
-    </noscript>
+    <KnowledgeGraph height={420} />
   </div>
 </section>
 
@@ -165,7 +120,7 @@ const description = 'An interactive demonstration of the QuantHQ research interf
     <h2 class="lab-outro-h2">The real work is in the archive.</h2>
     <div class="community-ctas">
       <a href="/research/" class="btn-primary">Read the research →</a>
-      <a href="/#join" class="btn-ghost">Get research updates</a>
+      <a href="https://www.linkedin.com/groups/36960154/" target="_blank" rel="noopener" class="btn-ghost">Join the community</a>
     </div>
   </div>
 </section>
@@ -175,9 +130,9 @@ const description = 'An interactive demonstration of the QuantHQ research interf
 <CommandPalette />
 
 <script>
+import { sampleTickers } from '../data/sampleMarket.ts';
+
 const reduced = matchMedia('(prefers-reduced-motion:reduce)').matches;
-const isLight = () => document.documentElement.classList.contains('light');
-const canvasInk = () => isLight() ? '15,23,42' : '255,255,255';
 
 /* ── SCROLL PROGRESS + NAV STATE ── */
 const sp = document.getElementById('scroll-prog');
@@ -194,373 +149,11 @@ addEventListener('scroll', () => {
   });
 }, {passive:true});
 
-/* ── SIMULATED SERIES ──
-   Every number on this page comes from here. There is no network request. */
-function makePoints(n, base, variance) {
-  let v = base, pts = [];
-  for (let i=0; i<n; i++) {
-    v += (Math.random()-.48)*variance;
-    pts.push(Math.max(base*0.9, Math.min(base*1.1, v)));
-  }
-  return pts;
-}
-function toSVGPoints(arr, w, h) {
-  const min = Math.min(...arr), max = Math.max(...arr), range = max-min||1;
-  return arr.map((v,i) => `${i/(arr.length-1)*w},${h-(v-min)/range*h}`).join(' ');
-}
-let spxData = makePoints(40, 5847, 12);
-let vixData = makePoints(40, 16.3, 0.4);
-function tweenNum(el, to, fmt) {
-  const from = parseFloat(el.textContent.replace(/,/g,'')) || to;
-  if (reduced || from === to) { el.textContent = fmt(to); return; }
-  const start = performance.now(), dur = 400;
-  (function step(now) {
-    const t = Math.min((now - start) / dur, 1), e = 1 - Math.pow(1 - t, 3);
-    el.textContent = fmt(from + (to - from) * e);
-    if (t < 1) requestAnimationFrame(step);
-  })(start);
-}
-function updateCharts() {
-  spxData.push(spxData[spxData.length-1]+(Math.random()-.48)*8); spxData.shift();
-  vixData.push(vixData[vixData.length-1]+(Math.random()-.48)*0.3); vixData.shift();
-  const spxV = spxData[spxData.length-1];
-  const vixV = vixData[vixData.length-1];
-  tweenNum(document.getElementById('spx-val'), spxV, v => Math.round(v).toLocaleString('en-US'));
-  tweenNum(document.getElementById('vix-val'), vixV, v => v.toFixed(1));
-  document.getElementById('spx-time').textContent = new Date().toLocaleTimeString('en-US',{hour12:false});
-  const spxPct = ((spxV/spxData[0]-1)*100).toFixed(2);
-  const vixPct = ((vixV/vixData[0]-1)*100).toFixed(2);
-  const spxEl = document.getElementById('spx-chg');
-  spxEl.textContent = (spxPct>=0?'+':'')+spxPct+'%';
-  spxEl.className = 'bb-change '+(spxPct>=0?'up':'down');
-  const vixEl = document.getElementById('vix-chg');
-  vixEl.textContent = (vixPct>=0?'+':'')+vixPct+'%';
-  vixEl.className = 'bb-change '+(vixPct>=0?'up':'down');
-  document.getElementById('spx-line').setAttribute('points', toSVGPoints(spxData,200,48));
-  document.getElementById('vix-line').setAttribute('points', toSVGPoints(vixData,200,48));
-}
-updateCharts();
-if (!reduced) setInterval(updateCharts, 1800);
-
-/* ── HEATMAP ── */
-const hmColors = [60,40,20].map(p=>`color-mix(in srgb,var(--green) ${p}%,transparent)`)
-  .concat(['var(--border-hover)'], [20,40,60].map(p=>`color-mix(in srgb,var(--red) ${p}%,transparent)`));
-const hmEl = document.getElementById('heatmap');
-const sectors = ['Tech','Fin','Health','Energy','Cons','Util','Mat','RE','Comm','Ind','XLRE','ARKK','IWM','QQQ','SPY','DIA','TLT','GLD'];
-const hmPcts = [2.4, 1.5, 0.6, 0.1, -0.6, -1.5, -2.4];
-for (let i=0; i<21; i++) {
-  const c = document.createElement('div');
-  c.className = 'hm-cell';
-  const ci = Math.floor(Math.random()*hmColors.length);
-  c.style.background = hmColors[ci];
-  c.style.animationDelay = (Math.random()*3)+'s';
-  c.style.animationDuration = (2+Math.random()*3)+'s';
-  c.title = sectors[i%sectors.length];
-  c.dataset.sector = sectors[i%sectors.length];
-  c.dataset.pct = (hmPcts[ci] + (Math.random()-0.5)*0.6).toFixed(1);
-  hmEl.appendChild(c);
-}
-const hmDetail = document.createElement('div');
-hmDetail.className = 'hm-detail';
-hmEl.after(hmDetail);
-hmEl.addEventListener('click', e => {
-  const cell = e.target.closest('.hm-cell');
-  if (!cell) return;
-  const was = cell.classList.contains('sel');
-  hmEl.querySelectorAll('.sel').forEach(c => c.classList.remove('sel'));
-  if (was) { hmDetail.textContent = ''; return; }
-  cell.classList.add('sel');
-  const p = +cell.dataset.pct;
-  hmDetail.textContent = `${cell.dataset.sector.toUpperCase()} · ${p>=0?'+':''}${p}% (sample)`;
-});
-hmEl.addEventListener('mouseover', e => {
-  const cell = e.target.closest('.hm-cell');
-  if (!cell || hmEl.querySelector('.sel')) return;
-  const p = +cell.dataset.pct;
-  hmDetail.textContent = `${cell.dataset.sector.toUpperCase()} · ${p>=0?'+':''}${p}% (sample)`;
-});
-hmEl.addEventListener('mouseleave', () => {
-  if (!hmEl.querySelector('.sel')) hmDetail.textContent = '';
-});
-
-/* ── INSTRUMENT FEED ── */
-const tickers = [
-  {sym:'NVDA',price:'131.42',chg:'+2.8%',dir:'up'},
-  {sym:'AAPL',price:'212.18',chg:'+1.4%',dir:'up'},
-  {sym:'MSFT',price:'448.62',chg:'+0.4%',dir:'up'},
-  {sym:'META',price:'562.90',chg:'+1.9%',dir:'up'},
-  {sym:'TSLA',price:'189.34',chg:'-1.6%',dir:'down'},
-  {sym:'BTC',price:'68,420',chg:'+3.1%',dir:'up'},
-  {sym:'ETH',price:'3,840',chg:'+2.2%',dir:'up'},
-  {sym:'VIX',price:'16.3',chg:'-2.1%',dir:'down'},
-];
-const tf = document.getElementById('ticker-feed');
-const tickerRow = t => `
-  <div class="ticker-row" data-sym="${t.sym}">
-    <span class="ticker-sym">${t.sym}</span>
-    <span class="ticker-price">${t.price}</span>
-    <span class="ticker-chg ${t.dir}">${t.chg}</span>
-  </div>`;
-tf.innerHTML = tickers.map(tickerRow).join('');
-if (!reduced) {
-  setInterval(()=>{
-    const t = tickers[Math.floor(Math.random()*tickers.length)];
-    const pct = parseFloat(t.chg)+(Math.random()-.5)*0.2;
-    t.chg = (pct>=0?'+':'')+pct.toFixed(1)+'%';
-    t.dir = pct>=0?'up':'down';
-    const chgEl = tf.querySelector(`.ticker-row[data-sym="${t.sym}"] .ticker-chg`);
-    if (!chgEl) return;
-    chgEl.textContent = t.chg;
-    chgEl.className = 'ticker-chg ' + t.dir;
-    const tr = chgEl.closest('.ticker-row');
-    tr.classList.remove('flash-up','flash-down');
-    void tr.offsetWidth;
-    tr.classList.add(t.dir === 'up' ? 'flash-up' : 'flash-down');
-  }, 2200);
-}
-
-/* ── RESEARCH JOBS ── */
-const agentColors = {running:'var(--green)',training:'var(--violet)',idle:'var(--text-4)'};
-const agents = [
-  {name:'alpha-extractor-v3',status:'running'},
-  {name:'regime-classifier',status:'training'},
-  {name:'earnings-nlp-agent',status:'idle'},
-  {name:'backtest-engine-5d',status:'running'},
-  {name:'signal-ranker',status:'running'},
-];
-document.getElementById('agent-feed').innerHTML = agents.map(a=>`
-  <div class="agent-row">
-    <div class="agent-dot" style="background:${agentColors[a.status]}"></div>
-    <span class="agent-name">${a.name}</span>
-    <span class="agent-status">[${a.status}]</span>
-  </div>`).join('');
-
-/* ── FACTOR BARS ── */
-const factors = [
-  {name:'momentum_3m',val:0.72},
-  {name:'earnings_rev',val:0.91},
-  {name:'quality_score',val:0.68},
-  {name:'short_interest',val:0.43},
-  {name:'sentiment_nlp',val:0.56},
-];
-document.getElementById('factor-bars').innerHTML = factors.map(f=>`
-  <div style="margin-bottom:8px">
-    <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-3);margin-bottom:3px;letter-spacing:0.05em">
-      <span>${f.name}</span><span>${f.val.toFixed(2)}</span>
-    </div>
-    <div style="height:3px;background:var(--border);border-radius:2px;overflow:hidden">
-      <div style="height:100%;width:${f.val*100}%;background:var(--blue);border-radius:2px"></div>
-    </div>
-  </div>`).join('');
-
-/* ── SPARKLINE CROSSHAIR + TOOLTIP ── */
-function sparkHover(lineId, data, fmt) {
-  const line = document.getElementById(lineId);
-  const wrap = line.closest('.bb-chart-line');
-  const svg = line.ownerSVGElement;
-  const vline = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-  vline.setAttribute('y1', 0); vline.setAttribute('y2', 48);
-  vline.style.stroke = 'var(--text-2)';
-  vline.setAttribute('stroke-width', '0.75');
-  vline.style.opacity = 0;
-  svg.appendChild(vline);
-  const tip = document.createElement('div');
-  tip.className = 'spark-tip';
-  wrap.appendChild(tip);
-  wrap.addEventListener('mousemove', e => {
-    const r = wrap.getBoundingClientRect();
-    const frac = Math.max(0, Math.min(1, (e.clientX - r.left)/r.width));
-    const idx = Math.round(frac*(data.length-1));
-    const x = idx/(data.length-1)*200;
-    vline.setAttribute('x1', x); vline.setAttribute('x2', x);
-    vline.style.opacity = 1;
-    tip.textContent = fmt(data[idx]);
-    tip.style.left = (frac*100)+'%';
-    tip.style.opacity = 1;
-  }, {passive:true});
-  wrap.addEventListener('mouseleave', () => { vline.style.opacity = 0; tip.style.opacity = 0; });
-}
-sparkHover('spx-line', spxData, v => v.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ','));
-sparkHover('vix-line', vixData, v => v.toFixed(1));
-
 /* ── TICKER TAPE ── */
 const tapeTrack = document.getElementById('tape-track');
 if (tapeTrack) {
   const tapeItem = t => `<span class="tape-item"><span class="tape-sym">${t.sym}</span><span class="tape-px">${t.price}</span><span class="tape-chg ${t.dir}">${t.chg}</span></span>`;
-  tapeTrack.innerHTML = [...tickers, ...tickers].map(tapeItem).join('');
-}
-
-/* ── KNOWLEDGE GRAPH ── */
-const GRAPH_TOPICS = [
-  'Momentum','Earnings NLP','Signal Ranking','Alpha Factors','Quality Score','Regime HMM',
-  'Backtesting','LLM Agents','Factor Attribution','Sharpe Ratio','Risk Models','VaR',
-  'Portfolio Optimization','Alt Data','Sentiment','Volatility','Order Flow','Cross-Section',
-  'Walk-Forward','Publication','Replication','Alpha Decay','Half-Life','Transaction Costs',
-  'Turnover','Capacity','Skewness','Kurtosis','Tail Risk','Drawdown','Recovery','Yield Curve',
-  'Credit Spreads','Factor Rotation','Deflated Sharpe','Multiple Testing',
-];
-const fc = document.getElementById('force-canvas');
-const fctx = fc.getContext('2d');
-let fW, fH;
-const nodePalette = () => isLight()
-  ? ['rgba(37,99,235,0.85)','rgba(109,40,217,0.85)','rgba(8,145,178,0.85)','rgba(15,23,42,0.45)']
-  : ['rgba(122,158,255,0.9)','rgba(178,150,255,0.9)','rgba(0,255,240,0.75)','rgba(255,255,255,0.45)'];
-let fNodes = [], fEdges = [];
-function initForce() {
-  fW = fc.width = fc.offsetWidth; fH = fc.height = 420;
-  fNodes = GRAPH_TOPICS.map((label, i) => ({
-    x: fW/2 + (Math.random()-.5)*fW*0.7,
-    y: fH/2 + (Math.random()-.5)*fH*0.7,
-    vx:0, vy:0,
-    r: 4+Math.random()*4.5,
-    type: i % 4,
-    label,
-  }));
-  fEdges = [];
-  for (let i=0;i<fNodes.length;i++) for (let j=i+1;j<fNodes.length;j++) {
-    if (Math.random()<0.12) fEdges.push([i,j]);
-  }
-}
-let fMouseX = -1, fMouseY = -1, fHoverNode = -1, fDrag = -1;
-function stepForce() {
-  const k = 80, repK = 4000, damping = 0.88;
-  for (let i=0;i<fNodes.length;i++) {
-    if (i === fDrag) continue; // dragged node follows the pointer, not physics
-    let fx=0,fy=0;
-    for (let j=0;j<fNodes.length;j++) {
-      if(i===j)continue;
-      const dx=fNodes[i].x-fNodes[j].x, dy=fNodes[i].y-fNodes[j].y;
-      const d=Math.max(1,Math.hypot(dx,dy));
-      fx+=repK*dx/d/d; fy+=repK*dy/d/d;
-    }
-    fEdges.forEach(([a,b])=>{
-      if(a===i||b===i){
-        const other=a===i?b:a;
-        const dx=fNodes[i].x-fNodes[other].x, dy=fNodes[i].y-fNodes[other].y;
-        const d=Math.max(1,Math.hypot(dx,dy));
-        fx-=k*(d-100)*dx/d; fy-=k*(d-100)*dy/d;
-      }
-    });
-    fx += (fW/2-fNodes[i].x)*0.015;
-    fy += (fH/2-fNodes[i].y)*0.015;
-    fNodes[i].vx=(fNodes[i].vx+fx*0.001)*damping;
-    fNodes[i].vy=(fNodes[i].vy+fy*0.001)*damping;
-    fNodes[i].x+=fNodes[i].vx; fNodes[i].y+=fNodes[i].vy;
-    fNodes[i].x=Math.max(20,Math.min(fW-20,fNodes[i].x));
-    fNodes[i].y=Math.max(20,Math.min(fH-20,fNodes[i].y));
-  }
-}
-fc.addEventListener('pointerdown', e => {
-  const rect = fc.getBoundingClientRect();
-  const x = e.clientX - rect.left, y = e.clientY - rect.top;
-  for (let i=0; i<fNodes.length; i++) {
-    if (Math.hypot(fNodes[i].x-x, fNodes[i].y-y) < 14) {
-      fDrag = i;
-      fc.setPointerCapture(e.pointerId);
-      e.preventDefault();
-      break;
-    }
-  }
-});
-fc.addEventListener('pointermove', e => {
-  const rect = fc.getBoundingClientRect();
-  fMouseX = e.clientX - rect.left;
-  fMouseY = e.clientY - rect.top;
-  if (fDrag >= 0) {
-    const n = fNodes[fDrag];
-    n.x = Math.max(20, Math.min(fW-20, fMouseX));
-    n.y = Math.max(20, Math.min(fH-20, fMouseY));
-    n.vx = n.vy = 0;
-    fHoverNode = fDrag;
-    return;
-  }
-  fHoverNode = -1;
-  for (let i=0; i<fNodes.length; i++) {
-    if (Math.hypot(fNodes[i].x-fMouseX, fNodes[i].y-fMouseY) < 12) { fHoverNode = i; break; }
-  }
-});
-fc.addEventListener('pointerup', () => { fDrag = -1; });
-fc.addEventListener('pointercancel', () => { fDrag = -1; });
-fc.addEventListener('mouseleave', () => { fMouseX=-1; fMouseY=-1; fHoverNode=-1; });
-
-function drawForce() {
-  fctx.clearRect(0,0,fW,fH);
-  stepForce();
-  const ink = canvasInk();
-  const palette = nodePalette();
-
-  fEdges.forEach(([a,b])=>{
-    const na=fNodes[a],nb=fNodes[b];
-    const isHovered = fHoverNode === a || fHoverNode === b;
-    fctx.strokeStyle = isHovered ? `rgba(${ink},0.45)` : `rgba(${ink},0.16)`;
-    fctx.lineWidth = isHovered ? 1.5 : 0.9;
-    fctx.beginPath();fctx.moveTo(na.x,na.y);fctx.lineTo(nb.x,nb.y);fctx.stroke();
-  });
-
-  fNodes.forEach((n,i)=>{
-    const c=palette[n.type];
-    const isHovered = fHoverNode === i;
-    const scale = isHovered ? 1.6 : 1;
-    const glowRadius = isHovered ? n.r*8 : n.r*4;
-
-    const grad=fctx.createRadialGradient(n.x,n.y,n.r,n.x,n.y,glowRadius);
-    grad.addColorStop(0,c.replace(/[\d.]+\)$/,'0.20)'));
-    grad.addColorStop(1,'transparent');
-    fctx.beginPath();fctx.arc(n.x,n.y,glowRadius,0,Math.PI*2);
-    fctx.fillStyle=grad;fctx.fill();
-
-    fctx.beginPath();fctx.arc(n.x,n.y,n.r*scale,0,Math.PI*2);
-    fctx.fillStyle=c;fctx.fill();
-
-    if (isHovered) {
-      fctx.strokeStyle = `rgba(${ink},0.6)`;
-      fctx.lineWidth = 1.5;
-      fctx.beginPath();fctx.arc(n.x,n.y,n.r*scale+2,0,Math.PI*2);
-      fctx.stroke();
-
-      const label = n.label;
-      const padding = 8;
-      fctx.font = '600 11px Inter, system-ui, sans-serif';
-      const tw = fctx.measureText(label).width;
-      const bx = Math.min(n.x - tw/2 - padding, fW - tw - padding*2 - 4);
-      const by = n.y - n.r*scale - 36;
-      const bxClamped = Math.max(4, bx);
-      const byClamped = Math.max(4, by);
-
-      fctx.fillStyle = isLight() ? 'rgba(255,255,255,0.95)' : 'rgba(9,13,21,0.92)';
-      fctx.beginPath();
-      fctx.roundRect(bxClamped, byClamped, tw + padding*2, 24, 4);
-      fctx.fill();
-
-      fctx.strokeStyle = `rgba(${ink},0.3)`;
-      fctx.lineWidth = 1;
-      fctx.beginPath();
-      fctx.roundRect(bxClamped, byClamped, tw + padding*2, 24, 4);
-      fctx.stroke();
-
-      fctx.fillStyle = c;
-      fctx.fillText(label, bxClamped + padding, byClamped + 16);
-    }
-  });
-}
-initForce();
-if (reduced) {
-  drawForce();
-  document.addEventListener('themechange', drawForce);
-} else {
-  let fActive = false, fAnimId;
-  function fLoop() {
-    if (!fActive) return;
-    drawForce();
-    fAnimId = requestAnimationFrame(fLoop);
-  }
-  new IntersectionObserver(entries => {
-    const vis = entries[0].isIntersecting;
-    if (vis && !fActive) { fActive = true; fLoop(); }
-    else if (!vis) { fActive = false; cancelAnimationFrame(fAnimId); }
-  }, {threshold: 0.05}).observe(fc);
-  // reassigning canvas.width wipes the bitmap; repaint if the loop is paused
-  addEventListener('resize', ()=>{ initForce(); if (!fActive) drawForce(); }, {passive:true});
+  tapeTrack.innerHTML = [...sampleTickers, ...sampleTickers].map(tapeItem).join('');
 }
 
 /* ── TERMINAL ── */

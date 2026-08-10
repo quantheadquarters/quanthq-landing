@@ -230,8 +230,6 @@ html.light .bg-grid{opacity:0.3}
 html.light .nebula-blob{opacity:0.4}
 html.light .hero-floor{opacity:0.3}
 html.light .grain{opacity:0.02}
-html.light .bb-cell{background:rgba(255,255,255,0.9)}
-html.light .bb-cell:hover{background:rgba(255,255,255,1)}
 html.light .bento-card{background:rgba(255,255,255,0.8);border-color:var(--border)}
 html.light .bento-card:hover{border-color:var(--border-hover);box-shadow:0 32px 64px -16px rgba(0,0,0,0.08)}
 html.light .terminal-body{background:rgba(245,245,247,0.98)}
@@ -542,126 +540,8 @@ html.light .hero-floor{opacity:0.25}
 }
 .in .wrd{opacity:1;transform:none;filter:none}
 /* odometer digits removed */
-/* sparkline crosshair tooltip */
-.bb-chart-line{position:relative}
-.spark-tip{
-  position:absolute;top:-26px;transform:translateX(-50%);
-  padding:2px 8px;border-radius:4px;
-  background:var(--surface-2);
-  backdrop-filter:blur(8px);
-  border:1px solid var(--border-hover);
-  font-family:var(--font-mono);font-size:10px;color:var(--white);
-  pointer-events:none;opacity:0;transition:opacity 0.15s;
-  white-space:nowrap;z-index:5;
-}
-.hm-cell{cursor:pointer;transition:outline-color 0.15s}
-.hm-cell.sel{outline:1px solid var(--text-1);outline-offset:1px}
-.hm-detail{
-  margin-top:10px;font-family:var(--font-mono);
-  font-size:10px;color:var(--text-2);
-  min-height:14px;letter-spacing:0.05em;
-}
 .ds-inner{max-width:var(--shell);margin:0 auto}
 .ds-header{margin-bottom:64px}
-.bloomberg-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr 1fr 1fr;
-  grid-template-rows:auto auto auto;
-  gap:1px;
-  background:var(--border);
-  border:1px solid var(--border);
-  border-radius:8px;
-  overflow:hidden;
-}
-.bb-cell{
-  background:var(--carbon);
-  padding:20px;
-  position:relative;
-  overflow:hidden;
-}
-.bb-cell:hover{background:var(--carbon)}
-.bb-cell.span2{grid-column:span 2}
-.bb-cell.tall{grid-row:span 2}
-.bb-label{
-  font-size:9px;letter-spacing:0.15em;text-transform:uppercase;
-  color:var(--text-3);font-weight:600;margin-bottom:12px;
-  display:flex;align-items:center;justify-content:space-between;
-}
-.bb-val{
-  font-size:32px;font-weight:700;letter-spacing:-0.03em;
-  line-height:1;color:var(--white);
-}
-.bb-change{
-  font-size:12px;font-weight:600;margin-top:4px;
-}
-.bb-change.up{color:var(--green)}
-.bb-change.down{color:var(--red)}
-.bb-chart-line{
-  width:100%;height:48px;margin-top:16px;
-}
-.bb-chart-line svg{width:100%;height:100%}
-.ticker-row{
-  display:flex;align-items:center;gap:12px;
-  padding:8px 0;
-  border-bottom:1px solid var(--border);
-  font-size:12px;
-}
-.ticker-row:last-child{border-bottom:none}
-.ticker-sym{
-  font-family:var(--font-mono);
-  color:var(--text-1);font-weight:600;
-  width:50px;flex-shrink:0;
-}
-.ticker-price{
-  margin-left:auto;font-family:var(--font-mono);
-  color:var(--text-2);
-}
-.ticker-chg{
-  font-family:var(--font-mono);font-size:11px;
-  font-weight:600;width:52px;text-align:right;flex-shrink:0;
-}
-.ticker-chg.up{color:var(--green)}
-.ticker-chg.down{color:var(--red)}
-.mini-heatmap{
-  display:grid;grid-template-columns:repeat(7,1fr);grid-auto-rows:1fr;gap:2px;
-  margin-top:8px;height:104px;
-}
-.hm-cell{
-  border-radius:2px;
-  animation:hmPulse ease-in-out infinite;
-}
-html.light .hm-cell{animation:none}
-@keyframes hmPulse{
-  0%,100%{filter:brightness(1)}
-  50%{filter:brightness(1.3)}
-}
-/* price flash on ticker update */
-.ticker-row.flash-up{animation:rowFlashUp 0.5s var(--ease-out)}
-.ticker-row.flash-down{animation:rowFlashDown 0.5s var(--ease-out)}
-@keyframes rowFlashUp{from{background:color-mix(in srgb,var(--green) 16%,transparent)}to{background:transparent}}
-@keyframes rowFlashDown{from{background:color-mix(in srgb,var(--red) 16%,transparent)}to{background:transparent}}
-/* heatmap repricing flash */
-.hm-cell.hm-flash{animation:hmFlash 0.6s var(--ease-out)}
-@keyframes hmFlash{from{filter:brightness(2.2)}to{filter:brightness(1)}}
-.agent-row{
-  display:flex;align-items:center;gap:10px;
-  padding:10px 0;border-bottom:1px solid var(--border);
-  font-size:11px;
-}
-.agent-row:last-child{border-bottom:none}
-.agent-dot{
-  width:6px;height:6px;border-radius:50%;flex-shrink:0;
-  animation:agentPulse 2s ease-in-out infinite;
-}
-@keyframes agentPulse{
-  0%,100%{opacity:1;transform:scale(1)}
-  50%{opacity:0.5;transform:scale(0.7)}
-}
-.agent-name{color:var(--text-2);flex:1}
-.agent-status{
-  font-family:var(--font-mono);
-  color:var(--text-3);font-size:10px;
-}
 
 /* ── BENTO GRID ── */
 .bento-section{padding:0 var(--gutter) var(--section-gap)}
@@ -962,19 +842,18 @@ footer{
 }
 
 /* ── REVEAL ANIMATIONS ── */
-.rv2{
+.js .rv2{
   opacity:0;transform:translateY(32px);
   transition:opacity 0.8s var(--ease-out),transform 0.8s var(--ease-out);
 }
-.rv2.in{opacity:1;transform:translateY(0)}
-.rv2[data-d="1"]{transition-delay:0.1s}
-.rv2[data-d="2"]{transition-delay:0.2s}
-.rv2[data-d="3"]{transition-delay:0.3s}
+.js .rv2.in{opacity:1;transform:translateY(0)}
+.js .rv2[data-d="1"]{transition-delay:0.1s}
+.js .rv2[data-d="2"]{transition-delay:0.2s}
+.js .rv2[data-d="3"]{transition-delay:0.3s}
 
 /* ── RESPONSIVE ── */
 @media(max-width:1024px){
   :root{--section-gap:112px;--gutter:24px}
-  .bloomberg-grid{grid-template-columns:1fr 1fr}
   .bento-grid{grid-template-columns:repeat(6,1fr)}
   .bento-card.wide{grid-column:span 6}
   .bento-card{grid-column:span 3}
@@ -1023,12 +902,12 @@ footer{
 }
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{animation:none!important;transition:none!important}
-  .rv2{opacity:1;transform:none}
+  .js .rv2{opacity:1;transform:none}
 }
 
 /* ── SMOOTH THEME TRANSITION ── */
 html{transition:background 0.5s,color 0.5s}
-html body,html nav,html footer,.bento-card,.bb-cell,.project-card,.terminal-window{
+html body,html nav,html footer,.bento-card,.project-card,.terminal-window{
   transition:background 0.5s,color 0.5s,border-color 0.5s,box-shadow 0.5s;
 }
 
@@ -1057,7 +936,7 @@ html body,html nav,html footer,.bento-card,.bb-cell,.project-card,.terminal-wind
 .fade-in.in{opacity:1}
 
 /* ── SMOOTH STAT COUNTERS ── */
-.hero-metric .n,.bb-val{
+.hero-metric .n{
   font-family:var(--font-mono);
   font-variant-numeric:tabular-nums;
   font-feature-settings:'tnum' 1;
@@ -1234,11 +1113,6 @@ html body,html nav,html footer,.bento-card,.bb-cell,.project-card,.terminal-wind
 }
 .sample-banner strong{color:var(--text-1)}
 .sample-banner a{color:var(--blue);text-decoration:underline;text-underline-offset:2px}
-.bb-sample{
-  font-size:8px;letter-spacing:0.16em;text-transform:uppercase;
-  padding:2px 6px;border-radius:100px;margin-left:6px;
-  border:1px solid var(--border);color:var(--text-3);
-}
 .panel-note{margin-top:20px;font-size:12.5px;color:var(--text-3);line-height:1.7}
 .panel-note a{color:var(--blue);text-decoration:underline;text-underline-offset:2px}
 .lab-outro{padding:0 var(--gutter) var(--section-gap);text-align:center}

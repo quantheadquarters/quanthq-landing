@@ -1,29 +1,105 @@
 ---
 import Base from '../layouts/Base.astro';
 import AboutStory from '../components/AboutStory.astro';
+import KnowledgeGraph from '../components/KnowledgeGraph.astro';
+import SignalDashboard from '../components/SignalDashboard.astro';
+import { JOIN_URL } from '../data/links.ts';
 ---
-<Base title="About QuantHQ | Open Quantitative Finance Research" description="Learn how QuantHQ brings together quants, engineers, mathematicians, and AI scientists to build open, reproducible quantitative finance research.">
-  <section class="px-8 pt-24 pb-14">
-    <div class="max-w-[var(--shell)] mx-auto">
-      <div class="section-label mb-8">About QuantHQ</div>
-      <h1 class="sr-only">About QuantHQ</h1>
-      <div class="flex flex-col gap-5 text-[clamp(40px,6.2vw,92px)] display-title leading-[0.98]">
-        <div class="rv">Most communities <span class="text-[var(--text-3)]">consume.</span></div>
-        <div class="rv">We <span class="gradient-text">research.</span></div>
-        <div class="rv">We <span class="gradient-text">build.</span></div>
-        <div class="rv">We <span class="gradient-text">publish.</span></div>
-        <div class="rv">We create <span class="gradient-text">intelligence.</span></div>
-        <div class="rv">Welcome to <span class="gradient-text">QuantHQ.</span></div>
-      </div>
-      <p class="rv mt-10 max-w-xl text-[var(--text-2)] text-[17px] leading-relaxed">
-        A digital research institution for quantitative finance and AI — building rigorous,
-        open, reproducible research in public, with a global community of quants, engineers,
-        and scientists.
+<Base
+  title="About QuantHQ | Open Quantitative Finance Research"
+  description="QuantHQ is an open research community for quantitative finance and financial AI — papers published with their methods, and a place to argue about them."
+>
+  <section class="about-hero">
+    <div class="shell">
+      <p class="about-eyebrow">About</p>
+      <h1 class="about-h1">
+        We publish quant research<br />with the working shown.
+      </h1>
+      <p class="about-lead">
+        Most of what gets written about markets is either a sales pitch or a result with no method
+        attached. QuantHQ exists to do the other thing: publish the paper, the data sources, and the
+        attempts that failed — then hand it to a room full of people qualified to tear it apart.
       </p>
+      <p class="about-lead">
+        It is open, it is free, and it is run by quants, engineers, and students who mostly argue
+        about method.
+      </p>
+      <a href={JOIN_URL} target="_blank" rel="noopener" class="btn btn-solid about-cta">Join the community</a>
     </div>
   </section>
 
-  <section class="px-8 pb-10">
+  <section class="about-map">
+    <div class="shell">
+      <div class="kicker"><span class="kicker-rule"></span><span>What we study</span></div>
+      <p class="about-map-note">
+        Each node is a topic we work on; an edge means the two show up together in our papers.
+        Drag one to pull the map apart.
+      </p>
+      <KnowledgeGraph height={440} />
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="shell">
+      <div class="kicker"><span class="kicker-rule"></span><span>The intelligence layer</span></div>
+      <h2 class="headline headline-rule rv">Signal intelligence, laid out.</h2>
+      <p class="lead rv">
+        This is how we lay out a research surface — sparklines, a sector grid, the job queue, and
+        factor attribution on one screen. It is a layout demo, not a data product.
+      </p>
+      <p class="sample-note rv">
+        <strong>Simulated data.</strong> Nothing here is a market feed. Every price, sector move, job
+        state, and factor loading is generated in your browser from sample values and refreshes on a
+        timer. Results with real data and methodology live in the <a href="/research/">research archive</a>.
+      </p>
+      <div class="dash-wrap rv">
+        <SignalDashboard
+          note='The full interactive version, with the pipeline terminal and knowledge graph, is on the <a href="/lab/">lab</a> page.'
+        />
+      </div>
+    </div>
+  </section>
+
+  <section class="shell about-story">
     <AboutStory />
   </section>
 </Base>
+
+<style>
+  .about-hero { padding: clamp(56px, 9vh, 96px) 0 clamp(40px, 6vh, 64px); }
+  .about-eyebrow {
+    font-family: var(--font-mono); font-size: 11px;
+    letter-spacing: 0.24em; text-transform: uppercase; color: var(--text-3);
+  }
+  .about-h1 {
+    margin-top: 24px;
+    font-family: var(--font-display); font-weight: 400;
+    font-size: clamp(38px, 6.4vw, 84px); line-height: 1.0;
+    letter-spacing: -0.03em; color: var(--text);
+  }
+  .about-lead {
+    margin-top: 26px; max-width: 62ch;
+    font-size: clamp(16px, 1.7vw, 19px); line-height: 1.68; color: var(--text-2);
+  }
+  .about-cta { margin-top: 36px; }
+
+  .about-map { padding-bottom: clamp(40px, 7vh, 76px); }
+  .about-map-note {
+    margin: -8px 0 22px; max-width: 58ch;
+    font-size: 15px; line-height: 1.6; color: var(--text-3);
+  }
+  .about-story { padding-bottom: 40px; }
+
+  /* the simulated-data disclosure is non-negotiable: this panel is a layout
+     demo, so it must never read as a live feed. */
+  .sample-note {
+    margin-top: 24px; max-width: 74ch;
+    padding: 14px 18px; border-radius: 10px;
+    border: 1px solid color-mix(in srgb, var(--gold) 34%, transparent);
+    background: color-mix(in srgb, var(--gold) 7%, transparent);
+    font-size: 13.5px; line-height: 1.7; color: var(--text-2);
+  }
+  .sample-note strong { color: var(--text-1); }
+  .sample-note a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+  .dash-wrap { margin-top: 36px; }
+</style>

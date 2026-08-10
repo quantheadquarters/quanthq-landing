@@ -1,0 +1,256 @@
+---
+// Force-directed map of the research topics we work on. Nodes are topics, edges
+// are topics that co-occur in our papers. Decorative but honest — it is our own
+// topic list, not simulated market data, so unlike the /lab panels it is safe to
+// use on content pages.
+//
+// Used by /about (mission section) and /lab (panel 02). One implementation, two
+// call sites — do not fork it.
+interface Props {
+  topics?: string[];
+  height?: number;
+  /** rendered above the canvas; pass null to omit */
+  legend?: boolean;
+}
+const {
+  topics = [
+    'Momentum', 'Earnings NLP', 'Signal Ranking', 'Alpha Factors', 'Quality Score', 'Regime HMM',
+    'Backtesting', 'LLM Agents', 'Factor Attribution', 'Sharpe Ratio', 'Risk Models', 'VaR',
+    'Portfolio Optimization', 'Alt Data', 'Sentiment', 'Volatility', 'Order Flow', 'Cross-Section',
+    'Walk-Forward', 'Publication', 'Replication', 'Alpha Decay', 'Half-Life', 'Transaction Costs',
+    'Turnover', 'Capacity', 'Skewness', 'Kurtosis', 'Tail Risk', 'Drawdown', 'Recovery', 'Yield Curve',
+    'Credit Spreads', 'Factor Rotation', 'Deflated Sharpe', 'Multiple Testing',
+  ],
+  height = 420,
+  legend = true,
+} = Astro.props;
+---
+<div class="kgraph" data-height={height}>
+  {legend && (
+    <div class="kgraph-legend" aria-hidden="true">
+      <span class="kgl"><i style="background:var(--accent, #3D7BFF)"></i>Research</span>
+      <span class="kgl"><i style="background:var(--accent2, #7B5CFF)"></i>Papers</span>
+      <span class="kgl"><i style="background:var(--cyan, #00FFF0)"></i>Methods</span>
+      <span class="kgl"><i style="background:var(--text-4, rgba(255,255,255,0.38))"></i>Signals</span>
+      <span class="kgl-hint">Drag a node</span>
+    </div>
+  )}
+  <canvas
+    class="kgraph-canvas"
+    data-topics={JSON.stringify(topics)}
+    role="img"
+    aria-label={`Force-directed graph of ${topics.length} QuantHQ research topics and how they connect`}
+  ></canvas>
+  <noscript>
+    <p class="kgraph-fallback">
+      Topics we work on: {topics.join(' · ')}.
+    </p>
+  </noscript>
+</div>
+
+<style>
+  .kgraph {
+    position: relative;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--card-bg);
+    overflow: hidden;
+  }
+  .kgraph-canvas { display: block; width: 100%; }
+  .kgraph-legend {
+    position: absolute; top: 0; left: 0; right: 0; z-index: 1;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 18px;
+    padding: 14px 18px;
+    font-family: var(--font-mono); font-size: 10px;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-3);
+  }
+  .kgl { display: inline-flex; align-items: center; gap: 7px; }
+  .kgl i { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+  .kgl-hint { margin-left: auto; color: var(--text-4); }
+  .kgraph-fallback { padding: 28px 22px; color: var(--text-3); font-size: 13px; line-height: 1.7; }
+  @media (max-width: 620px) { .kgl-hint { display: none; } }
+</style>
+
+<script>
+  function initKGraphs() {
+    document.querySelectorAll('.kgraph').forEach((wrap) => {
+      if (wrap.dataset.bound) return;
+      wrap.dataset.bound = '1';
+
+      const canvas = wrap.querySelector('.kgraph-canvas');
+      const ctx = canvas.getContext('2d');
+      const labels = JSON.parse(canvas.dataset.topics);
+      // a decorative panel should not eat half a phone screen. Recomputed on
+      // every init() so a resize across the breakpoint picks up the new height.
+      const maxH = +wrap.dataset.height || 420;
+      const heightFor = () => Math.min(maxH, innerWidth < 640 ? 300 : maxH);
+      let H = heightFor();
+      const reduced = matchMedia('(prefers-reduced-motion:reduce)').matches;
+      const isLight = () => document.documentElement.classList.contains('light');
+      const ink = () => (isLight() ? '15,23,42' : '255,255,255');
+      const palette = () =>
+        isLight()
+          ? ['rgba(37,99,235,0.85)', 'rgba(109,40,217,0.85)', 'rgba(8,145,178,0.85)', 'rgba(15,23,42,0.45)']
+          : ['rgba(122,158,255,0.9)', 'rgba(178,150,255,0.9)', 'rgba(0,255,240,0.75)', 'rgba(255,255,255,0.45)'];
+
+      let W, nodes = [], edges = [], drag = -1, hover = -1;
+
+      function init() {
+        // back the bitmap with devicePixelRatio so the nodes and labels stay crisp
+        const dpr = Math.min(devicePixelRatio || 1, 2);
+        H = heightFor();
+        W = canvas.offsetWidth;
+        canvas.width = W * dpr;
+        canvas.height = H * dpr;
+        canvas.style.height = H + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        nodes = labels.map((label, i) => ({
+          x: W / 2 + (Math.random() - 0.5) * W * 0.7,
+          y: H / 2 + (Math.random() - 0.5) * H * 0.7,
+          vx: 0, vy: 0,
+          r: 4 + Math.random() * 4.5,
+          type: i % 4,
+          seed: Math.random() * Math.PI * 2, // per-node phase for the idle drift
+          label,
+        }));
+        edges = [];
+        for (let i = 0; i < nodes.length; i++)
+          for (let j = i + 1; j < nodes.length; j++)
+            if (Math.random() < 0.12) edges.push([i, j]);
+      }
+
+      function step() {
+        const k = 80, repK = 4000, damping = 0.88;
+        // Without this the layout settles to equilibrium in a couple of seconds
+        // and the panel looks like a static image. A slow per-node wander keeps
+        // it alive. DRIFT is the tuning knob — raise for more motion, 0 to stop.
+        const DRIFT = 90;
+        const t = performance.now() / 1000;
+        for (let i = 0; i < nodes.length; i++) {
+          if (i === drag) continue; // dragged node follows the pointer, not physics
+          let fx = 0, fy = 0;
+          for (let j = 0; j < nodes.length; j++) {
+            if (i === j) continue;
+            const dx = nodes[i].x - nodes[j].x, dy = nodes[i].y - nodes[j].y;
+            const d = Math.max(1, Math.hypot(dx, dy));
+            fx += (repK * dx) / d / d; fy += (repK * dy) / d / d;
+          }
+          for (const [a, b] of edges) {
+            if (a !== i && b !== i) continue;
+            const o = nodes[a === i ? b : a];
+            const dx = nodes[i].x - o.x, dy = nodes[i].y - o.y;
+            const d = Math.max(1, Math.hypot(dx, dy));
+            fx -= (k * (d - 100) * dx) / d; fy -= (k * (d - 100) * dy) / d;
+          }
+          fx += (W / 2 - nodes[i].x) * 0.015;
+          fy += (H / 2 - nodes[i].y) * 0.015;
+          fx += Math.sin(t * 0.35 + nodes[i].seed) * DRIFT;
+          fy += Math.cos(t * 0.29 + nodes[i].seed * 1.7) * DRIFT;
+          nodes[i].vx = (nodes[i].vx + fx * 0.001) * damping;
+          nodes[i].vy = (nodes[i].vy + fy * 0.001) * damping;
+          nodes[i].x = Math.max(20, Math.min(W - 20, nodes[i].x + nodes[i].vx));
+          nodes[i].y = Math.max(20, Math.min(H - 20, nodes[i].y + nodes[i].vy));
+        }
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, W, H);
+        step();
+        const I = ink(), pal = palette();
+
+        for (const [a, b] of edges) {
+          const on = hover === a || hover === b;
+          ctx.strokeStyle = `rgba(${I},${on ? 0.45 : 0.16})`;
+          ctx.lineWidth = on ? 1.5 : 0.9;
+          ctx.beginPath(); ctx.moveTo(nodes[a].x, nodes[a].y); ctx.lineTo(nodes[b].x, nodes[b].y); ctx.stroke();
+        }
+
+        nodes.forEach((n, i) => {
+          const c = pal[n.type];
+          const on = hover === i;
+          const rr = n.r * (on ? 1.6 : 1);
+          const glow = n.r * (on ? 8 : 4);
+
+          const g = ctx.createRadialGradient(n.x, n.y, n.r, n.x, n.y, glow);
+          g.addColorStop(0, c.replace(/[\d.]+\)$/, '0.20)'));
+          g.addColorStop(1, 'transparent');
+          ctx.beginPath(); ctx.arc(n.x, n.y, glow, 0, Math.PI * 2); ctx.fillStyle = g; ctx.fill();
+
+          ctx.beginPath(); ctx.arc(n.x, n.y, rr, 0, Math.PI * 2); ctx.fillStyle = c; ctx.fill();
+
+          if (!on) return;
+          ctx.strokeStyle = `rgba(${I},0.6)`; ctx.lineWidth = 1.5;
+          ctx.beginPath(); ctx.arc(n.x, n.y, rr + 2, 0, Math.PI * 2); ctx.stroke();
+
+          const pad = 8;
+          ctx.font = '600 11px Inter, system-ui, sans-serif';
+          const tw = ctx.measureText(n.label).width;
+          const bx = Math.max(4, Math.min(n.x - tw / 2 - pad, W - tw - pad * 2 - 4));
+          const by = Math.max(4, n.y - rr - 36);
+          ctx.fillStyle = isLight() ? 'rgba(255,255,255,0.95)' : 'rgba(9,13,21,0.92)';
+          ctx.beginPath(); ctx.roundRect(bx, by, tw + pad * 2, 24, 4); ctx.fill();
+          ctx.strokeStyle = `rgba(${I},0.3)`; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.roundRect(bx, by, tw + pad * 2, 24, 4); ctx.stroke();
+          ctx.fillStyle = c;
+          ctx.fillText(n.label, bx + pad, by + 16);
+        });
+      }
+
+      const at = (e) => {
+        const r = canvas.getBoundingClientRect();
+        return [e.clientX - r.left, e.clientY - r.top];
+      };
+      canvas.addEventListener('pointerdown', (e) => {
+        const [x, y] = at(e);
+        for (let i = 0; i < nodes.length; i++) {
+          if (Math.hypot(nodes[i].x - x, nodes[i].y - y) < 14) {
+            drag = i; canvas.setPointerCapture(e.pointerId); e.preventDefault(); break;
+          }
+        }
+      });
+      canvas.addEventListener('pointermove', (e) => {
+        const [x, y] = at(e);
+        if (drag >= 0) {
+          const n = nodes[drag];
+          n.x = Math.max(20, Math.min(W - 20, x));
+          n.y = Math.max(20, Math.min(H - 20, y));
+          n.vx = n.vy = 0;
+          hover = drag;
+          if (reduced) draw(); // no rAF loop under reduced motion, so repaint on drag
+          return;
+        }
+        hover = -1;
+        for (let i = 0; i < nodes.length; i++) {
+          if (Math.hypot(nodes[i].x - x, nodes[i].y - y) < 12) { hover = i; break; }
+        }
+      });
+      canvas.addEventListener('pointerup', () => { drag = -1; });
+      canvas.addEventListener('pointercancel', () => { drag = -1; });
+      canvas.addEventListener('mouseleave', () => { hover = -1; });
+
+      init();
+
+      if (reduced) {
+        draw();
+        document.addEventListener('themechange', draw);
+        addEventListener('resize', () => { init(); draw(); }, { passive: true });
+        return;
+      }
+
+      let active = false, raf;
+      const loop = () => { if (!active) return; draw(); raf = requestAnimationFrame(loop); };
+      new IntersectionObserver(
+        (es) => {
+          if (es[0].isIntersecting && !active) { active = true; loop(); }
+          else if (!es[0].isIntersecting) { active = false; cancelAnimationFrame(raf); }
+        },
+        { threshold: 0.05 }
+      ).observe(canvas);
+      // reassigning canvas.width wipes the bitmap; repaint if the loop is paused
+      addEventListener('resize', () => { init(); if (!active) draw(); }, { passive: true });
+    });
+  }
+
+  initKGraphs();
+  document.addEventListener('astro:page-load', initKGraphs);
+</script>

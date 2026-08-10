@@ -1,0 +1,395 @@
+---
+// Market and factor dashboard panel — the "signal intelligence" grid.
+//
+// EVERY FIGURE IS SIMULATED. Values come from `data/sampleMarket.ts` and from
+// random walks generated in the browser; there is no network request anywhere in
+// this component. Each cell carries a "sample" chip, and any page using it must
+// also say so in prose. Never describe it as live, real-time, or streaming.
+//
+// Used by /lab (panel 01) and /about. One implementation, two call sites — do
+// not fork it. Styles use the canonical global.css variable names with literal
+// fallbacks so it also resolves inside the /lab home.css variable set.
+
+interface Props {
+  /** rendered under the grid; pass null to omit */
+  note?: string | null;
+}
+const { note = null } = Astro.props;
+---
+<div class="sigdash">
+  <div class="bloomberg-grid">
+    <div class="bb-cell">
+      <div class="bb-label">SPX <span class="bb-sample">sample</span> <span data-spx-time></span></div>
+      <div class="bb-val" data-spx-val>5,847</div>
+      <div class="bb-change up" data-spx-chg>+0.42%</div>
+      <div class="bb-chart-line">
+        <svg viewBox="0 0 200 48" preserveAspectRatio="none">
+          <polyline data-spx-line fill="none" stroke="var(--accent, #3D7BFF)" stroke-width="1.5" points=""></polyline>
+        </svg>
+      </div>
+    </div>
+    <div class="bb-cell">
+      <div class="bb-label">VIX <span class="bb-sample">sample</span></div>
+      <div class="bb-val" data-vix-val>16.3</div>
+      <div class="bb-change down" data-vix-chg>-2.1%</div>
+      <div class="bb-chart-line">
+        <svg viewBox="0 0 200 48" preserveAspectRatio="none">
+          <polyline data-vix-line fill="none" stroke="var(--red, #FF4466)" stroke-width="1.5" points=""></polyline>
+        </svg>
+      </div>
+    </div>
+    <div class="bb-cell span2">
+      <div class="bb-label">Sector heatmap <span class="bb-sample">sample</span></div>
+      <div class="mini-heatmap" data-heatmap></div>
+    </div>
+
+    <div class="bb-cell span2 tall bb-flex">
+      <div class="bb-label">Instrument feed <span class="bb-sample">sample</span></div>
+      <div class="bb-fill" data-ticker-feed></div>
+    </div>
+    <div class="bb-cell span2">
+      <div class="bb-label">Research jobs <span class="bb-sample">sample</span></div>
+      <div data-agent-feed></div>
+    </div>
+    <div class="bb-cell span2">
+      <div class="bb-label">Factor attribution <span class="bb-sample">sample</span></div>
+      <div data-factor-bars></div>
+    </div>
+  </div>
+  {note && <p class="panel-note" set:html={note} />}
+  <noscript>
+    <p class="panel-note">
+      This panel is an interactive layout demo built from simulated sample values and needs
+      JavaScript. Published results with real data live in the <a href="/research/">research archive</a>.
+    </p>
+  </noscript>
+</div>
+
+<style>
+  .bloomberg-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .bb-cell {
+    background: var(--card-bg, #090D15);
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: background 0.5s, border-color 0.5s;
+  }
+  .bb-cell.span2 { grid-column: span 2; }
+  .bb-cell.tall { grid-row: span 2; }
+  .bb-flex { display: flex; flex-direction: column; }
+  .bb-fill { flex: 1; display: flex; flex-direction: column; justify-content: space-evenly; }
+  .bb-label {
+    font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--text-3); font-weight: 600; margin-bottom: 12px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .bb-sample {
+    font-size: 8px; letter-spacing: 0.16em; text-transform: uppercase;
+    padding: 2px 6px; border-radius: 100px; margin-left: 6px;
+    border: 1px solid var(--border); color: var(--text-3);
+  }
+  .bb-val {
+    font-size: 32px; font-weight: 700; letter-spacing: -0.03em;
+    line-height: 1; color: var(--text);
+    font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+  }
+  .bb-change { font-size: 12px; font-weight: 600; margin-top: 4px; }
+  .bb-change.up { color: var(--green); }
+  .bb-change.down { color: var(--red); }
+  .bb-chart-line { position: relative; width: 100%; height: 48px; margin-top: 16px; }
+  .bb-chart-line svg { width: 100%; height: 100%; }
+
+  /* sparkline crosshair tooltip — appended by the script, so :global */
+  .bb-chart-line :global(.spark-tip) {
+    position: absolute; top: -26px; transform: translateX(-50%);
+    padding: 2px 8px; border-radius: 4px;
+    background: var(--surface-2); backdrop-filter: blur(8px);
+    border: 1px solid var(--border-hover);
+    font-family: var(--font-mono); font-size: 10px; color: var(--text);
+    pointer-events: none; opacity: 0; transition: opacity 0.15s;
+    white-space: nowrap; z-index: 5;
+  }
+
+  .mini-heatmap {
+    display: grid; grid-template-columns: repeat(7, 1fr); grid-auto-rows: 1fr; gap: 2px;
+    margin-top: 8px; height: 104px;
+  }
+  .mini-heatmap :global(.hm-cell) {
+    border-radius: 2px; cursor: pointer;
+    transition: outline-color 0.15s;
+    animation: hmPulse ease-in-out infinite;
+  }
+  .mini-heatmap :global(.hm-cell.sel) { outline: 1px solid var(--text-1); outline-offset: 1px; }
+  :global(html.light) .mini-heatmap :global(.hm-cell) { animation: none; }
+  @keyframes hmPulse { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.3); } }
+  .sigdash :global(.hm-detail) {
+    margin-top: 10px; font-family: var(--font-mono);
+    font-size: 10px; color: var(--text-2);
+    min-height: 14px; letter-spacing: 0.05em;
+  }
+
+  .sigdash :global(.ticker-row) {
+    display: flex; align-items: center; gap: 12px;
+    padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 12px;
+  }
+  .sigdash :global(.ticker-row:last-child) { border-bottom: none; }
+  .sigdash :global(.ticker-sym) {
+    font-family: var(--font-mono); color: var(--text-1);
+    font-weight: 600; width: 50px; flex-shrink: 0;
+  }
+  .sigdash :global(.ticker-price) { margin-left: auto; font-family: var(--font-mono); color: var(--text-2); }
+  .sigdash :global(.ticker-chg) {
+    font-family: var(--font-mono); font-size: 11px;
+    font-weight: 600; width: 52px; text-align: right; flex-shrink: 0;
+  }
+  .sigdash :global(.ticker-chg.up) { color: var(--green); }
+  .sigdash :global(.ticker-chg.down) { color: var(--red); }
+  .sigdash :global(.ticker-row.flash-up) { animation: rowFlashUp 0.5s cubic-bezier(.22,1,.36,1); }
+  .sigdash :global(.ticker-row.flash-down) { animation: rowFlashDown 0.5s cubic-bezier(.22,1,.36,1); }
+  @keyframes rowFlashUp { from { background: color-mix(in srgb, var(--green) 16%, transparent); } to { background: transparent; } }
+  @keyframes rowFlashDown { from { background: color-mix(in srgb, var(--red) 16%, transparent); } to { background: transparent; } }
+
+  .sigdash :global(.agent-row) {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 11px;
+  }
+  .sigdash :global(.agent-row:last-child) { border-bottom: none; }
+  .sigdash :global(.agent-dot) {
+    width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+    animation: agentPulse 2s ease-in-out infinite;
+  }
+  @keyframes agentPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.7); }
+  }
+  .sigdash :global(.agent-name) { color: var(--text-2); flex: 1; }
+  .sigdash :global(.agent-status) { font-family: var(--font-mono); font-size: 10px; color: var(--text-4); }
+
+  .sigdash :global(.fbar-head) {
+    display: flex; justify-content: space-between; margin-bottom: 3px;
+    font-family: var(--font-mono); font-size: 10px;
+    letter-spacing: 0.05em; color: var(--text-3);
+  }
+  .sigdash :global(.fbar-track) {
+    height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 8px;
+  }
+  .sigdash :global(.fbar-fill) { height: 100%; background: var(--accent, #3D7BFF); border-radius: 2px; }
+
+  .panel-note { margin-top: 20px; font-size: 12.5px; color: var(--text-3); line-height: 1.7; }
+  .panel-note a { color: var(--accent, #3D7BFF); text-decoration: underline; text-underline-offset: 2px; }
+
+  @media (max-width: 1024px) { .bloomberg-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 560px) {
+    .bloomberg-grid { grid-template-columns: 1fr; }
+    .bb-cell.span2 { grid-column: span 1; }
+    .bb-cell.tall { grid-row: auto; }
+  }
+</style>
+
+<script>
+  import { sampleTickers } from '../data/sampleMarket.ts';
+
+  function initSignalDashboards() {
+    document.querySelectorAll('.sigdash').forEach((root) => {
+      if (root.dataset.bound) return;
+      root.dataset.bound = '1';
+
+      const q = (sel) => root.querySelector(sel);
+      const reduced = matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+      /* ── simulated series ──
+         Every number below originates here. There is no network request. */
+      const makePoints = (n, base, variance) => {
+        let v = base;
+        const pts = [];
+        for (let i = 0; i < n; i++) {
+          v += (Math.random() - 0.48) * variance;
+          pts.push(Math.max(base * 0.9, Math.min(base * 1.1, v)));
+        }
+        return pts;
+      };
+      const toSVGPoints = (arr, w, h) => {
+        const min = Math.min(...arr), max = Math.max(...arr), range = max - min || 1;
+        return arr.map((v, i) => `${(i / (arr.length - 1)) * w},${h - ((v - min) / range) * h}`).join(' ');
+      };
+      const spxData = makePoints(40, 5847, 12);
+      const vixData = makePoints(40, 16.3, 0.4);
+
+      function tweenNum(el, to, fmt) {
+        const from = parseFloat(el.textContent.replace(/,/g, '')) || to;
+        if (reduced || from === to) { el.textContent = fmt(to); return; }
+        const start = performance.now(), dur = 400;
+        (function stepFrame(now) {
+          const t = Math.min((now - start) / dur, 1), e = 1 - Math.pow(1 - t, 3);
+          el.textContent = fmt(from + (to - from) * e);
+          if (t < 1) requestAnimationFrame(stepFrame);
+        })(start);
+      }
+
+      function updateCharts() {
+        spxData.push(spxData[spxData.length - 1] + (Math.random() - 0.48) * 8); spxData.shift();
+        vixData.push(vixData[vixData.length - 1] + (Math.random() - 0.48) * 0.3); vixData.shift();
+        const spxV = spxData[spxData.length - 1], vixV = vixData[vixData.length - 1];
+        tweenNum(q('[data-spx-val]'), spxV, (v) => Math.round(v).toLocaleString('en-US'));
+        tweenNum(q('[data-vix-val]'), vixV, (v) => v.toFixed(1));
+        q('[data-spx-time]').textContent = new Date().toLocaleTimeString('en-US', { hour12: false });
+        for (const [key, val, base] of [['spx', spxV, spxData[0]], ['vix', vixV, vixData[0]]]) {
+          const pct = ((val / base - 1) * 100).toFixed(2);
+          const el = q(`[data-${key}-chg]`);
+          el.textContent = (pct >= 0 ? '+' : '') + pct + '%';
+          el.className = 'bb-change ' + (pct >= 0 ? 'up' : 'down');
+        }
+        q('[data-spx-line]').setAttribute('points', toSVGPoints(spxData, 200, 48));
+        q('[data-vix-line]').setAttribute('points', toSVGPoints(vixData, 200, 48));
+      }
+      updateCharts();
+      if (!reduced) setInterval(updateCharts, 1800);
+
+      /* ── heatmap ── */
+      const hmColors = [60, 40, 20]
+        .map((p) => `color-mix(in srgb,var(--green) ${p}%,transparent)`)
+        .concat(['var(--border-hover)'], [20, 40, 60].map((p) => `color-mix(in srgb,var(--red) ${p}%,transparent)`));
+      const hmEl = q('[data-heatmap]');
+      const sectors = ['Tech', 'Fin', 'Health', 'Energy', 'Cons', 'Util', 'Mat', 'RE', 'Comm', 'Ind', 'XLRE', 'ARKK', 'IWM', 'QQQ', 'SPY', 'DIA', 'TLT', 'GLD'];
+      const hmPcts = [2.4, 1.5, 0.6, 0.1, -0.6, -1.5, -2.4];
+      for (let i = 0; i < 21; i++) {
+        const c = document.createElement('div');
+        c.className = 'hm-cell';
+        const ci = Math.floor(Math.random() * hmColors.length);
+        c.style.background = hmColors[ci];
+        c.style.animationDelay = Math.random() * 3 + 's';
+        c.style.animationDuration = 2 + Math.random() * 3 + 's';
+        c.title = sectors[i % sectors.length];
+        c.dataset.sector = sectors[i % sectors.length];
+        c.dataset.pct = (hmPcts[ci] + (Math.random() - 0.5) * 0.6).toFixed(1);
+        hmEl.appendChild(c);
+      }
+      const hmDetail = document.createElement('div');
+      hmDetail.className = 'hm-detail';
+      hmEl.after(hmDetail);
+      const label = (cell) => {
+        const p = +cell.dataset.pct;
+        return `${cell.dataset.sector.toUpperCase()} · ${p >= 0 ? '+' : ''}${p}% (sample)`;
+      };
+      hmEl.addEventListener('click', (e) => {
+        const cell = e.target.closest('.hm-cell');
+        if (!cell) return;
+        const was = cell.classList.contains('sel');
+        hmEl.querySelectorAll('.sel').forEach((c) => c.classList.remove('sel'));
+        if (was) { hmDetail.textContent = ''; return; }
+        cell.classList.add('sel');
+        hmDetail.textContent = label(cell);
+      });
+      hmEl.addEventListener('mouseover', (e) => {
+        const cell = e.target.closest('.hm-cell');
+        if (!cell || hmEl.querySelector('.sel')) return;
+        hmDetail.textContent = label(cell);
+      });
+      hmEl.addEventListener('mouseleave', () => {
+        if (!hmEl.querySelector('.sel')) hmDetail.textContent = '';
+      });
+
+      /* ── instrument feed ── */
+      const tickers = sampleTickers.map((t) => ({ ...t })); // local copy: the loop mutates chg
+      const tf = q('[data-ticker-feed]');
+      tf.innerHTML = tickers
+        .map((t) => `
+          <div class="ticker-row" data-sym="${t.sym}">
+            <span class="ticker-sym">${t.sym}</span>
+            <span class="ticker-price">${t.price}</span>
+            <span class="ticker-chg ${t.dir}">${t.chg}</span>
+          </div>`)
+        .join('');
+      if (!reduced) {
+        setInterval(() => {
+          const t = tickers[Math.floor(Math.random() * tickers.length)];
+          const pct = parseFloat(t.chg) + (Math.random() - 0.5) * 0.2;
+          t.chg = (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%';
+          t.dir = pct >= 0 ? 'up' : 'down';
+          const chgEl = tf.querySelector(`.ticker-row[data-sym="${t.sym}"] .ticker-chg`);
+          if (!chgEl) return;
+          chgEl.textContent = t.chg;
+          chgEl.className = 'ticker-chg ' + t.dir;
+          const tr = chgEl.closest('.ticker-row');
+          tr.classList.remove('flash-up', 'flash-down');
+          void tr.offsetWidth;
+          tr.classList.add(t.dir === 'up' ? 'flash-up' : 'flash-down');
+        }, 2200);
+      }
+
+      /* ── research jobs ── */
+      const agentColors = { running: 'var(--green)', training: 'var(--accent2, #7B5CFF)', idle: 'var(--text-4)' };
+      const agents = [
+        { name: 'alpha-extractor-v3', status: 'running' },
+        { name: 'regime-classifier', status: 'training' },
+        { name: 'earnings-nlp-agent', status: 'idle' },
+        { name: 'backtest-engine-5d', status: 'running' },
+        { name: 'signal-ranker', status: 'running' },
+      ];
+      q('[data-agent-feed]').innerHTML = agents
+        .map((a) => `
+          <div class="agent-row">
+            <div class="agent-dot" style="background:${agentColors[a.status]}"></div>
+            <span class="agent-name">${a.name}</span>
+            <span class="agent-status">[${a.status}]</span>
+          </div>`)
+        .join('');
+
+      /* ── factor bars ── */
+      const factors = [
+        { name: 'momentum_3m', val: 0.72 },
+        { name: 'earnings_rev', val: 0.91 },
+        { name: 'quality_score', val: 0.68 },
+        { name: 'short_interest', val: 0.43 },
+        { name: 'sentiment_nlp', val: 0.56 },
+      ];
+      q('[data-factor-bars]').innerHTML = factors
+        .map((f) => `
+          <div class="fbar-head"><span>${f.name}</span><span>${f.val.toFixed(2)}</span></div>
+          <div class="fbar-track"><div class="fbar-fill" style="width:${f.val * 100}%"></div></div>`)
+        .join('');
+
+      /* ── sparkline crosshair ── */
+      function sparkHover(sel, data, fmt) {
+        const line = q(sel);
+        const wrap = line.closest('.bb-chart-line');
+        const vline = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        vline.setAttribute('y1', 0); vline.setAttribute('y2', 48);
+        vline.style.stroke = 'var(--text-2)';
+        vline.setAttribute('stroke-width', '0.75');
+        vline.style.opacity = 0;
+        line.ownerSVGElement.appendChild(vline);
+        const tip = document.createElement('div');
+        tip.className = 'spark-tip';
+        wrap.appendChild(tip);
+        wrap.addEventListener('mousemove', (e) => {
+          const r = wrap.getBoundingClientRect();
+          const frac = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+          const idx = Math.round(frac * (data.length - 1));
+          const x = (idx / (data.length - 1)) * 200;
+          vline.setAttribute('x1', x); vline.setAttribute('x2', x);
+          vline.style.opacity = 1;
+          tip.textContent = fmt(data[idx]);
+          tip.style.left = frac * 100 + '%';
+          tip.style.opacity = 1;
+        }, { passive: true });
+        wrap.addEventListener('mouseleave', () => { vline.style.opacity = 0; tip.style.opacity = 0; });
+      }
+      sparkHover('[data-spx-line]', spxData, (v) => Math.round(v).toLocaleString('en-US'));
+      sparkHover('[data-vix-line]', vixData, (v) => v.toFixed(1));
+    });
+  }
+
+  initSignalDashboards();
+  document.addEventListener('astro:page-load', initSignalDashboards);
+</script>

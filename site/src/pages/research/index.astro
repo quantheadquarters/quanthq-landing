@@ -2,17 +2,29 @@
 import Base from '../../layouts/Base.astro';
 import { getCollection } from 'astro:content';
 import JsonLd from '../../components/JsonLd.astro';
+import { reading } from '../../data/reading';
 const papers = (await getCollection('research')).sort((a, b) => +b.data.date - +a.data.date);
 const featured = papers.find((p) => p.data.featured);
 const rest = papers.filter((p) => p !== featured);
-const allTags = [...new Set(papers.flatMap((p) => p.data.tags))];
-const searchIndex = papers.map((p) => ({
-  id: p.id,
-  title: p.data.title,
-  abstract: p.data.abstract,
-  authors: p.data.authors.join(' '),
-  tags: p.data.tags,
-}));
+// pinned first, then newest — the pinned set is the canon we keep pointing people at
+const readingList = [...reading].sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned) || b.year - a.year);
+const allTags = [...new Set([...papers.flatMap((p) => p.data.tags), ...reading.flatMap((r) => r.tags)])];
+const searchIndex = [
+  ...papers.map((p) => ({
+    id: p.id,
+    title: p.data.title,
+    abstract: p.data.abstract,
+    authors: p.data.authors.join(' '),
+    tags: p.data.tags,
+  })),
+  ...reading.map((r) => ({
+    id: r.href,
+    title: r.title,
+    abstract: `${r.note} ${r.venue}`,
+    authors: r.authors,
+    tags: r.tags,
+  })),
+];
 
 const itemListSchema = {
   "@context": "https://schema.org",
@@ -25,13 +37,13 @@ const itemListSchema = {
   }))
 };
 ---
-<Base title="Quantitative Finance Research Papers | QuantHQ" description="Read QuantHQ research papers, preprints, and technical reports on factor investing, financial AI, NLP, macro regimes, and systematic strategies.">
+<Base title="Quant Research: Papers and a Reading List | QuantHQ" description={`Research notes and preprints on quantitative finance, plus ${reading.length} papers we recommend on asset pricing, factor investing, market microstructure, and machine learning in finance.`}>
   <JsonLd data={itemListSchema} />
   <section class="px-8 pt-20 pb-8">
     <div class="max-w-[var(--shell)] mx-auto">
       <div class="section-label mb-6">Scientific Archive</div>
       <h1 class="text-[clamp(56px,9vw,120px)] display-title leading-none">Research</h1>
-      <p class="mt-5 text-[var(--text-2)] max-w-md">Preprints, technical reports, and open quantitative finance research. Explore our work on factor investing, financial AI, NLP, macro regimes, and systematic trading strategies.</p>
+      <p class="mt-5 text-[var(--text-2)] max-w-xl">Research notes and preprints, plus a reading list of {reading.length} papers — the ones we think are worth the evening, from the equilibrium arguments the whole field rests on to what deep learning has actually established about price formation.</p>
 
       <input
         id="paper-search"
@@ -48,8 +60,14 @@ const itemListSchema = {
     </div>
   </section>
 
+  <section class="px-8 pt-4 pb-2" data-section="ours">
+    <div class="max-w-[var(--shell)] mx-auto">
+      <h2 class="section-label">Papers</h2>
+    </div>
+  </section>
+
   {featured && (
-    <section class="px-8 pb-8" id="featured-section">
+    <section class="px-8 pb-8" id="featured-section" data-section="ours">
       <div class="max-w-[var(--shell)] mx-auto">
         <a href={`/research/${featured.id}/`} class="card p-8 md:p-11 block paper-item group rv relative overflow-hidden" data-id={featured.id} data-tags={featured.data.tags.join(',')}>
           <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[var(--accent)] to-[var(--accent2)]"></div>
@@ -76,7 +94,7 @@ const itemListSchema = {
     <div class="max-w-[var(--shell)] mx-auto">
       <p id="paper-empty" class="hidden text-[var(--text-2)] text-sm py-8">No papers match that search.</p>
     </div>
-    <div class="max-w-[var(--shell)] mx-auto flex flex-col gap-4" id="paper-list">
+    <div class="max-w-[var(--shell)] mx-auto flex flex-col gap-4" id="paper-list" data-section="ours">
       {rest.map((p) => (
         <a href={`/research/${p.id}/`} class="card p-8 block paper-item group" data-id={p.id} data-tags={p.data.tags.join(',')}>
           <div class="flex flex-wrap items-center gap-2 mb-4">
@@ -91,6 +109,43 @@ const itemListSchema = {
             <span class="text-[var(--text-2)] font-medium">{p.data.authors.join(' · ')}</span>
             <span class="font-mono">{p.data.date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
             <span class="ml-auto text-[var(--accent)] font-semibold uppercase text-[11px] tracking-wide group-hover:tracking-wider transition-all">Read paper →</span>
+          </div>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <section class="px-8 pt-20 pb-8" data-section="reading">
+    <div class="max-w-[var(--shell)] mx-auto">
+      <h2 class="section-label">Recommended reading · {reading.length} papers</h2>
+      <p class="mt-4 text-[var(--text-2)] text-[15px] leading-relaxed max-w-2xl">
+        Papers we come back to. Each note says why it earns the spot rather than restating the abstract —
+        read the notes to decide what to open, then read the paper. Every link goes to the canonical
+        source: a DOI, arXiv, SSRN, or the publisher's own PDF. Some sit behind a paywall; a preprint is
+        usually a search away.
+      </p>
+    </div>
+  </section>
+
+  <section class="px-8 pb-4" data-section="reading">
+    <div class="max-w-[var(--shell)] mx-auto grid gap-4 md:grid-cols-2">
+      {readingList.map((r) => (
+        <a href={r.href} target="_blank" rel="noopener" class="card p-7 block paper-item group flex flex-col" data-id={r.href} data-tags={r.tags.join(',')}>
+          <div class="flex flex-wrap items-center gap-2 mb-4">
+            {r.pinned && (
+              <span class="text-[9px] uppercase tracking-[0.2em] px-2.5 py-1 rounded-full bg-accent-10 border border-accent-20 text-[var(--accent)] font-semibold">★ Core</span>
+            )}
+            {r.tags.map((t) => (
+              <span class="text-[9px] uppercase tracking-[0.2em] px-2.5 py-1 rounded-full border border-accent-20 text-[var(--accent)] font-semibold">{t}</span>
+            ))}
+            <span class="font-mono text-[10px] uppercase tracking-[0.15em] text-[var(--text-3)] ml-auto">{r.year}</span>
+          </div>
+          <h3 class="text-lg font-semibold text-[var(--text-1)] leading-snug group-hover:text-[var(--accent)] transition-colors">{r.title}</h3>
+          <p class="mt-2 text-[12px] text-[var(--text-2)] font-medium">{r.authors}</p>
+          <p class="mt-3 text-sm text-[var(--text-2)] leading-relaxed">{r.note}</p>
+          <div class="mt-5 pt-4 border-t border-[var(--border)] flex items-center gap-4 text-[12px] text-[var(--text-3)] mt-auto">
+            <span class="font-mono">{r.venue}</span>
+            <span class="ml-auto text-[var(--accent)] font-semibold uppercase text-[11px] tracking-wide group-hover:tracking-wider transition-all whitespace-nowrap">Open ↗</span>
           </div>
         </a>
       ))}
@@ -119,9 +174,19 @@ const itemListSchema = {
         const qOk = !matched || matched.has(el.dataset.id);
         const on = tagOk && qOk;
         if (on) shown++;
+        el.dataset.on = on ? '1' : '';
         // the featured card lives in its own section — hide the section so its
         // padding doesn't leave a phantom gap when it is filtered out
         (el.closest('#featured-section') || el).style.display = on ? '' : 'none';
+      });
+      // headings/intros belong to a group ("ours", "reading") — hide the whole
+      // group when a filter empties it, so no header stands over nothing
+      const live = new Set(items.filter((el) => el.dataset.on)
+        .map((el) => el.closest('[data-section]')?.dataset.section));
+      document.querySelectorAll('[data-section]').forEach((s) => {
+        // the featured section is hidden by its own card above — don't fight it
+        if (s.id === 'featured-section') return;
+        s.style.display = live.has(s.dataset.section) ? '' : 'none';
       });
       document.getElementById('paper-empty').classList.toggle('hidden', shown > 0);
     }
