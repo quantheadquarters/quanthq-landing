@@ -12,6 +12,13 @@ const pickedReading = [...reading].filter((r) => r.pinned).slice(0, 3);
 
 const allPosts = (await getCollection('blog')).sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
 const latestPosts = allPosts.slice(0, 4);
+// Every number says what it counts and comes from a collection — never hand-written.
+// No "papers we published" figure: we curate and we write, we do not publish papers.
+const aboutStats = [
+  [String(reading.length), 'Papers on the reading list'],
+  [String(allPosts.length), 'Articles written'],
+  ['Free', 'To read and to join'],
+];
 
 const monthYear = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
 
@@ -77,33 +84,40 @@ const value = [
 
   <!-- HERO -->
   <section class="hero">
-    <div class="shell hero-grid">
-      <div class="hero-copy">
-        <p class="hero-eyebrow">Open research community</p>
-        <h1 class="hero-h1">
-          The community layer for <span class="hero-em">quantitative finance.</span>
-        </h1>
-        <p class="hero-lead">
-          QuantHQ is a place to read quant research, argue about it, and publish your own.
-          Everything we put out shows its working.
-        </p>
-        <div class="hero-ctas">
-          <a href={JOIN_URL} target="_blank" rel="noopener" class="btn btn-solid">Join the community</a>
-          <a href="/research/" class="btn btn-outline">See the reading list</a>
-        </div>
-        <p class="hero-meta">
-  Free to join · a {reading.length}-paper reading list · {allPosts.length} articles
-        </p>
+    <div class="shell hero-copy">
+      <p class="hero-eyebrow">Open research community</p>
+      <h1 class="hero-h1">
+        The community layer for <span class="hero-em">quantitative finance.</span>
+      </h1>
+      <p class="hero-lead">
+        QuantHQ is a place to read quant research, argue about it, and publish your own.
+        Everything we put out shows its working.
+      </p>
+      <div class="hero-ctas">
+        <a href={JOIN_URL} target="_blank" rel="noopener" class="btn btn-solid">Join the community</a>
+        <a href="/research/" class="btn btn-outline">See the reading list</a>
       </div>
-      <div class="hero-visual">
-        <KnowledgeGraph height={460} legend={false} />
-        <p class="hero-visual-cap">What we study — drag a node to pull the map apart.</p>
+      <div class="hero-stats">
+        {aboutStats.map(([n, l]) => (
+          <div class="hero-stat">
+            <span class="hero-stat-n">{n}</span>
+            <span class="hero-stat-l">{l}</span>
+          </div>
+        ))}
       </div>
     </div>
   </section>
 
+  <!-- The map sits below the hero, full width, rather than beside the copy. -->
+  <section class="hero-visual">
+    <div class="shell">
+      <KnowledgeGraph height={420} legend={false} />
+      <p class="hero-visual-cap">What we study — drag a node to pull the map apart.</p>
+    </div>
+  </section>
+
   <!-- WHAT YOU GET -->
-  <section class="band">
+  <section class="band band-center">
     <div class="shell">
       <div class="kicker rv"><span class="kicker-n">01</span><span class="kicker-rule"></span><span>Why join</span></div>
       <h2 class="headline headline-rule rv">What you actually get.</h2>
@@ -126,7 +140,7 @@ const value = [
   </section>
 
   <!-- READING LIST -->
-  <section class="band">
+  <section class="band band-center">
     <div class="shell">
       <div class="kicker rv"><span class="kicker-n">02</span><span class="kicker-rule"></span><span>Reading list</span></div>
       <h2 class="headline headline-rule rv">Start with these.</h2>
@@ -156,7 +170,7 @@ const value = [
   </section>
 
   <!-- WRITING -->
-  <section class="band">
+  <section class="band band-center">
     <div class="shell">
       <div class="kicker rv"><span class="kicker-n">03</span><span class="kicker-rule"></span><span>Writing</span></div>
       <h2 class="headline headline-rule rv">Shorter notes from the work.</h2>
@@ -181,7 +195,7 @@ const value = [
   </section>
 
   <!-- WHO IT'S FOR -->
-  <section class="band">
+  <section class="band band-center">
     <div class="shell">
       <div class="kicker rv"><span class="kicker-n">04</span><span class="kicker-rule"></span><span>Who it's for</span></div>
       <h2 class="headline headline-rule rv">You'll probably fit if…</h2>
@@ -202,10 +216,27 @@ const value = [
     </div>
   </section>
 
-  <!-- JOIN -->
-  <section class="band join-band">
+  <!-- ABOUT — the old /about/ page, folded in. /about/ redirects to this anchor. -->
+  <section class="band band-center" id="about">
     <div class="shell">
-      <div class="kicker rv"><span class="kicker-n">05</span><span class="kicker-rule"></span><span>Join</span></div>
+      <div class="kicker rv"><span class="kicker-n">05</span><span class="kicker-rule"></span><span>About</span></div>
+      <h2 class="headline headline-rule rv">Everything here shows its working.</h2>
+      <p class="lead rv">
+        Most of what gets written about markets is either a sales pitch or a result with no method
+        attached. QuantHQ does the other thing: point at the papers that earned their reputation, say
+        plainly why each one matters, and write up methods with the caveats left in.
+      </p>
+      <p class="lead rv">
+        It is open, it is free, and it is run by quants, engineers, and students who mostly argue
+        about method.
+      </p>
+    </div>
+  </section>
+
+  <!-- JOIN -->
+  <section class="band band-center join-band">
+    <div class="shell">
+      <div class="kicker rv"><span class="kicker-n">06</span><span class="kicker-rule"></span><span>Join</span></div>
       <h2 class="headline join-headline headline-rule rv">Come argue about method with us.</h2>
       <p class="lead rv">
         The community runs on LinkedIn. It is free, it is public, and nobody is selling you a course.
@@ -263,36 +294,63 @@ const value = [
     :global(html.intro-play) { --intro-lead: 0s; }
   }
 
-  /* ── hero ── */
-  .hero { padding: clamp(56px, 9vh, 104px) 0 clamp(56px, 9vh, 96px); }
-  .hero-grid {
-    display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
-    gap: clamp(32px, 5vw, 72px); align-items: center;
-  }
-  .hero-visual { min-width: 0; }
+  /* ── hero ──
+     Single centred column: eyebrow, headline, lead, CTAs, stats. The map is its
+     own full-width section below rather than a second grid column. */
+  .hero { padding: clamp(56px, 9vh, 104px) 0 clamp(40px, 6vh, 64px); }
+  .hero-copy { text-align: center; }
+  .hero-visual { min-width: 0; padding-bottom: clamp(40px, 7vh, 76px); }
   .hero-visual-cap {
-    margin-top: 14px; font-family: var(--font-mono);
-    font-size: 11px; letter-spacing: 0.06em; color: var(--text-4);
+    margin-top: 14px; text-align: center; font-family: var(--font-mono);
+    font-size: 11px; letter-spacing: 0.06em; color: var(--text-3);
   }
+
+  /* stats sit under the CTAs, mirroring the reference's centred metric row */
+  .hero-stats {
+    display: flex; flex-wrap: wrap; justify-content: center;
+    gap: clamp(28px, 6vw, 72px); margin-top: 52px;
+    padding-top: 40px; border-top: 1px solid var(--border);
+  }
+  .hero-stat { display: flex; flex-direction: column; gap: 10px; }
+  .hero-stat-n {
+    font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+    font-size: clamp(28px, 3.6vw, 42px); font-weight: 700;
+    letter-spacing: -0.02em; color: var(--text); line-height: 1;
+  }
+  .hero-stat-l {
+    font-family: var(--font-mono); font-size: 11px;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3);
+  }
+
+  /* ── centred bands ──
+     Heading block centres; the data rows below (reading, writing, fit) stay
+     left-aligned so long lines remain readable. */
+  .band-center .kicker { justify-content: center; }
+  .band-center .headline,
+  .band-center .lead { margin-left: auto; margin-right: auto; text-align: center; }
+  .band-center .headline { max-width: 24ch; }
+  /* the self-drawing hairline must open from the middle under a centred headline */
+  .band-center .headline-rule::after { transform-origin: center; }
+  /* .arrow-link is inline-flex, so auto margins can't centre it — go to flex */
+  .band-center .arrow-link { display: flex; justify-content: center; }
   .hero-eyebrow {
     font-family: var(--font-mono); font-size: 11px;
     letter-spacing: 0.24em; text-transform: uppercase; color: var(--text-3);
   }
   .hero-h1 {
-    margin-top: 26px;
+    margin: 26px auto 0; max-width: 22ch;
     font-family: var(--font-display); font-weight: 400;
     font-size: clamp(40px, 5.4vw, 78px); line-height: 1.0;
     letter-spacing: -0.03em; color: var(--text);
   }
   .hero-em { color: var(--text-3); }
   .hero-lead {
-    margin-top: 30px; max-width: 54ch;
+    margin: 30px auto 0; max-width: 58ch;
     font-size: clamp(17px, 2vw, 21px); line-height: 1.6; color: var(--text-2);
   }
-  .hero-ctas { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 38px; }
-  .hero-meta {
-    margin-top: 26px; font-family: var(--font-mono);
-    font-size: 12px; letter-spacing: 0.04em; color: var(--text-3);
+  .hero-ctas {
+    display: flex; flex-wrap: wrap; justify-content: center;
+    gap: 12px; margin-top: 38px;
   }
 
   /* hero entrance — above the fold, so it runs on load rather than on scroll.
@@ -365,7 +423,7 @@ const value = [
   .reading-note { font-size: 14.5px; line-height: 1.65; color: var(--text-3); max-width: 72ch; }
   .reading-tags {
     font-family: var(--font-mono); font-size: 10.5px;
-    letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-4);
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-3);
   }
   .reading-meta {
     display: flex; flex-direction: column; gap: 5px; text-align: right;
@@ -400,6 +458,10 @@ const value = [
   }
   .writing-all { margin-top: 30px; }
 
+  /* ── about ── */
+  #about { scroll-margin-top: calc(var(--nav-h) + 40px); }
+  .band .lead + .lead { margin-top: 18px; }
+
   /* ── join ── */
   .join-headline { max-width: 20ch; }
   .join-band .lead { margin-top: 22px; }
@@ -407,9 +469,6 @@ const value = [
   .join-note a { color: var(--text-1); text-decoration: underline; text-underline-offset: 3px; }
   .join-note a:hover { color: var(--text); }
 
-  @media (max-width: 1000px) {
-    .hero-grid { grid-template-columns: 1fr; gap: 44px; }
-  }
   @media (max-width: 900px) {
     .value-grid { grid-template-columns: 1fr; }
   }

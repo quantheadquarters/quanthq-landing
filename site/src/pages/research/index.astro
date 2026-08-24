@@ -37,13 +37,13 @@ const itemListSchema = {
   }))
 };
 ---
-<Base title="Quant Research: Papers and a Reading List | QuantHQ" description={`Research notes and preprints on quantitative finance, plus ${reading.length} papers we recommend on asset pricing, factor investing, market microstructure, and machine learning in finance.`}>
-  <JsonLd data={itemListSchema} />
+<Base title="Quant Research Reading List | QuantHQ" description={`${reading.length} papers we recommend on asset pricing, factor investing, market microstructure, and machine learning in finance — each with a note on why it earns its place.`}>
+  {papers.length > 0 && <JsonLd data={itemListSchema} />}
   <section class="px-8 pt-20 pb-8">
-    <div class="max-w-[var(--shell)] mx-auto">
-      <div class="section-label mb-6">Scientific Archive</div>
-      <h1 class="text-[clamp(56px,9vw,120px)] display-title leading-none">Research</h1>
-      <p class="mt-5 text-[var(--text-2)] max-w-xl">Research notes and preprints, plus a reading list of {reading.length} papers — the ones we think are worth the evening, from the equilibrium arguments the whole field rests on to what deep learning has actually established about price formation.</p>
+    <div class="max-w-[var(--shell)] mx-auto page-head">
+      <div class="section-label mb-6">Reading list</div>
+      <h1 class="text-[clamp(44px,7vw,92px)] display-title leading-none">Research</h1>
+      <p class="mt-5 text-[var(--text-2)] max-w-xl">A reading list of {reading.length} papers — the ones we think are worth the evening, from the equilibrium arguments the whole field rests on to what deep learning has actually established about price formation. Each note says why the paper earns its place.</p>
 
       <input
         id="paper-search"
@@ -51,7 +51,7 @@ const itemListSchema = {
         placeholder="Search papers, authors, topics…"
         class="mt-9 w-full max-w-lg px-5 py-3.5 rounded-lg bg-[var(--card-bg)] border border-[var(--border)] text-sm text-[var(--text)] placeholder:text-[var(--text-3)] focus:border-accent-40 focus:outline-none"
       />
-      <div class="mt-5 flex flex-wrap gap-2" id="tag-filters">
+      <div class="mt-5 flex flex-wrap gap-2 justify-center" id="tag-filters">
         <button data-tag="" class="tag-btn px-4 py-1.5 rounded-full text-xs font-medium border border-accent-40 text-[var(--accent)]">All</button>
         {allTags.map((t) => (
           <button data-tag={t} class="tag-btn px-4 py-1.5 rounded-full text-xs font-medium border border-[var(--border)] text-[var(--text-2)] hover:text-[var(--text-1)]">{t}</button>
@@ -60,11 +60,13 @@ const itemListSchema = {
     </div>
   </section>
 
-  <section class="px-8 pt-4 pb-2" data-section="ours">
-    <div class="max-w-[var(--shell)] mx-auto">
-      <h2 class="section-label">Papers</h2>
-    </div>
-  </section>
+  {papers.length > 0 && (
+    <section class="px-8 pt-4 pb-2" data-section="ours">
+      <div class="max-w-[var(--shell)] mx-auto">
+        <h2 class="section-label">Papers</h2>
+      </div>
+    </section>
+  )}
 
   {featured && (
     <section class="px-8 pb-8" id="featured-section" data-section="ours">
@@ -130,7 +132,7 @@ const itemListSchema = {
   <section class="px-8 pb-4" data-section="reading">
     <div class="max-w-[var(--shell)] mx-auto grid gap-4 md:grid-cols-2">
       {readingList.map((r) => (
-        <a href={r.href} target="_blank" rel="noopener" class="card p-7 block paper-item group flex flex-col" data-id={r.href} data-tags={r.tags.join(',')}>
+        <a href={r.href} target="_blank" rel="noopener" class="card p-7 paper-item group flex flex-col" data-id={r.href} data-tags={r.tags.join(',')}>
           <div class="flex flex-wrap items-center gap-2 mb-4">
             {r.pinned && (
               <span class="text-[9px] uppercase tracking-[0.2em] px-2.5 py-1 rounded-full bg-accent-10 border border-accent-20 text-[var(--accent)] font-semibold">★ Core</span>
@@ -143,7 +145,7 @@ const itemListSchema = {
           <h3 class="text-lg font-semibold text-[var(--text-1)] leading-snug group-hover:text-[var(--accent)] transition-colors">{r.title}</h3>
           <p class="mt-2 text-[12px] text-[var(--text-2)] font-medium">{r.authors}</p>
           <p class="mt-3 text-sm text-[var(--text-2)] leading-relaxed">{r.note}</p>
-          <div class="mt-5 pt-4 border-t border-[var(--border)] flex items-center gap-4 text-[12px] text-[var(--text-3)] mt-auto">
+          <div class="mt-auto pt-4 border-t border-[var(--border)] flex items-center gap-4 text-[12px] text-[var(--text-3)]">
             <span class="font-mono">{r.venue}</span>
             <span class="ml-auto text-[var(--accent)] font-semibold uppercase text-[11px] tracking-wide group-hover:tracking-wider transition-all whitespace-nowrap">Open ↗</span>
           </div>

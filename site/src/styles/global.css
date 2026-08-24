@@ -31,6 +31,7 @@
   --gold-hi: #FFD27A;
   --gold-glow: rgba(235,168,58,0.45);
   --on-gold: #1A1206;
+  --nav-h: 64px;
   --shell: 1280px;
   --gutter: 32px;
   --glow: rgba(61,123,255,0.14);
@@ -84,7 +85,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-sans);
 .lg-nav {
   /* no flex here: the inner div self-centers (h-full flex), and the mobile
      menu is a block sibling that must drop below, not become a flex column */
-  position: fixed; top: 0; left: 0; right: 0; z-index: 800; height: 64px;
+  position: fixed; top: 0; left: 0; right: 0; z-index: 800; height: var(--nav-h);
   background: color-mix(in srgb, var(--bg) 58%, transparent);
   backdrop-filter: blur(22px) saturate(1.8);
   -webkit-backdrop-filter: blur(22px) saturate(1.8);
@@ -137,7 +138,7 @@ html.light .theme-toggle .tt-sun { display: none; }
 
 *:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-::selection { background: rgba(61,123,255,0.4); color: var(--text); }
+::selection { background: color-mix(in srgb, var(--accent) 40%, transparent); color: var(--text); }
 ::-webkit-scrollbar { width: 10px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb {
@@ -235,6 +236,19 @@ html.light .bg-wash {
 .section-label::before {
   content: ''; width: 24px; height: 1px; background: var(--border-hover);
 }
+
+/* ── centred page header ──
+   The homepage bands centre their heading block; interior pages use this so
+   the whole site reads as one layout instead of two. Long-line content (paper
+   rows, article rows, card bodies) stays left-aligned underneath — centring
+   those makes them unreadable. */
+.page-head { text-align: center; }
+.page-head .section-label { justify-content: center; }
+.page-head h1 { margin-left: auto; margin-right: auto; max-width: 20ch; }
+.page-head > p { margin-left: auto; margin-right: auto; }
+/* the header's own controls (search, filter chips) centre with it */
+.page-head input[type="search"] { margin-left: auto; margin-right: auto; display: block; }
+.page-head #tag-filters, .page-head .filter-row { justify-content: center; }
 .display-title {
   font-family: var(--font-display);
   font-weight: 400;
@@ -323,6 +337,9 @@ html.light .bg-wash {
   *, *::before, *::after { animation: none !important; transition: none !important; }
   .js .rv { opacity: 1; transform: none; }
   .js .headline-rule::after { transform: none !important; }
+  /* smooth scrolling is a vestibular trigger and is NOT covered by the
+     animation/transition resets above — it needs its own opt-out */
+  html { scroll-behavior: auto; }
 }
 
 /* opacity utilities (Tailwind v4 can't do /NN on CSS variable values) */
@@ -346,3 +363,8 @@ html.light .bg-wash {
   white-space: nowrap;
   border-width: 0;
 }
+
+/* main clears the fixed nav — derived from --nav-h so the two can never drift
+   (they were hard-coded 64px and 92px, which disagreed by 28px for no reason) */
+.page-main { padding-top: var(--nav-h); }
+@media (min-width: 768px) { .page-main { padding-top: calc(var(--nav-h) + 28px); } }

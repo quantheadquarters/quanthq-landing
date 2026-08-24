@@ -1,250 +1,312 @@
 ---
-import CommandPalette from '../components/CommandPalette.astro';
-import HomeFooter from '../components/HomeFooter.astro';
-import HomeNav from '../components/HomeNav.astro';
+import Base from '../layouts/Base.astro';
 import KnowledgeGraph from '../components/KnowledgeGraph.astro';
 import SignalDashboard from '../components/SignalDashboard.astro';
-import '../styles/home.css';
+import { JOIN_URL } from '../data/links.ts';
 
-const canonicalUrl = new URL(Astro.url.pathname, Astro.site ?? 'https://quanthq.in').href;
 const description = 'An interactive demonstration of the QuantHQ research interface — dashboard, knowledge graph, and pipeline terminal. All figures use simulated sample data.';
 ---
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>The Lab | QuantHQ</title>
-<link rel="icon" type="image/png" sizes="96x96" href="/favicon.png">
-<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-<meta name="description" content={description}>
-<meta property="og:title" content="The Lab | QuantHQ">
-<meta property="og:description" content={description}>
-<meta property="og:type" content="website">
-<meta name="twitter:card" content="summary_large_image">
-<meta property="og:url" content="https://quanthq.in/lab/">
-<meta property="og:image" content="https://quanthq.in/og.png">
-<meta name="twitter:image" content="https://quanthq.in/og.png">
-<link rel="canonical" href={canonicalUrl} />
-<script is:inline>document.documentElement.classList.add('js');if(localStorage.theme==='light')document.documentElement.classList.add('light')</script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
-</head>
-<body>
-
-<a href="#main-content" class="skip-link">Skip to main content</a>
-<div id="scroll-prog"></div>
-
-<div class="bg-aurora"></div>
-<div class="bg-grid" aria-hidden="true"></div>
-<div class="nebula-blob nb1" aria-hidden="true"></div>
-<div class="nebula-blob nb2" aria-hidden="true"></div>
-
-<HomeNav />
-
-<div class="vignette" aria-hidden="true"></div>
-<div class="grain" aria-hidden="true"></div>
-
-<!-- TICKER TAPE — demo only, lives on this page and nowhere else -->
-<div class="tape" aria-hidden="true">
-  <div class="tape-track" id="tape-track"></div>
-</div>
-
-<main id="main-content">
-<section class="lab-hero">
-  <div class="lab-hero-inner">
-    <div class="section-label">The Lab</div>
-    <h1 class="lab-h1">An interactive demo of the<br><span class="grad-text">research interface.</span></h1>
-    <p class="lab-lead">These panels show how QuantHQ research surfaces are laid out — a market dashboard, a knowledge graph of research topics, and the pipeline terminal.</p>
-    <div class="sample-banner" role="note">
-      <strong>Simulated data.</strong> Nothing on this page is a live market feed. Prices, factor loadings, agent states, and node counts are generated in your browser from sample values and refresh on a timer. Published results with real data and methodology live in the <a href="/research/">research archive</a>.
-    </div>
+<Base title="The Lab | QuantHQ" description={description}>
+  <!-- TICKER TAPE — demo only, lives on this page and nowhere else -->
+  <div class="tape" aria-hidden="true">
+    <div class="tape-track" id="tape-track"></div>
   </div>
-</section>
 
-<!-- DASHBOARD -->
-<section class="dashboard-section" id="dashboard">
-  <div class="ds-inner">
-    <div class="ds-header section-head">
-      <div class="section-label">Panel 01</div>
-      <h2 class="section-h2">Market and factor<br>dashboard.</h2>
-      <div class="section-sub in">Layout demo. Values are simulated in-browser and refresh every 1.8 seconds.</div>
-    </div>
-    <SignalDashboard
-      note='Factor definitions and the attribution method are described in <a href="/research/earnings-revision-momentum-decay/">Earnings Revision Momentum Decay</a>.'
-    />
-  </div>
-</section>
-
-<!-- KNOWLEDGE GRAPH -->
-<section class="graph-section" id="graph">
-  <div class="graph-inner">
-    <div class="section-head">
-      <div class="section-label">Panel 02</div>
-      <h2 class="section-h2">Explore connected<br>research topics.</h2>
-      <div class="section-sub in">Each node is a topic we work on; edges are topics that appear together in our papers. Drag a node to explore.</div>
-    </div>
-    <KnowledgeGraph height={420} />
-  </div>
-</section>
-
-<!-- TERMINAL -->
-<section class="terminal-section" id="terminal">
-  <div class="terminal-inner">
-    <div class="section-head">
-      <div class="section-label">Panel 03</div>
-      <h2 class="section-h2">The research<br>pipeline, end to end.</h2>
-      <div class="section-sub in">A scripted demo of the pipeline we run — ingestion, factor attribution, walk-forward validation, publication. Type <code>help</code> to drive it yourself.</div>
-    </div>
-    <div class="terminal-window">
-      <div class="terminal-bar">
-        <div class="term-dot" style="background:#FF5F57"></div>
-        <div class="term-dot" style="background:#FFBD2E"></div>
-        <div class="term-dot" style="background:#28C840"></div>
-        <div class="terminal-title">quanthq / research-pipeline · demo</div>
-      </div>
-      <div class="terminal-body" id="terminal-body">
-        <div class="term-line">─────────────────────────────────────────────</div>
-        <div class="term-line">  QuantHQ pipeline — scripted demo, not a live shell</div>
-        <div class="term-line">─────────────────────────────────────────────</div>
-        <div id="term-lines"></div>
-        <span class="term-prompt">$ </span><span id="term-input" class="term-cmd"></span><span class="term-cursor"></span><span id="term-hint" style="color:var(--text-3)">  click here, type 'help'</span>
+  <section class="hero lab-hero">
+    <div class="shell">
+      <div class="kicker"><span class="kicker-rule"></span><span>The Lab</span></div>
+      <h1 class="headline lab-h1">An interactive demo of the research interface.</h1>
+      <p class="lead">
+        These panels show how QuantHQ research surfaces are laid out — a market dashboard, a
+        knowledge graph of research topics, and the pipeline terminal.
+      </p>
+      <div class="sample-banner" role="note">
+        <strong>Simulated data.</strong> Nothing on this page is a live market feed. Prices, factor
+        loadings, agent states, and node counts are generated in your browser from sample values and
+        refresh on a timer. The papers we actually recommend are on the
+        <a href="/research/">reading list</a>.
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<section class="lab-outro">
-  <div class="lab-outro-inner">
-    <h2 class="lab-outro-h2">The real work is in the archive.</h2>
-    <div class="community-ctas">
-      <a href="/research/" class="btn-primary">Read the research →</a>
-      <a href="https://www.linkedin.com/groups/36960154/" target="_blank" rel="noopener" class="btn-ghost">Join the community</a>
+  <!-- DASHBOARD -->
+  <section class="band" id="dashboard">
+    <div class="shell">
+      <div class="kicker rv"><span class="kicker-n">01</span><span class="kicker-rule"></span><span>Panel 01</span></div>
+      <h2 class="headline headline-rule rv">Market and factor dashboard.</h2>
+      <p class="lead rv">Layout demo. Values are simulated in-browser and refresh every 1.8 seconds.</p>
+      <div class="panel-wrap rv">
+        <SignalDashboard
+          note='Factor definitions follow the standard references on the <a href="/research/">reading list</a>. The values here are simulated.'
+        />
+      </div>
     </div>
-  </div>
-</section>
-</main>
+  </section>
 
-<HomeFooter />
-<CommandPalette />
+  <!-- KNOWLEDGE GRAPH -->
+  <section class="band" id="graph">
+    <div class="shell">
+      <div class="kicker rv"><span class="kicker-n">02</span><span class="kicker-rule"></span><span>Panel 02</span></div>
+      <h2 class="headline headline-rule rv">Explore connected research topics.</h2>
+      <p class="lead rv">
+        Each node is a topic we work on; edges are topics that appear together in our writing. Drag a
+        node to explore.
+      </p>
+      <div class="panel-wrap rv"><KnowledgeGraph height={420} /></div>
+    </div>
+  </section>
+
+  <!-- TERMINAL -->
+  <section class="band" id="terminal">
+    <div class="shell">
+      <div class="kicker rv"><span class="kicker-n">03</span><span class="kicker-rule"></span><span>Panel 03</span></div>
+      <h2 class="headline headline-rule rv">The research pipeline, end to end.</h2>
+      <p class="lead rv">
+        A scripted demo of the pipeline we run — ingestion, factor attribution, walk-forward
+        validation, publication. Type <code>help</code> to drive it yourself.
+      </p>
+      <div class="terminal-window rv">
+        <div class="terminal-bar">
+          <div class="term-dot" style="background:#FF5F57"></div>
+          <div class="term-dot" style="background:#FFBD2E"></div>
+          <div class="term-dot" style="background:#28C840"></div>
+          <div class="terminal-title">quanthq / research-pipeline · demo</div>
+        </div>
+        <div class="terminal-body" id="terminal-body">
+          <div class="term-line">─────────────────────────────────────────────</div>
+          <div class="term-line">  QuantHQ pipeline — scripted demo, not a live shell</div>
+          <div class="term-line">─────────────────────────────────────────────</div>
+          <div id="term-lines"></div>
+          <span class="term-prompt">$ </span><span id="term-input" class="term-cmd"></span><span class="term-cursor"></span><span id="term-hint" class="term-hint">  click here, type 'help'</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band lab-outro">
+    <div class="shell">
+      <h2 class="headline lab-outro-h2 rv">The real work is on the reading list.</h2>
+      <div class="hero-ctas rv">
+        <a href="/research/" class="btn btn-solid">Open the reading list</a>
+        <a href={JOIN_URL} target="_blank" rel="noopener" class="btn btn-outline">Join the community</a>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* Lab-only chrome. Everything else on this page uses the shared primitives in
+     global.css (.band / .shell / .kicker / .headline / .lead / .btn). This page
+     used to be a standalone document on its own 1,100-line stylesheet. */
+
+  /* the tape sits directly under the fixed nav */
+  .tape {
+    position: fixed; top: var(--nav-h); left: 0; right: 0; z-index: 790;
+    height: 28px; overflow: hidden;
+    background: color-mix(in srgb, var(--card-bg) 85%, transparent);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+  }
+  .tape-track {
+    display: flex; gap: 36px; align-items: center; height: 100%;
+    width: max-content; padding: 0 18px;
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em;
+    animation: tapeScroll 45s linear infinite;
+  }
+  .tape:hover .tape-track { animation-play-state: paused; }
+  .tape-track :global(.tape-sym) { color: var(--text-1); font-weight: 700; }
+  .tape-track :global(.tape-px) { color: var(--text-3); margin-left: 6px; }
+  .tape-track :global(.tape-chg) { margin-left: 6px; font-weight: 700; }
+  .tape-track :global(.tape-chg.up) { color: var(--green); }
+  .tape-track :global(.tape-chg.down) { color: var(--red); }
+  @keyframes tapeScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+  /* the tape is 28px of fixed chrome the layout has to clear */
+  .lab-hero { padding-top: calc(28px + clamp(40px, 6vh, 72px)); }
+  .lab-h1 { margin-top: 8px; max-width: 22ch; }
+
+  .sample-banner {
+    margin-top: 32px; padding: 18px 22px; max-width: 80ch;
+    border: 1px solid color-mix(in srgb, var(--gold) 34%, transparent);
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--gold) 7%, transparent);
+    font-size: 13.5px; line-height: 1.7; color: var(--text-2);
+  }
+  .sample-banner strong { color: var(--text-1); }
+  .sample-banner a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+
+  .panel-wrap { margin-top: 44px; }
+
+  /* ── terminal ── */
+  .terminal-window {
+    border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+    max-width: 980px; margin: 44px auto 0; position: relative;
+    box-shadow: 0 64px 128px -32px rgba(0,0,0,0.8);
+  }
+  :global(html.light) .terminal-window { box-shadow: 0 32px 64px -24px rgba(15,23,42,0.18); }
+  /* CRT scanlines sit on the window, not the body — the body scrolls, and an
+     overlay inside it would scroll away with the content */
+  .terminal-window::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 2;
+    background: repeating-linear-gradient(0deg, rgba(255,255,255,0.028) 0 1px, transparent 1px 3px);
+    animation: crtFlicker 4s linear infinite;
+  }
+  :global(html.light) .terminal-window::after {
+    background: repeating-linear-gradient(0deg, rgba(15,23,42,0.02) 0 1px, transparent 1px 3px);
+  }
+  @keyframes crtFlicker { 0%,91%,94%,100% { opacity: 1; } 92% { opacity: .55; } 93% { opacity: .85; } }
+
+  .terminal-bar {
+    background: var(--surface-2); padding: 12px 20px;
+    display: flex; align-items: center; gap: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .term-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .terminal-title {
+    font-size: 11px; letter-spacing: 0.1em; color: var(--text-3);
+    margin-left: 8px; font-family: var(--font-mono);
+  }
+  .terminal-body {
+    background: var(--card-bg); padding: 32px;
+    font-family: var(--font-mono); font-size: 14px; line-height: 2;
+    /* fixed height: the feed loops forever, and with min-height it grew past the
+       box and shunted the whole page down, then snapped back on every reset */
+    height: 340px; overflow-y: auto; scrollbar-width: none; position: relative;
+  }
+  :global(html.light) .terminal-body { background: color-mix(in srgb, var(--card-bg) 98%, transparent); }
+  .terminal-body::-webkit-scrollbar { display: none; }
+  .term-line { color: var(--text-3); }
+  .term-hint { color: var(--text-3); }
+  .terminal-body :global(.term-prompt) { color: var(--accent); }
+  .terminal-body :global(.term-cmd) { color: var(--text-1); }
+  .terminal-body :global(.term-out) { color: var(--text-1); }
+  .terminal-body :global(.term-ok) { color: var(--green); }
+  .term-cursor {
+    display: inline-block; width: 8px; height: 14px;
+    background: var(--accent); vertical-align: middle;
+    animation: termBlink 1s step-end infinite;
+  }
+  @keyframes termBlink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+
+  .lab-outro { text-align: center; }
+  .lab-outro-h2 { margin: 0 auto; max-width: 20ch; }
+  .lab-outro .hero-ctas {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 34px;
+  }
+
+  @media (max-width: 720px) {
+    .terminal-body { padding: 20px; font-size: 12.5px; }
+  }
+</style>
 
 <script>
-import { sampleTickers } from '../data/sampleMarket.ts';
+  import { sampleTickers } from '../data/sampleMarket.ts';
 
-const reduced = matchMedia('(prefers-reduced-motion:reduce)').matches;
+  // ClientRouter swaps the DOM, so everything binds on astro:page-load and tears
+  // itself down on the way out — otherwise the terminal's timer keeps firing
+  // against detached nodes after you navigate away.
+  function initLab() {
+    if (!document.getElementById('terminal-body')) return;
+    const reduced = matchMedia('(prefers-reduced-motion:reduce)').matches;
+    let alive = true;
+    document.addEventListener('astro:before-swap', () => { alive = false; }, { once: true });
 
-/* ── SCROLL PROGRESS + NAV STATE ── */
-const sp = document.getElementById('scroll-prog');
-const navEl = document.getElementById('nav');
-let ticking = false;
-addEventListener('scroll', () => {
-  if (ticking) return;
-  ticking = true;
-  requestAnimationFrame(() => {
-    const h = document.documentElement;
-    sp.style.width = (scrollY / (h.scrollHeight - h.clientHeight) * 100) + '%';
-    navEl.classList.toggle('scrolled', scrollY > 40);
-    ticking = false;
-  });
-}, {passive:true});
+    /* ── TICKER TAPE ── */
+    const tapeTrack = document.getElementById('tape-track');
+    if (tapeTrack) {
+      const tapeItem = (t) => `<span class="tape-item"><span class="tape-sym">${t.sym}</span><span class="tape-px">${t.price}</span><span class="tape-chg ${t.dir}">${t.chg}</span></span>`;
+      tapeTrack.innerHTML = [...sampleTickers, ...sampleTickers].map(tapeItem).join('');
+    }
 
-/* ── TICKER TAPE ── */
-const tapeTrack = document.getElementById('tape-track');
-if (tapeTrack) {
-  const tapeItem = t => `<span class="tape-item"><span class="tape-sym">${t.sym}</span><span class="tape-px">${t.price}</span><span class="tape-chg ${t.dir}">${t.chg}</span></span>`;
-  tapeTrack.innerHTML = [...sampleTickers, ...sampleTickers].map(tapeItem).join('');
-}
+    /* ── TERMINAL ── */
+    const termLines = [
+      { type: 'cmd', text: './run-pipeline.sh --universe=sp500' },
+      { type: 'out', text: '► Loading 8,412 instruments...' },
+      { type: 'out', text: '► Computing momentum factors (3m, 6m, 12m)...' },
+      { type: 'ok', text: '✓ Factor attribution complete' },
+      { type: 'cmd', text: 'backtest --strategy=momentum_quality --walk-forward' },
+      { type: 'out', text: '► Running 5-year walk-forward validation...' },
+      { type: 'out', text: '► Sharpe 1.84 | Max DD -4.2% | Calmar 2.1  (sample output)' },
+      { type: 'ok', text: '✓ Tearsheet written to ./out/tearsheet.html' },
+      { type: 'cmd', text: 'publish --target=archive' },
+      { type: 'out', text: '► Bundling code, data manifest, and methodology...' },
+      { type: 'ok', text: '✓ Draft ready for review' },
+    ];
+    const tl = document.getElementById('term-lines');
+    let ti = 0;
+    let termUserMode = false; // once the visitor types, the demo loop stops
+    function typeTermLine() {
+      if (!alive || termUserMode) return;
+      if (ti >= termLines.length) { ti = 0; tl.innerHTML = ''; }
+      const line = termLines[ti++];
+      const el = document.createElement('div');
+      const classes = { cmd: 'term-cmd', out: 'term-out', ok: 'term-ok' };
+      const prefixes = { cmd: '<span class="term-prompt">$ </span>', out: '  ', ok: '  ' };
+      el.innerHTML = prefixes[line.type] + `<span class="${classes[line.type]}">${line.text}</span>`;
+      tl.appendChild(el);
+      tl.parentElement.scrollTop = tl.parentElement.scrollHeight;
+      setTimeout(typeTermLine, 600 + Math.random() * 800);
+    }
+    if (!reduced) setTimeout(typeTermLine, 1200);
 
-/* ── TERMINAL ── */
-const termLines = [
-  {type:'cmd', text:'./run-pipeline.sh --universe=sp500'},
-  {type:'out', text:'► Loading 8,412 instruments...'},
-  {type:'out', text:'► Computing momentum factors (3m, 6m, 12m)...'},
-  {type:'ok',  text:'✓ Factor attribution complete'},
-  {type:'cmd', text:'backtest --strategy=momentum_quality --walk-forward'},
-  {type:'out', text:'► Running 5-year walk-forward validation...'},
-  {type:'out', text:'► Sharpe 1.84 | Max DD -4.2% | Calmar 2.1  (sample output)'},
-  {type:'ok',  text:'✓ Tearsheet written to ./out/tearsheet.html'},
-  {type:'cmd', text:'publish --target=archive'},
-  {type:'out', text:'► Bundling code, data manifest, and methodology...'},
-  {type:'ok',  text:'✓ Draft ready for review'},
-];
-const tl = document.getElementById('term-lines');
-let ti = 0;
-let termUserMode = false; // once the visitor types, the demo loop stops
-function typeTermLine() {
-  if (termUserMode) return;
-  if (ti >= termLines.length) { ti = 0; tl.innerHTML = ''; }
-  const line = termLines[ti++];
-  const el = document.createElement('div');
-  const classes = {cmd:'term-cmd',out:'term-out',ok:'term-ok'};
-  const prefixes = {cmd:'<span class="term-prompt">$ </span>',out:'  ',ok:'  '};
-  el.innerHTML = prefixes[line.type] + `<span class="${classes[line.type]}">${line.text}</span>`;
-  tl.appendChild(el);
-  tl.parentElement.scrollTop = tl.parentElement.scrollHeight;
-  setTimeout(typeTermLine, 600+Math.random()*800);
-}
-if (!reduced) setTimeout(typeTermLine, 1200);
-
-const termBody = document.getElementById('terminal-body');
-const termInput = document.getElementById('term-input');
-const termHint = document.getElementById('term-hint');
-const TERM_CMDS = {
-  help: [
-    'available commands:',
-    '  jobs        list the demo research jobs',
-    '  backtest    print a sample walk-forward result',
-    '  factors     print sample factor attribution',
-    '  clear       clear the terminal',
-  ],
-  jobs: [
-    '► alpha-extractor-v3   [running]',
-    '► regime-classifier    [training]',
-    '► earnings-nlp-agent   [idle]',
-    '► backtest-engine-5d   [running]',
-    '► signal-ranker        [running]',
-  ],
-  backtest: [
-    '► Running 5-year walk-forward validation...',
-    '► Sharpe 1.84 | Max DD -4.2% | Calmar 2.1  (sample output)',
-    '✓ Tearsheet written to ./out/tearsheet.html',
-  ],
-  factors: [
-    '► momentum_3m +0.72 | earnings_rev +0.91 | quality +0.68  (sample)',
-    '✓ Factor attribution complete',
-  ],
-};
-termBody.setAttribute('tabindex', '0');
-termBody.setAttribute('aria-label', "Demo terminal. Type 'help' for commands.");
-termBody.style.cursor = 'text';
-termBody.addEventListener('keydown', e => {
-  if (e.metaKey || e.ctrlKey || e.altKey) return;
-  if (e.key.length === 1) {
-    termUserMode = true;
-    termHint.textContent = '';
-    termInput.textContent += e.key;
-  } else if (e.key === 'Backspace') {
-    termInput.textContent = termInput.textContent.slice(0, -1);
-  } else if (e.key === 'Enter') {
-    const cmd = termInput.textContent.trim().toLowerCase();
-    termInput.textContent = '';
-    if (!cmd) return;
-    const echo = document.createElement('div');
-    echo.innerHTML = '<span class="term-prompt">$ </span><span class="term-cmd"></span>';
-    echo.querySelector('.term-cmd').textContent = cmd;
-    tl.appendChild(echo);
-    if (cmd === 'clear') { tl.innerHTML = ''; termBody.scrollTop = 0; return; }
-    (TERM_CMDS[cmd] || [`command not found: ${cmd} — try 'help'`]).forEach(text => {
-      const d = document.createElement('div');
-      d.className = text.startsWith('✓') ? 'term-ok' : 'term-out';
-      d.textContent = '  ' + text;
-      tl.appendChild(d);
+    const termBody = document.getElementById('terminal-body');
+    const termInput = document.getElementById('term-input');
+    const termHint = document.getElementById('term-hint');
+    const TERM_CMDS = {
+      help: [
+        'available commands:',
+        '  jobs        list the demo research jobs',
+        '  backtest    print a sample walk-forward result',
+        '  factors     print sample factor attribution',
+        '  clear       clear the terminal',
+      ],
+      jobs: [
+        '► alpha-extractor-v3   [running]',
+        '► regime-classifier    [training]',
+        '► earnings-nlp-agent   [idle]',
+        '► backtest-engine-5d   [running]',
+        '► signal-ranker        [running]',
+      ],
+      backtest: [
+        '► Running 5-year walk-forward validation...',
+        '► Sharpe 1.84 | Max DD -4.2% | Calmar 2.1  (sample output)',
+        '✓ Tearsheet written to ./out/tearsheet.html',
+      ],
+      factors: [
+        '► momentum_3m +0.72 | earnings_rev +0.91 | quality +0.68  (sample)',
+        '✓ Factor attribution complete',
+      ],
+    };
+    termBody.setAttribute('tabindex', '0');
+    termBody.setAttribute('aria-label', "Demo terminal. Type 'help' for commands.");
+    termBody.style.cursor = 'text';
+    termBody.addEventListener('keydown', (e) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key.length === 1) {
+        termUserMode = true;
+        termHint.textContent = '';
+        termInput.textContent += e.key;
+      } else if (e.key === 'Backspace') {
+        termInput.textContent = termInput.textContent.slice(0, -1);
+      } else if (e.key === 'Enter') {
+        const cmd = termInput.textContent.trim().toLowerCase();
+        termInput.textContent = '';
+        if (!cmd) return;
+        const echo = document.createElement('div');
+        echo.innerHTML = '<span class="term-prompt">$ </span><span class="term-cmd"></span>';
+        echo.querySelector('.term-cmd').textContent = cmd;
+        tl.appendChild(echo);
+        if (cmd === 'clear') { tl.innerHTML = ''; termBody.scrollTop = 0; return; }
+        (TERM_CMDS[cmd] || [`command not found: ${cmd} — try 'help'`]).forEach((text) => {
+          const d = document.createElement('div');
+          d.className = text.startsWith('✓') ? 'term-ok' : 'term-out';
+          d.textContent = '  ' + text;
+          tl.appendChild(d);
+        });
+        termBody.scrollTop = termBody.scrollHeight;
+      } else return;
+      e.preventDefault();
     });
-    termBody.scrollTop = termBody.scrollHeight;
-  } else return;
-  e.preventDefault();
-});
+  }
+  document.addEventListener('astro:page-load', initLab);
 </script>
-</body>
-</html>

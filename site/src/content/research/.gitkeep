@@ -1,0 +1,7 @@
+Intentionally empty. The research collection exists in content.config.ts and the
+/research/ route guards on papers.length, so the site renders correctly with no
+papers. This file only keeps the directory present so the glob loader does not
+warn about a missing base dir.
+
+Do not add a .md/.mdx file here unless it is real work by a real author with a
+reproducible result — see the Honesty rules in AGENTS.md.

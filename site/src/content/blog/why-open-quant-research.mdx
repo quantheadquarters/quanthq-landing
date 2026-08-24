@@ -13,14 +13,20 @@ Most quant secrecy protects capacity-constrained execution details, not ideas. T
 
 The execution edge — low-latency infrastructure, market microstructure insights, capacity constraints — that's worth protecting. But the research methodology? That only gets better in the open.
 
-## What we share
+## Where the line sits
 
-We publish factor research, evaluation methodology, and tooling. We keep execution infrastructure private. That line has served open-source communities well for decades.
+The useful split is between method and execution. Method — factor construction,
+validation design, the data you used and the choices you made — costs you nothing to
+publish and gets better when other people can attack it. Execution is the part worth
+keeping quiet about.
 
-- **Factor research:** We publish our methodology, data sources, and results
-- **Validation frameworks:** Walk-forward validation, out-of-sample testing, regime-aware backtesting
-- **Tooling:** Open-source research frameworks and data processing pipelines
-- **Execution details:** Low-latency infrastructure, order routing, market microstructure — these stay private
+- **Method:** the construction, the data sources, the parameter choices, and the results that did not work
+- **Validation:** walk-forward design, out-of-sample splits, regime-aware testing
+- **Tooling:** the scripts and pipelines that produced the numbers
+- **Execution:** low-latency infrastructure, order routing, capacity — this is the part that stays private
+
+That is the standard we hold writing to here, and the standard we would ask of anything
+we published.
 
 ## The benefits of openness
 
@@ -29,16 +35,10 @@ We publish factor research, evaluation methodology, and tooling. We keep executi
 3. **Community building:** Open research attracts collaborators, not competitors
 4. **Reproducibility:** Others can verify your results, building trust
 
-## Examples from our research
-
-Our work on [earnings revision momentum decay](/research/earnings-revision-momentum-decay/) and [LLM-extracted earnings sentiment](/research/llm-earnings-sentiment-alpha/) is fully reproducible. The methodology is documented, the data sources are specified, and the code is available.
-
 ## Join us
 
 If you spend your weekends reading papers, you already belong here. Come build with us.
 
 ## Related Reading
 
-- [Earnings Revision Momentum Decay in the Post-2023 Regime](/research/earnings-revision-momentum-decay/) — example of our open methodology
-- [LLM-Extracted Earnings Sentiment as an Alpha Factor](/research/llm-earnings-sentiment-alpha/) — reproducible financial AI research
 - [Five Backtesting Pitfalls That Fake Your Sharpe](/blog/backtesting-pitfalls/) — open methodology for validation

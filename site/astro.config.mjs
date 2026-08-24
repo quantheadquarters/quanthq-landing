@@ -6,5 +6,7 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   site: 'https://quanthq.in',
   integrations: [mdx(), sitemap()],
+  // /about/ was folded into the homepage; keep the old URL alive for inbound links.
+  redirects: { '/about': '/#about' },
   vite: { plugins: [tailwindcss()] },
 });

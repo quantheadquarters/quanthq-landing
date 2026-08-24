@@ -3,7 +3,7 @@ import '../styles/global.css';
 import { ClientRouter } from 'astro:transitions';
 import CommandPalette from '../components/CommandPalette.astro';
 import { links, JOIN_URL } from '../data/links.ts';
-const { title = 'QuantHQ', description = 'QuantHQ is an open research institution for quantitative finance and financial AI. Explore reproducible factor research, backtesting methods, and open-source tools.' } = Astro.props;
+const { title = 'QuantHQ', description = 'An open community for quantitative finance — a curated reading list of the papers worth your evening, writing on method, and somewhere to argue about both.' } = Astro.props;
 const year = new Date().getFullYear();
 const canonicalUrl = new URL(Astro.url.pathname, Astro.site ?? 'https://quanthq.in').href;
 const nav = [
@@ -52,7 +52,7 @@ const nav = [
         QuantHQ
       </a>
       <div class="hidden md:flex items-center gap-8 ml-auto text-[13px] font-medium">
-        <a href="/about/" class="text-[var(--text-2)] hover:text-[var(--text-1)] transition-colors">About</a>
+        <a href="/#about" class="text-[var(--text-2)] hover:text-[var(--text-1)] transition-colors">About</a>
         {nav.map((n) => (
           <a href={n.href} class="text-[var(--text-2)] hover:text-[var(--text-1)] transition-colors">{n.label}</a>
         ))}
@@ -67,13 +67,13 @@ const nav = [
       </button>
     </div>
     <div id="mnav" class="hidden md:hidden bg-ink-97 backdrop-blur-xl border-b border-[var(--border)] px-8 py-4 flex-col gap-3 text-[15px]">
-      <a href="/about/" class="block py-2 text-[var(--text-1)]">About</a>
+      <a href="/#about" class="block py-2 text-[var(--text-1)]">About</a>
       {nav.map((n) => <a href={n.href} class="block py-2 text-[var(--text-1)]">{n.label}</a>)}
       <a href={JOIN_URL} target="_blank" rel="noopener" class="block py-2 font-semibold text-[var(--gold-hi)]">Join the community →</a>
     </div>
   </nav>
 
-  <main id="main-content" class="pt-16 md:pt-[92px]">
+  <main id="main-content" class="page-main">
     <slot />
   </main>
 
@@ -81,7 +81,7 @@ const nav = [
     <div class="max-w-[var(--shell)] mx-auto flex flex-wrap justify-between gap-10">
       <div>
         <div class="font-display text-[26px] leading-none mb-3">QuantHQ</div>
-        <p class="text-[var(--text-3)] text-sm max-w-56">A digital research institution for quantitative finance and AI.</p>
+        <p class="text-[var(--text-3)] text-sm max-w-56">An open community for quantitative finance — a reading list, writing, and somewhere to argue about method.</p>
         <p class="text-[var(--text-3)] text-xs max-w-56 mt-2">Research results are for educational purposes only and do not constitute investment advice.</p>
         <div class="flex gap-3 mt-5">
           <a href={JOIN_URL} target="_blank" rel="noopener" class="w-8 h-8 rounded-full bg-[var(--surface-2)] flex items-center justify-center text-[var(--text-3)] hover:text-[var(--accent)] hover:bg-[var(--border-hover)] transition-colors" aria-label="LinkedIn group">
@@ -100,7 +100,7 @@ const nav = [
         </div>
         <div class="flex flex-col gap-2.5">
           <span class="text-[10px] uppercase tracking-[0.2em] text-[var(--text-3)] font-semibold mb-1">Org</span>
-          <a href="/about/" class="text-[var(--text-2)] hover:text-[var(--text-1)]">About</a>
+          <a href="/#about" class="text-[var(--text-2)] hover:text-[var(--text-1)]">About</a>
           <a href="/contact/" class="text-[var(--text-2)] hover:text-[var(--text-1)]">Contact</a>
         </div>
       </div>

@@ -2,6 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import { getCollection, render } from 'astro:content';
 import JsonLd from '../../components/JsonLd.astro';
+import { JOIN_URL } from '../../data/links.ts';
 
 export async function getStaticPaths() {
   const posts = await getCollection('blog');
@@ -61,7 +62,7 @@ const breadcrumbSchema = {
 <Base title={`${post.data.title} — QuantHQ Blog`} description={post.data.description}>
   <JsonLd data={articleSchema} />
   <JsonLd data={breadcrumbSchema} />
-  <div id="read-prog" class="fixed top-16 left-0 h-px w-0 bg-gradient-to-r from-[var(--accent)] to-[var(--accent2)] z-40"></div>
+  <div id="read-prog" class="fixed left-0 h-px w-0 bg-gradient-to-r from-[var(--accent)] to-[var(--accent2)] z-40" style="top: var(--nav-h)"></div>
 
   <article class="px-8 pt-20 pb-10">
     <div class="max-w-[var(--shell)] mx-auto lg:grid lg:grid-cols-[1fr_240px] lg:gap-16">
@@ -84,13 +85,15 @@ const breadcrumbSchema = {
           <Content />
         </div>
 
+        <!-- No reaction buttons here. They were localStorage-backed, so every
+             reader saw their own clicks echoed back as if they were a tally.
+             Discussion happens in the group, where it is real. -->
         <div class="mt-16 border-t border-[var(--border)] pt-8">
-          <div class="text-[10px] uppercase tracking-[0.2em] text-[var(--text-3)] font-semibold mb-4">Was this helpful?</div>
-          <div class="flex flex-wrap gap-3" id="reactions">
-            {['💡 Insightful', '🔧 Useful', '✨ Interesting'].map((r) => (
-              <button data-r={r} class="react-btn px-5 py-2.5 rounded-full border border-[var(--border)] text-[var(--text-2)] text-[13px] hover:border-accent-40 hover:text-[var(--accent)] transition-colors cursor-pointer">{r} <span class="count text-[var(--text-3)] ml-1">0</span></button>
-            ))}
-          </div>
+          <div class="text-[10px] uppercase tracking-[0.2em] text-[var(--text-3)] font-semibold mb-3">Disagree with this?</div>
+          <p class="text-[var(--text-2)] text-[15px] leading-relaxed max-w-lg">
+            Take it up in the group — that is what it is for.
+          </p>
+          <a href={JOIN_URL} target="_blank" rel="noopener" class="arrow-link mt-5">Join the community</a>
         </div>
       </div>
 
@@ -109,25 +112,21 @@ const breadcrumbSchema = {
     </div>
   </article>
 
-  <script define:vars={{ slug: post.id }} data-astro-rerun>
-    (function () {
-    const prog = document.getElementById('read-prog');
-    addEventListener('scroll', () => {
-      const h = document.documentElement;
-      prog.style.width = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100 + '%';
-    }, { passive: true });
-
-    const key = `qhq-react-${slug}`;
-    const saved = JSON.parse(localStorage.getItem(key) || '{}');
-    document.querySelectorAll('.react-btn').forEach((b) => {
-      const r = b.dataset.r;
-      b.querySelector('.count').textContent = saved[r] || 0;
-      b.addEventListener('click', () => {
-        saved[r] = (saved[r] || 0) + 1;
-        localStorage.setItem(key, JSON.stringify(saved));
-        b.querySelector('.count').textContent = saved[r];
-      });
+  <script>
+    // ClientRouter re-runs page scripts on every navigation, so a bare
+    // addEventListener('scroll') here stacked up a new listener per visit, each
+    // still pointing at the previous page's (now detached) progress bar.
+    // AbortController tears the old one down on the way out.
+    document.addEventListener('astro:page-load', () => {
+      const prog = document.getElementById('read-prog');
+      if (!prog) return;
+      const ac = new AbortController();
+      addEventListener('scroll', () => {
+        const h = document.documentElement;
+        const scrollable = h.scrollHeight - h.clientHeight;
+        prog.style.width = (scrollable > 0 ? (h.scrollTop / scrollable) * 100 : 0) + '%';
+      }, { passive: true, signal: ac.signal });
+      document.addEventListener('astro:before-swap', () => ac.abort(), { once: true });
     });
-    })();
   </script>
 </Base>
