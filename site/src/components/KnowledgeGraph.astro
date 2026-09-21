@@ -1,8 +1,6 @@
 ---
-// Force-directed map of the research topics we work on. Nodes are topics, edges
-// are topics that co-occur in our papers. Decorative but honest — it is our own
-// topic list, not simulated market data, so unlike the /lab panels it is safe to
-// use on content pages.
+// Decorative topic map. Edges illustrate connections; they do not represent
+// measured co-occurrence or published research results.
 //
 // Used by / (hero) and /lab (panel 02). One implementation, two
 // call sites — do not fork it.
@@ -39,7 +37,7 @@ const {
     class="kgraph-canvas"
     data-topics={JSON.stringify(topics)}
     role="img"
-    aria-label={`Force-directed graph of ${topics.length} QuantHQ research topics and how they connect`}
+    aria-label={`Illustrative graph of ${topics.length} quantitative finance topics`}
   ></canvas>
   <noscript>
     <p class="kgraph-fallback">

@@ -22,9 +22,9 @@ const aboutStats = [
 
 const monthYear = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
 
-const title = 'QuantHQ | The community layer for quantitative finance';
+const title = 'QuantHQ | Read, discuss, and share quant research';
 const description =
-  'An open community for quantitative finance. Read the research, argue about it, and publish your own — methods and data sources included.';
+  'Read a curated quant finance reading list, discuss methods in our LinkedIn group, and share your own research notes.';
 
 const organizationSchema = {
   '@context': 'https://schema.org',
@@ -49,7 +49,7 @@ const value = [
   {
     n: '02',
     title: 'People reading the same things',
-    body: 'The group is where papers get posted, picked apart, and occasionally demolished. Quants, engineers, and students, mostly arguing about method.',
+    body: 'The LinkedIn group is the place to share a paper, ask about its method, and discuss it with other readers.',
     href: JOIN_URL,
     cta: 'Join the group',
     external: true,
@@ -57,7 +57,7 @@ const value = [
   {
     n: '03',
     title: 'Somewhere to put your work',
-    body: 'Written something worth reading — a replication, a negative result, a note on a method that keeps going wrong? Send it over and we will publish it.',
+    body: 'Written a replication, a negative result, or a useful method note? Email a short summary and a link. We can discuss whether it fits the site.',
     href: '/contact/',
     cta: 'Get in touch',
   },
@@ -87,11 +87,11 @@ const value = [
     <div class="shell hero-copy">
       <p class="hero-eyebrow">Open research community</p>
       <h1 class="hero-h1">
-        The community layer for <span class="hero-em">quantitative finance.</span>
+        Read better quant research. <span class="hero-em">Discuss the methods. Share your work.</span>
       </h1>
       <p class="hero-lead">
-        QuantHQ is a place to read quant research, argue about it, and publish your own.
-        Everything we put out shows its working.
+        Start with a curated reading list, discuss papers in our LinkedIn group, and send us a
+        replication or method note when you have one.
       </p>
       <div class="hero-ctas">
         <a href={JOIN_URL} target="_blank" rel="noopener" class="btn btn-solid">Join the community</a>
@@ -112,7 +112,7 @@ const value = [
   <section class="hero-visual">
     <div class="shell">
       <KnowledgeGraph height={420} legend={false} />
-      <p class="hero-visual-cap">What we study — drag a node to pull the map apart.</p>
+      <p class="hero-visual-cap">An illustrative map of topics in the reading list and writing. Drag a node to explore.</p>
     </div>
   </section>
 
@@ -220,15 +220,14 @@ const value = [
   <section class="band band-center" id="about">
     <div class="shell">
       <div class="kicker rv"><span class="kicker-n">05</span><span class="kicker-rule"></span><span>About</span></div>
-      <h2 class="headline headline-rule rv">Everything here shows its working.</h2>
+      <h2 class="headline headline-rule rv">Read closely. Show your work.</h2>
       <p class="lead rv">
-        Most of what gets written about markets is either a sales pitch or a result with no method
-        attached. QuantHQ does the other thing: point at the papers that earned their reputation, say
-        plainly why each one matters, and write up methods with the caveats left in.
+        QuantHQ curates papers worth reading and publishes articles about quantitative finance methods.
+        Each reading note explains why its paper is on the list. Our aim is to make assumptions,
+        limitations, and sources easy to inspect.
       </p>
       <p class="lead rv">
-        It is open, it is free, and it is run by quants, engineers, and students who mostly argue
-        about method.
+        The reading list and articles are open to everyone. Discussion happens in the LinkedIn group.
       </p>
     </div>
   </section>

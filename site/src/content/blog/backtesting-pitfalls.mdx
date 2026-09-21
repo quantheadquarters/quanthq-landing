@@ -9,17 +9,17 @@ readingTime: "9 min read"
 
 ## Introduction
 
-Backtesting is the foundation of quantitative strategy development, but it's also where most quant research goes wrong. Here are the five most common pitfalls that inflate your Sharpe ratio and how to avoid them.
+Backtesting helps evaluate a strategy, but its result depends on what information, securities, and costs the simulation includes. Here are five common ways a backtest can overstate performance and checks that may expose them.
 
 ## 1. Lookahead bias
 
-Using data that wasn't available at decision time is the most common backtesting error. Point-in-time databases are non-negotiable for reliable backtesting.
+Using data that was not available at decision time can inflate a backtest. A value's publication time matters as much as its observation date.
 
-**How to catch it:** Offset your signal data by at least one trading day and verify results still hold.
+**How to catch it:** Record when each input became available, then verify that every simulated decision uses only information available at that time. A fixed one-day offset is not sufficient for every data source.
 
 ## 2. Survivorship bias
 
-Backtesting on today's index constituents overstates returns by 1–2% annually. Delisted and acquired companies are systematically excluded from your historical universe.
+Using today's index constituents for earlier periods excludes securities that left the index, including delisted and acquired companies. The size and direction of the resulting bias depend on the strategy and sample.
 
 **How to catch it:** Use historical index composition rather than current constituents.
 
@@ -44,4 +44,3 @@ A strategy validated in one volatility regime often dies in the next. Walk-forwa
 ## Further Reading
 
 - [Deflated Sharpe Ratios: How to Account for Multiple Testing](/blog/deflated-sharpe-ratios/) — methodology for correcting selection bias
-- Our related methodology articles on walk-forward validation and transaction-cost modelling are coming soon.

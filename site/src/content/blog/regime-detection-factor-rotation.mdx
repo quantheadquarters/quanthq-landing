@@ -3,13 +3,13 @@ title: "Regime Detection for Factor Rotation: A Practical Guide"
 author: "QuantHQ Team"
 date: 2026-07-08
 category: "Quantitative Finance"
-description: "Market regimes change, and so should your factor exposures. Learn practical techniques for regime detection and how to apply them to systematic factor rotation strategies."
-readingTime: "12 min read"
+description: "A framework for testing regime-based factor rotation, with the validation and trading costs that can invalidate a promising backtest."
+readingTime: "7 min read"
 ---
 
 ## Introduction
 
-Factor strategies that perform well in one market regime often fail in another. Momentum dominates in trending markets, while value shines in mean-reverting environments. Regime-aware factor rotation can dramatically improve risk-adjusted returns.
+Factor performance can differ across market conditions. That does not mean a regime classifier can identify those conditions early enough to improve a portfolio after costs. Treat factor rotation as a hypothesis to test, not a rule to follow.
 
 ## What Are Market Regimes?
 
@@ -35,21 +35,13 @@ Market regimes are persistent states characterized by distinct statistical prope
 
 ### 2. Economic Indicators
 
-**Leading Indicators:**
+Potential inputs include:
 - Yield curve spread
 - Credit spreads
 - PMI readings
 - Housing starts
 
-**Coincident Indicators:**
-- GDP growth
-- Industrial production
-- Retail sales
-
-**Lagging Indicators:**
-- Unemployment rate
-- CPI inflation
-- Corporate earnings
+GDP growth, industrial production, retail sales, unemployment, inflation, and earnings can also be studied, but their release and revision dates matter. A backtest cannot use a revised series as though its values were known at the time.
 
 ### 3. Market-Based Signals
 
@@ -79,68 +71,17 @@ Common factors:
 - **Low Volatility:** Beta, idiosyncratic risk
 - **Size:** Market cap, liquidity
 
-### Step 2: Identify Regime-Specific Factor Performance
+### Step 2: State the hypothesis before testing
 
-For each regime, determine which factors historically outperformed:
+Specify the regime signal, factor universe, weights, rebalance rule, and baseline portfolio before looking at performance. Record every alternative tried. A table of historically favored factors is a result to estimate from point-in-time data, not a universal lookup table.
 
-| Regime | Dominant Factors | Underperforming Factors |
-|--------|------------------|------------------------|
-| High Volatility | Quality, Low Volatility | Value, Momentum |
-| Low Volatility | Momentum, Value | Low Volatility |
-| Inversion | Momentum, Quality | Value |
-| Normalization | Value, Low Volatility | Momentum |
+### Step 3: Evaluate on unseen periods
 
-### Step 3: Construct Regime-Conditioned Portfolio
-
-1. Detect current regime
-2. Allocate to dominant factors for that regime
-3. Hedge or reduce exposure to underperforming factors
-4. Rebalance on regime change (monthly/quarterly)
+Fit any classifier using only past observations, then freeze it for the next evaluation window. Compare the proposed rotation with a static allocation under the same return data and cost assumptions. Repeat across several windows and report failures as well as successes.
 
 ## Practical Implementation
 
-### Hidden Markov Model for Yield Curve Regimes
-
-```python
-from hmmlearn import hmm
-import numpy as np
-
-# Prepare data: yield curve spread (10-year - 2-year)
-spread = ten_year - two_year
-
-# Fit HMM with 2 states
-model = hmm.GaussianHMM(n_components=2, covariance_type="diag")
-model.fit(spread.reshape(-1, 1))
-
-# Predict regime
-regime = model.predict(spread[-1].reshape(1, -1))[0]
-```
-
-### Simple Threshold-Based Regime Classification
-
-```python
-def classify_regime(yield_curve_spread):
-    """Classify regime based on yield curve spread."""
-    if yield_curve_spread < 0:
-        return "inversion"
-    elif yield_curve_spread < 50:  # bps
-        return "flat"
-    else:
-        return "normalization"
-```
-
-### Factor Rotation Logic
-
-```python
-def factor_rotation(regime):
-    """Return factor weights based on regime."""
-    if regime == "inversion":
-        return {"momentum": 0.4, "quality": 0.4, "value": 0.1, "low_vol": 0.1}
-    elif regime == "normalization":
-        return {"momentum": 0.1, "quality": 0.2, "value": 0.4, "low_vol": 0.3}
-    else:
-        return {"momentum": 0.25, "quality": 0.25, "value": 0.25, "low_vol": 0.25}
-```
+For a first test, use a documented threshold on one observable input, such as the yield-curve spread, and compare it with a fixed-weight portfolio. A more complex model such as a hidden Markov model adds fitting choices and state-label instability. It needs a stronger out-of-sample result to justify that complexity.
 
 ## Evaluation and Validation
 
@@ -162,7 +103,7 @@ def factor_rotation(regime):
 
 ### Overfitting Regime Definitions
 
-Too many regimes = overfitting. Start with 2-3 regimes:
+More regime definitions create more ways to fit noise. Start with a small set of definitions stated in advance, for example:
 - Volatility regimes (high/low)
 - Trend regimes (trending/range)
 - Macro regimes (expansion/recession)
@@ -184,10 +125,3 @@ Ensure regime detection doesn't use future information:
 ## Related Reading
 
 - [Five Backtesting Pitfalls That Fake Your Sharpe](/blog/backtesting-pitfalls/) — validation methodology
-
-## Further Reading
-
-Upcoming articles will cover:
-- Multivariate regime detection
-- Dynamic factor models
-- Regime-aware risk management

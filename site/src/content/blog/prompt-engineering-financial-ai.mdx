@@ -3,13 +3,13 @@ title: "Prompt Engineering for Financial AI: Best Practices"
 author: "QuantHQ Team"
 date: 2026-07-05
 category: "AI"
-description: "Effective prompts are the difference between hallucinations and actionable insights. Learn prompt engineering best practices for financial AI applications, from sentiment analysis to document understanding."
+description: "Prompt patterns for extracting and classifying financial text, plus checks for unsupported answers and numerical errors."
 readingTime: "10 min read"
 ---
 
 ## Introduction
 
-Financial AI applications require prompts that are precise, domain-aware, and resistant to hallucination. Unlike general-purpose LLM use cases, financial prompts must handle numerical data, temporal relationships, and regulatory constraints.
+Financial text tasks involve numbers, dates, and claims that need evidence. A prompt can specify the task and output format, but reliability must be measured on representative documents.
 
 ## Core Principles
 
@@ -37,13 +37,13 @@ Financial LLMs need context about:
 
 LLMs struggle with exact numerical calculations. For quantitative tasks:
 - Request ranges or qualitative assessments instead of exact numbers
-- Ask for reasoning before numerical output
+- Calculate exact values with code or a verified data source
 - Use step-by-step decomposition for complex calculations
 
 ### 4. Guard Against Hallucination
 
 Use these techniques:
-- Ask for confidence scores
+- Treat model confidence labels as uncalibrated unless evaluated
 - Request source citations when available
 - Include "I don't know" as a valid response option
 - Validate against known data when possible
@@ -114,7 +114,7 @@ RISK 1:
 
 Don't ask for everything in one prompt. Break complex tasks into:
 - Separate classification and extraction
-- Chain-of-thought reasoning before final output
+- Separate evidence extraction from the final classification
 - Step-by-step decomposition
 
 ### Ignoring Edge Cases
@@ -149,11 +149,4 @@ LLMs forget earlier parts of long documents. For long financial documents:
 ## Related Reading
 
 - [Why Quant Research Should Be Open](/blog/why-open-quant-research/) — the case for sharing prompts and methodology
-- [Deflated Sharpe Ratios: How to Account for Multiple Testing](/blog/deflated-sharpe-ratios/) — methodology for correcting selection bias
-
-## Further Reading
-
-Upcoming articles will cover:
-- RAG for financial document understanding
-- Fine-tuning vs prompting for domain-specific tasks
-- Evaluation metrics for financial AI
+- [Deflated Sharpe Ratios: Start with the Selection Problem](/blog/deflated-sharpe-ratios/) — a reproducible selection-bias example
