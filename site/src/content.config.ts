@@ -26,10 +26,10 @@ const blog = defineCollection({
     title: z.string(),
     author: z.string(),
     date: z.coerce.date(),
+    updated: z.coerce.date().optional(),
     category: z.enum(['AI', 'Research', 'Engineering', 'Quantitative Finance', 'Opinion', 'Tutorials']),
     description: z.string(),
     image: z.string().optional(),
-    readingTime: z.string().optional(),
   }),
 });
 

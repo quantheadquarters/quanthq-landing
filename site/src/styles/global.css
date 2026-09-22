@@ -166,9 +166,9 @@ html.light .theme-toggle .tt-sun { display: none; }
 .shell { max-width: var(--shell); margin: 0 auto; padding: 0 var(--gutter); }
 .shell-narrow { max-width: 980px; margin: 0 auto; padding: 0 var(--gutter); }
 
-.band { padding: 84px 0; border-top: 1px solid var(--border); }
+.band { padding: 72px 0; border-top: 1px solid var(--border); }
 .band:first-of-type { border-top: none; }
-@media (max-width: 720px) { .band { padding: 54px 0; } }
+@media (max-width: 720px) { .band { padding: 40px 0; } }
 
 .kicker {
   display: flex; align-items: center; gap: 14px; margin-bottom: 26px;

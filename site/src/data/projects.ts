@@ -5,6 +5,8 @@
 // open right now. This list previously held eight projects pointing at
 // `github.com/quanthq/*` — an organisation that does not exist; all six repo
 // links 404'd. Real org is `quantheadquarters` (see data/links.ts).
+import { links } from './links';
+
 export type Project = {
   name: string;
   blurb: string;
@@ -19,7 +21,7 @@ export const projects: Project[] = [
     name: 'finance-project-quant',
     blurb: 'Quantitative finance experiments and factor research notebooks.',
     status: 'Open Source',
-    href: 'https://github.com/quantheadquarters/finance-project-quant',
+    href: links.alphaEngine,
     updated: '2026-08-21',
     featured: true,
   },
@@ -27,7 +29,7 @@ export const projects: Project[] = [
     name: 'quanthq-landing',
     blurb: 'This site. Astro, statically built, deployed to GitHub Pages.',
     status: 'Open Source',
-    href: 'https://github.com/quantheadquarters/quanthq-landing',
+    href: `${links.github}/quanthq-landing`,
     updated: '2026-08-21',
   },
 ];

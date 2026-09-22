@@ -1,152 +1,51 @@
 ---
-title: "Prompt Engineering for Financial AI: Best Practices"
+title: "Testing a Financial Document Classification Prompt"
 author: "QuantHQ Team"
 date: 2026-07-05
+updated: 2026-09-22
 category: "AI"
-description: "Prompt patterns for extracting and classifying financial text, plus checks for unsupported answers and numerical errors."
-readingTime: "10 min read"
+description: "A small worked example for classifying financial documents with evidence, abstention, and explicit evaluation."
 ---
 
-## Introduction
+A prompt can make a financial document classifier easier to use. It cannot establish that the classifier is reliable. The useful work is to define the labels, require evidence, and test the output on documents with known answers.
 
-Financial text tasks involve numbers, dates, and claims that need evidence. A prompt can specify the task and output format, but reliability must be measured on representative documents.
+## Make the task narrow
 
-## Core Principles
+Suppose the input is text from one filing or company communication. The desired label is one of `10-K`, `10-Q`, `8-K`, `Proxy`, `Earnings transcript`, or `Press release`. Include `unknown` for fragments that lack enough evidence. Do not ask the model to infer sentiment, risks, and valuation in the same call; each is a separate task with a separate evaluation set.
 
-### 1. Be Explicit About Output Format
+A prompt for this task could read:
 
-**Bad:**
-```
-Analyze this earnings call and tell me if it's positive or negative.
-```
+```text
+Classify the document using only its supplied text.
+Allowed labels: 10-K, 10-Q, 8-K, Proxy,
+Earnings transcript, Press release, unknown.
 
-**Good:**
-```
-Analyze the following earnings call transcript on a scale from -5 (strongly negative) to +5 (strongly positive). Return only the numerical score and a one-sentence justification.
-```
+Return JSON with exactly:
+{"label": "...", "evidence": "..."}
 
-### 2. Include Domain Context
-
-Financial LLMs need context about:
-- Market conditions (bull/bear/regime)
-- Industry norms (margins, growth rates)
-- Regulatory environment (disclosure requirements)
-- Accounting standards (GAAP/IFRS differences)
-
-### 3. Handle Numerical Data Carefully
-
-LLMs struggle with exact numerical calculations. For quantitative tasks:
-- Request ranges or qualitative assessments instead of exact numbers
-- Calculate exact values with code or a verified data source
-- Use step-by-step decomposition for complex calculations
-
-### 4. Guard Against Hallucination
-
-Use these techniques:
-- Treat model confidence labels as uncalibrated unless evaluated
-- Request source citations when available
-- Include "I don't know" as a valid response option
-- Validate against known data when possible
-
-## Financial-Specific Prompt Patterns
-
-### Sentiment Analysis
-
-```
-You are a financial analyst. Analyze the forward-looking statements in this earnings call transcript.
-
-Scoring:
--5 to -1: Negative forward-looking guidance
-0: Neutral
-+1 to +5: Positive forward-looking guidance
-
-Output format:
-SCORE: [number]
-JUSTIFICATION: [one sentence]
-CONFIDENCE: [high/medium/low]
+The evidence must be a short, exact quote from the input.
+If the text does not distinguish the labels, use unknown
+and explain the missing evidence. Do not guess from company name.
 ```
 
-### Document Classification
+An exact quote makes the decision inspectable. It is not proof that the label is correct: the quoted phrase may appear in more than one document type. Parse the JSON, check that `label` is allowed, and verify that `evidence` occurs in the source text. Reject malformed or unsupported output rather than silently accepting it.
 
-```
-Classify this financial document into one of: [10-K, 10-Q, 8-K, Proxy Statement, Earnings Transcript, Press Release].
+## Try cases that can defeat a tidy example
 
-Criteria:
-- 10-K: Annual comprehensive report
-- 10-Q: Quarterly report
-- 8-K: Current report (material events)
-- Proxy Statement: Shareholder meeting materials
-- Earnings Transcript: CEO/CFO earnings call
-- Press Release: Company-issued news
+Build a small labelled set *before* revising the prompt. Include ordinary filings and confusing excerpts: an 8-K that mentions a 10-K, a press release quoting an earnings call, a truncated filing cover page, and a proxy statement with financial tables. In each case record the source, the correct label, and which lines justify it. A three-row illustration of the expected behaviour:
 
-Output format:
-DOCUMENT_TYPE: [type]
-CONFIDENCE: [high/medium/low]
-EVIDENCE: [key phrases supporting classification]
-```
+| Input excerpt | Expected label | Reason |
+| --- | --- | --- |
+| `FORM 10-Q ... quarterly period ended` | `10-Q` | The form and period agree. |
+| `FORM 8-K ... Item 2.02 Results of Operations` | `8-K` | The form header identifies the filing, even though it reports earnings. |
+| `Revenue increased 12% this quarter` | `unknown` | No document type is identified. |
 
-### Risk Factor Extraction
+These are **illustrative snippets**, not a measured benchmark. For an actual evaluation, use full, appropriately licensed documents with independently checked labels. Split by company and date where possible so near-duplicate templates do not leak between development and evaluation sets.
 
-```
-Extract the top 5 risk factors from this 10-K filing. For each risk, provide:
-1. Category (operational, financial, regulatory, market, other)
-2. Severity (high/medium/low)
-3. Specific mention (direct quote)
+## Measure the errors that matter
 
-Output format:
-RISK 1:
-  CATEGORY: [category]
-  SEVERITY: [severity]
-  QUOTE: "[exact text]"
-```
+Count correct labels per class and inspect a confusion matrix. Track `unknown` decisions separately: abstaining on a clear 10-Q is a different failure from confidently calling an 8-K a press release. Check evidence quotations and JSON validity too. Keep the prompt and model version fixed while scoring a held-out set, and retain failed examples when changing either.
 
-## Prompt Engineering Workflow
+If the next task extracts numerical claims, use code to parse and calculate values from the quoted source. A prompt asking for “confidence: high” does not provide calibrated confidence, and a plausible percentage is not a verified calculation.
 
-1. **Define Success Criteria:** What does "good" output look like?
-2. **Iterate on Prompts:** Test variations with sample data
-3. **Validate Output:** Check for hallucinations and accuracy
-4. **Productionize:** Add guardrails and fallbacks
-5. **Monitor:** Track performance and drift over time
-
-## Common Pitfalls
-
-### Over-asking
-
-Don't ask for everything in one prompt. Break complex tasks into:
-- Separate classification and extraction
-- Separate evidence extraction from the final classification
-- Step-by-step decomposition
-
-### Ignoring Edge Cases
-
-Financial data has edge cases:
-- Negative numbers in parentheses
-- Currency symbols and multipliers (M, B, T)
-- Fiscal year vs calendar year
-- Pro forma vs GAAP metrics
-
-### Forgetting Context
-
-LLMs forget earlier parts of long documents. For long financial documents:
-- Summarize first, then analyze
-- Use retrieval-augmented generation (RAG)
-- Break into logical sections
-
-## Tools and Infrastructure
-
-### Evaluation Frameworks
-
-- **Quantitative:** Accuracy, F1-score, precision/recall
-- **Qualitative:** Human review, consistency checks
-- **Financial:** Impact on downstream tasks
-
-### Monitoring
-
-- Track response time and cost
-- Monitor for drift in output distributions
-- Log prompts and responses for debugging
-
-## Related Reading
-
-- [Why Quant Research Should Be Open](/blog/why-open-quant-research/) — the case for sharing prompts and methodology
-- [Deflated Sharpe Ratios: Start with the Selection Problem](/blog/deflated-sharpe-ratios/) — a reproducible selection-bias example
+The deliverable is a repeatable evaluation, including misses and unsupported answers. The prompt is only one input to it. For the parallel problem of selecting a winning result from many attempts, see [Deflated Sharpe Ratios: Start with the Selection Problem](/blog/deflated-sharpe-ratios/).

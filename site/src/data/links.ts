@@ -3,6 +3,8 @@
 export const links = {
   linkedinGroup: 'https://www.linkedin.com/groups/36960154/',
   github: 'https://github.com/quantheadquarters',
+  alphaEngine: 'https://github.com/quantheadquarters/finance-project-quant',
+  alphaEngineFindings: 'https://github.com/quantheadquarters/finance-project-quant/blob/main/FINDINGS.md',
   email: 'quantheadquarters@gmail.com',
 } as const;
 

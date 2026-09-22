@@ -1,17 +1,18 @@
 ---
-// Site-wide ⌘K command palette. Included in both the standalone homepage and
-// Base.astro. Navigation-first so every command works from any page.
+import { links } from '../data/links';
+// Site-wide ⌘K command palette.
 const commands = [
-  { label: 'Research',            hint: 'Papers & preprints',      href: '/research/',  group: 'Navigate' },
+  { label: 'Research',            hint: 'Annotated reading list', href: '/research/',  group: 'Navigate' },
   { label: 'Blog',                hint: 'Writing & essays',        href: '/blog/',      group: 'Navigate' },
   { label: 'About',               hint: 'Why this exists',         href: '/#about',     group: 'Navigate' },
   { label: 'Community',           hint: 'Groups & open source',    href: '/community/', group: 'Navigate' },
   { label: 'Contact',             hint: 'Get in touch',            href: '/contact/',   group: 'Navigate' },
   { label: 'Home',                hint: 'Back to the landing',     href: '/',           group: 'Navigate' },
   { label: 'Lab',                 hint: 'Interactive demos',       href: '/lab/',       group: 'Navigate' },
+  { label: 'Alpha Engine study',  hint: 'A documented negative result', href: '/studies/alpha-engine/', group: 'Navigate' },
   { label: 'Toggle Theme',        hint: 'Light / dark',            action: 'theme',     group: 'Actions' },
-  { label: 'Join the community',  hint: 'LinkedIn group',          href: 'https://www.linkedin.com/groups/36960154/', ext: true, group: 'External' },
-  { label: 'GitHub',              hint: 'Code',                    href: 'https://github.com/quantheadquarters', ext: true, group: 'External' },
+  { label: 'Join the community',  hint: 'LinkedIn group',          href: links.linkedinGroup, ext: true, group: 'External' },
+  { label: 'GitHub',              hint: 'Code',                    href: links.github, ext: true, group: 'External' },
 ];
 ---
 <button class="cmdk-trigger" id="cmdk-trigger" aria-label="Open command menu (Command K)">
@@ -70,7 +71,7 @@ const commands = [
   color:var(--text-2);background:var(--surface-2);border:1px solid var(--border);
   padding:1px 5px;border-radius:4px;
 }
-@media(max-width:767px){.cmdk-trigger{bottom:16px;right:16px}.cmdk-trigger kbd{display:none}}
+@media(max-width:767px){.cmdk-trigger{display:none}}
 
 .cmdk-overlay{
   position:fixed;inset:0;z-index:9500;

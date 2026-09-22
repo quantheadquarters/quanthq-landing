@@ -9,8 +9,7 @@ export async function getStaticPaths() {
   return posts.map((p) => ({ params: { slug: p.id }, props: { post: p } }));
 }
 const { post } = Astro.props;
-const { Content, headings } = await render(post);
-const toc = headings.filter((h) => h.depth <= 3);
+const { Content } = await render(post);
 const canonicalUrl = new URL(`/blog/${post.id}/`, Astro.site ?? 'https://quanthq.in').href;
 
 const articleSchema = {
@@ -20,9 +19,9 @@ const articleSchema = {
   "headline": post.data.title,
   "description": post.data.description,
   "datePublished": post.data.date.toISOString(),
-  "dateModified": post.data.date.toISOString(),
+  "dateModified": (post.data.updated ?? post.data.date).toISOString(),
   "author": {
-    "@type": "Person",
+    "@type": "Organization",
     "name": post.data.author
   },
   "publisher": {
@@ -65,8 +64,7 @@ const breadcrumbSchema = {
   <div id="read-prog" class="fixed left-0 h-px w-0 bg-gradient-to-r from-[var(--accent)] to-[var(--accent2)] z-40" style="top: var(--nav-h)"></div>
 
   <article class="px-8 pt-20 pb-10">
-    <div class="max-w-[var(--shell)] mx-auto lg:grid lg:grid-cols-[1fr_240px] lg:gap-16">
-      <div class="max-w-3xl">
+    <div class="max-w-3xl mx-auto">
         <nav class="flex items-center gap-2 text-[12px] text-[var(--text-3)] mb-6" aria-label="Breadcrumb">
           <a href="/" class="hover:text-[var(--text-1)] transition-colors">Home</a>
           <span class="text-[var(--border)]">/</span>
@@ -76,12 +74,12 @@ const breadcrumbSchema = {
         </nav>
         <div class="text-[10px] uppercase tracking-[0.15em] text-[var(--accent2)] font-semibold">{post.data.category}</div>
         <h1 class="mt-4 text-[clamp(32px,4.8vw,60px)] display-title leading-[1.02]">{post.data.title}</h1>
-        <div class="mt-5 flex items-center gap-3 text-[13px] text-[var(--text-2)]">
+        <div class="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-[var(--text-2)]">
           <span class="text-[var(--text-1)] font-medium">{post.data.author}</span>
           <span>{post.data.date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
-          {post.data.readingTime && <span>· {post.data.readingTime}</span>}
+          {post.data.updated && <span>· Updated {post.data.updated.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>}
         </div>
-        <div class="mt-10 prose-dark text-[15.5px]">
+        <div class="mt-10 prose-dark text-[17px]">
           <Content />
         </div>
 
@@ -95,20 +93,6 @@ const breadcrumbSchema = {
           </p>
           <a href={JOIN_URL} target="_blank" rel="noopener" class="arrow-link mt-5">Join the community</a>
         </div>
-      </div>
-
-      {toc.length > 0 && (
-        <aside class="hidden lg:block">
-          <div class="sticky top-28">
-            <div class="text-[10px] uppercase tracking-[0.2em] text-[var(--text-3)] font-semibold mb-4">Contents</div>
-            <nav class="flex flex-col gap-2.5 text-[13px] border-l border-[var(--border)]">
-              {toc.map((h) => (
-                <a href={`#${h.slug}`} class={`text-[var(--text-2)] hover:text-[var(--text-1)] pl-4 transition-colors ${h.depth === 3 ? 'pl-8' : ''}`}>{h.text}</a>
-              ))}
-            </nav>
-          </div>
-        </aside>
-      )}
     </div>
   </article>
 

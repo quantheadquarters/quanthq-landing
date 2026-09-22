@@ -3,14 +3,6 @@ import Base from '../../layouts/Base.astro';
 import { getCollection } from 'astro:content';
 import JsonLd from '../../components/JsonLd.astro';
 const posts = (await getCollection('blog')).sort((a, b) => +b.data.date - +a.data.date);
-const categories = [...new Set(posts.map(p => p.data.category))];
-const searchIndex = posts.map(p => ({
-  id: p.id,
-  title: p.data.title,
-  description: p.data.description,
-  author: p.data.author,
-  category: p.data.category,
-}));
 const itemListSchema = {
   "@context": "https://schema.org",
   "@type": "ItemList",
@@ -29,24 +21,13 @@ const itemListSchema = {
       <div class="section-label mb-6">Writing</div>
       <h1 class="text-[clamp(44px,7vw,92px)] display-title leading-none">Writing</h1>
       <p class="mt-5 text-[var(--text-2)] max-w-md mx-auto">Notes on quantitative finance, methods, engineering, and AI.</p>
-      <input id="blog-search" type="search" placeholder="Search articles…"
-        class="mt-9 w-full max-w-lg px-5 py-3.5 rounded-lg bg-[var(--card-bg)] border border-[var(--border)] text-sm text-[var(--text)] placeholder:text-[var(--text-3)] focus:border-accent-40 focus:outline-none" />
-      <div class="mt-5 flex flex-wrap gap-2 justify-center">
-        <button data-cat="" class="cat-btn px-4 py-1.5 rounded-full text-xs font-medium border border-accent-40 text-[var(--accent)]">All</button>
-        {categories.map((c) => (
-          <button data-cat={c} class="cat-btn px-4 py-1.5 rounded-full text-xs font-medium border border-[var(--border)] text-[var(--text-2)] hover:text-[var(--text-1)]">{c}</button>
-        ))}
-      </div>
     </div>
   </section>
 
   <section class="px-8">
-    <div class="max-w-[var(--shell)] mx-auto">
-      <p id="blog-empty" class="hidden text-[var(--text-2)] text-sm py-8">No posts match that search.</p>
-    </div>
-    <div class="max-w-[var(--shell)] mx-auto index-list" id="blog-list">
+    <div class="max-w-[var(--shell)] mx-auto index-list">
       {posts.map((p) => (
-        <a href={`/blog/${p.id}/`} class="index-row blog-item" data-id={p.id} data-cat={p.data.category}>
+        <a href={`/blog/${p.id}/`} class="index-row">
           <div>
             <div class="index-eyebrow">{p.data.category}</div>
             <h2>{p.data.title}</h2>
@@ -55,7 +36,6 @@ const itemListSchema = {
           <div class="index-meta">
             <span>{p.data.author}</span>
             <span>{p.data.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-            {p.data.readingTime && <span>{p.data.readingTime}</span>}
             <span>Read article →</span>
           </div>
         </a>
@@ -63,43 +43,4 @@ const itemListSchema = {
     </div>
   </section>
 
-  <script define:vars={{ searchIndex }} data-astro-rerun>
-    (function () {
-    const input = document.getElementById('blog-search');
-    const items = [...document.querySelectorAll('.blog-item')];
-    const btns = [...document.querySelectorAll('.cat-btn')];
-    let cat = '';
-    // Local substring search keeps this small article index simple.
-    const haystack = new Map(searchIndex.map((p) => [p.id,
-      [p.title, p.description, p.author, p.category].join(' ').toLowerCase()]));
-
-    function apply() {
-      const q = input.value.trim().toLowerCase();
-      const matched = q
-        ? new Set([...haystack].filter(([, t]) => t.includes(q)).map(([id]) => id))
-        : null;
-      let shown = 0;
-      items.forEach((el) => {
-        const catOk = !cat || el.dataset.cat === cat;
-        const qOk = !matched || matched.has(el.dataset.id);
-        const on = catOk && qOk;
-        if (on) shown++;
-        el.style.display = on ? '' : 'none';
-      });
-      document.getElementById('blog-empty').classList.toggle('hidden', shown > 0);
-    }
-
-    input?.addEventListener('input', apply);
-    btns.forEach((b) => b.addEventListener('click', () => {
-      cat = b.dataset.cat;
-      btns.forEach((x) => {
-        x.style.borderColor = '';
-        x.style.color = '';
-      });
-      b.style.borderColor = 'var(--accent)';
-      b.style.color = 'var(--accent)';
-      apply();
-    }));
-    })();
-  </script>
 </Base>

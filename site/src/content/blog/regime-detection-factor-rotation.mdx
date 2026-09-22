@@ -1,127 +1,38 @@
 ---
-title: "Regime Detection for Factor Rotation: A Practical Guide"
+title: "Testing Regime-Based Factor Rotation"
 author: "QuantHQ Team"
 date: 2026-07-08
+updated: 2026-09-22
 category: "Quantitative Finance"
-description: "A framework for testing regime-based factor rotation, with the validation and trading costs that can invalidate a promising backtest."
-readingTime: "7 min read"
+description: "A concrete test plan for factor rotation: observable signals, point-in-time inputs, a static baseline, and costs."
 ---
 
-## Introduction
+Factor returns vary across market conditions. The investable question is narrower: can a rule identify those conditions *before* the relevant returns arrive, and improve a portfolio after trading costs? A chart that colours past periods by their eventual regime does not answer that question.
 
-Factor performance can differ across market conditions. That does not mean a regime classifier can identify those conditions early enough to improve a portfolio after costs. Treat factor rotation as a hypothesis to test, not a rule to follow.
+## Start with one decision rule
 
-## What Are Market Regimes?
+Consider a deliberately simple hypothesis: when trailing market volatility is high, hold less of a value portfolio and more of a low-volatility portfolio. The exact threshold and weights are research choices, so record them before examining the evaluation period. For an illustration, use the previous 63 trading days of market returns to estimate volatility at each month end. At the next trading session, allocate 25% to value and 75% to low volatility if that estimate exceeds a threshold fixed on training data; otherwise reverse the weights.
 
-Market regimes are persistent states characterized by distinct statistical properties:
-- **Volatility regimes:** High vs low volatility
-- **Trend regimes:** Trending vs range-bound
-- **Macro regimes:** Growth vs recession, inflationary vs deflationary
-- **Liquidity regimes:** Abundant vs constrained liquidity
+Those percentages are an **illustrative rule, not a recommended allocation or a measured result**. The point is that every ingredient is observable when the trade is placed. A regime label assigned after a market crash is not.
 
-## Regime Detection Methods
+| At the decision date | Allowed input | Unavailable input |
+| --- | --- | --- |
+| Month end | Returns published through that close | Next month's factor returns |
+| Next session | Portfolio weights from the frozen rule | A revised macro series released later |
+| Later evaluation | Realised return and turnover | A new threshold chosen after seeing the outcome |
 
-### 1. Statistical Methods
+A yield-curve or inflation signal can be tested the same way, but use the value and release date available at the time. Revised economic data can make a historical rule look informed when it was not.
 
-**Hidden Markov Models (HMM)**
-- Model the market as a finite state machine
-- States transition with estimated probabilities
-- Emissions are observable market variables
+## Give rotation a fair opponent
 
-**Advantages:** Handles uncertainty, estimates transition probabilities
-**Disadvantages:** Requires tuning, sensitive to initialization
+Compare the rule with a fixed 50/50 value and low-volatility allocation on the **same dates, assets, and return series**. Rebalance both on the same schedule. Charge each for its actual turnover, spreads, fees, and market impact. If the rotation rule trades more often, its additional cost belongs in the comparison.
 
-**Example:** Use yield curve shape (2-year vs 10-year rates) as emission to classify inversion vs normalization regimes.
+Use a rolling evaluation: set the volatility threshold from an initial training window, freeze it, score the next window, and move forward. Do not tune the threshold on the final evaluation months. Keep a log of every threshold, factor definition, and rebalance frequency tried. If dozens of variants were examined, a single winning Sharpe ratio is selected evidence, not an independent test.
 
-### 2. Economic Indicators
+Report at least net return, volatility, drawdown, turnover, and the difference from the fixed portfolio. Show the time series, not only an aggregate. A gain concentrated in one short period is a different claim from a gain that persists across market conditions. Also report where the rule did worse. A model that mostly identifies regimes after they have changed may be descriptive but not useful for allocation.
 
-Potential inputs include:
-- Yield curve spread
-- Credit spreads
-- PMI readings
-- Housing starts
+## Add complexity only when it earns its place
 
-GDP growth, industrial production, retail sales, unemployment, inflation, and earnings can also be studied, but their release and revision dates matter. A backtest cannot use a revised series as though its values were known at the time.
+A hidden Markov model can estimate changing states, but it also adds state count, initialization, fitting window, and state-label choices. Its inferred states can shift when new data arrives. Test its *real-time* assignments, then ask whether it improves on the fixed rule and the simple volatility threshold after costs. If it does not, the simpler baseline is the more honest result.
 
-### 3. Market-Based Signals
-
-**Volatility-Based:**
-- VIX levels and changes
-- Realized volatility
-- Cross-sectional dispersion
-
-**Trend-Based:**
-- Moving average cross-overs
-- Trend strength metrics
-- Market breadth
-
-**Correlation-Based:**
-- Asset class correlations
-- Factor correlations
-- Cross-asset dispersion
-
-## Factor Rotation Framework
-
-### Step 1: Define Factor Universe
-
-Common factors:
-- **Value:** Book-to-market, earnings yield
-- **Momentum:** Price momentum, earnings revision
-- **Quality:** Profitability, debt ratios
-- **Low Volatility:** Beta, idiosyncratic risk
-- **Size:** Market cap, liquidity
-
-### Step 2: State the hypothesis before testing
-
-Specify the regime signal, factor universe, weights, rebalance rule, and baseline portfolio before looking at performance. Record every alternative tried. A table of historically favored factors is a result to estimate from point-in-time data, not a universal lookup table.
-
-### Step 3: Evaluate on unseen periods
-
-Fit any classifier using only past observations, then freeze it for the next evaluation window. Compare the proposed rotation with a static allocation under the same return data and cost assumptions. Repeat across several windows and report failures as well as successes.
-
-## Practical Implementation
-
-For a first test, use a documented threshold on one observable input, such as the yield-curve spread, and compare it with a fixed-weight portfolio. A more complex model such as a hidden Markov model adds fitting choices and state-label instability. It needs a stronger out-of-sample result to justify that complexity.
-
-## Evaluation and Validation
-
-### Backtesting Considerations
-
-- **Walk-forward validation:** Train regime model on historical data, test on forward period
-- **Regime lag:** Regime detection has lag; account for signal delay
-- **Transaction costs:** Frequent rebalancing increases costs
-- **Regime stability:** Evaluate how often regimes change
-
-### Performance Metrics
-
-- **Sharpe ratio:** Risk-adjusted returns
-- **Regime-specific returns:** Performance in each regime
-- **Drawdown:** Maximum drawdown during regime transitions
-- **Turnover:** Trading frequency and costs
-
-## Common Pitfalls
-
-### Overfitting Regime Definitions
-
-More regime definitions create more ways to fit noise. Start with a small set of definitions stated in advance, for example:
-- Volatility regimes (high/low)
-- Trend regimes (trending/range)
-- Macro regimes (expansion/recession)
-
-### Ignoring Transition Costs
-
-Regime changes often coincide with market stress:
-- Higher transaction costs during transitions
-- Wider bid-ask spreads
-- Reduced liquidity
-
-### Look-Ahead Bias
-
-Ensure regime detection doesn't use future information:
-- Use only data available at decision time
-- Point-in-time data for economic indicators
-- Realistic signal delays
-
-## Related Reading
-
-- [Five Backtesting Pitfalls That Fake Your Sharpe](/blog/backtesting-pitfalls/) — validation methodology
+This is a testing protocol, not evidence that regime rotation works. It gives the hypothesis a way to fail before anyone treats a backtest as a strategy. For more on trial selection and trading assumptions, see [Five Backtesting Pitfalls That Fake Your Sharpe](/blog/backtesting-pitfalls/) and the [reading list on multiple testing](/research/).

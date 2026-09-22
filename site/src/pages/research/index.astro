@@ -6,8 +6,13 @@ import { reading } from '../../data/reading';
 const papers = (await getCollection('research')).sort((a, b) => +b.data.date - +a.data.date);
 const featured = papers.find((p) => p.data.featured);
 const rest = papers.filter((p) => p !== featured);
-// pinned first, then newest — the pinned set is the canon we keep pointing people at
-const readingList = [...reading].sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned) || b.year - a.year);
+// Keep the pinned order consistent with the homepage's starting three.
+const readingList = [...reading].sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned));
+const paths = [
+  { title: 'Start with the foundations', note: 'How portfolios, risk, and factors became the language of the field.', titles: ['Portfolio Selection', 'Capital Asset Prices: A Theory of Market Equilibrium under Conditions of Risk', 'Common Risk Factors in the Returns on Stocks and Bonds'] },
+  { title: 'Learn to test claims', note: 'What happens when costs, multiple trials, and baselines enter the picture.', titles: ['Optimal Execution of Portfolio Transactions', '… and the Cross-Section of Expected Returns', 'The Deflated Sharpe Ratio: Correcting for Selection Bias, Backtest Overfitting and Non-Normality'] },
+  { title: 'Inspect modern methods', note: 'Where machine learning meets return prediction and order book data.', titles: ['Empirical Asset Pricing via Machine Learning', 'Universal Features of Price Formation in Financial Markets: Perspectives from Deep Learning', 'DeepLOB: Deep Convolutional Neural Networks for Limit Order Books'] },
+];
 const searchIndex = [
   ...papers.map((p) => ({
     id: p.id,
@@ -41,8 +46,8 @@ const itemListSchema = {
   <section class="px-8 pt-12 pb-8">
     <div class="max-w-[var(--shell)] mx-auto page-head">
       <div class="section-label mb-6">Reading list</div>
-      <h1 class="text-[clamp(44px,7vw,92px)] display-title leading-none">Research</h1>
-      <p class="mt-5 text-[var(--text-2)] max-w-xl">{reading.length} papers worth your evening, each with a note on why it belongs here.</p>
+      <h1 class="text-[clamp(44px,7vw,92px)] display-title leading-none">A quant research reading list.</h1>
+      <p class="mt-5 text-[var(--text-2)] max-w-xl">{reading.length} primary sources with short editorial notes. Follow a path below, or search the full list by author, title, or topic.</p>
 
       <input
         id="paper-search"
@@ -50,6 +55,24 @@ const itemListSchema = {
         placeholder="Search papers, authors, topics…"
         class="mt-9 w-full max-w-lg px-5 py-3.5 rounded-lg bg-[var(--card-bg)] border border-[var(--border)] text-sm text-[var(--text)] placeholder:text-[var(--text-3)] focus:border-accent-40 focus:outline-none"
       />
+    </div>
+  </section>
+
+  <section class="px-8 pb-10">
+    <div class="max-w-[var(--shell)] mx-auto grid md:grid-cols-3 gap-px border border-[var(--border)] bg-[var(--border)]">
+      {paths.map((path, i) => (
+        <div class="bg-[var(--card-bg)] p-6 md:p-7">
+          <div class="font-mono text-xs text-[var(--accent)]">0{i + 1} / Reading path</div>
+          <h2 class="display-title text-[30px] leading-tight mt-4">{path.title}</h2>
+          <p class="text-[var(--text-2)] text-sm leading-relaxed mt-2">{path.note}</p>
+          <ol class="mt-5 pt-4 border-t border-[var(--border)] space-y-3">
+            {path.titles.map((title, index) => {
+              const paper = reading.find((item) => item.title === title);
+              return paper && <li class="text-[13px] leading-snug"><a class="text-[var(--text-1)] hover:text-[var(--accent)]" href={paper.href} target="_blank" rel="noopener"><span class="font-mono text-[var(--text-3)] mr-2">{index + 1}.</span>{paper.title} ↗</a></li>;
+            })}
+          </ol>
+        </div>
+      ))}
     </div>
   </section>
 
@@ -113,7 +136,7 @@ const itemListSchema = {
   <section class="px-8 pt-8 pb-6" data-section="reading">
     <div class="max-w-[var(--shell)] mx-auto">
       <h2 class="section-label">Recommended reading · {reading.length} papers</h2>
-      <p class="mt-4 text-[var(--text-2)] text-[15px] leading-relaxed max-w-2xl">Read the note to decide what to open. Links lead to the DOI, arXiv, SSRN, or publisher; some papers may be behind a paywall.</p>
+      <p class="mt-4 text-[var(--text-2)] text-[15px] leading-relaxed max-w-2xl">These are selected for a useful idea, method, or limitation. A note explains our reason for including each one, not an endorsement of every conclusion. Links lead to primary sources; some may be behind a paywall.</p>
     </div>
   </section>
 

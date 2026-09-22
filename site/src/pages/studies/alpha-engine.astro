@@ -1,0 +1,91 @@
+---
+import Base from '../../layouts/Base.astro';
+import FindingChart from '../../components/FindingChart.astro';
+import { alphaFinding } from '../../data/findings';
+import { links } from '../../data/links';
+---
+<Base title="What 6,788 Alpha Engine Signals Showed | QuantHQ" description="A documented Alpha Engine evaluation found no measurable directional edge across 6,788 scored signals. Read the method, failed interpretations, and limitations.">
+  <header class="px-8 pt-12 pb-14">
+    <div class="max-w-4xl mx-auto page-head">
+      <div class="section-label mb-6">Case study / Alpha Engine</div>
+      <h1 class="display-title text-[clamp(44px,7vw,92px)] leading-[0.98]">6,788 signals. No measured edge.</h1>
+      <p class="lead mx-auto">The public Alpha Engine project replayed its directional calls against subsequent price moves. Its July 2026 evaluation found no measurable advantage over the direction-matched base rate.</p>
+      <p class="source-line">Reported {alphaFinding.date} · <a href={alphaFinding.source} target="_blank" rel="noopener">Full findings ↗</a></p>
+    </div>
+  </header>
+
+  <section class="px-8 pb-16">
+    <div class="max-w-[var(--shell)] mx-auto result-panel">
+      <div class="result-intro">
+        <div class="section-label">The measured result</div>
+        <div class="result-number">{alphaFinding.edge}</div>
+        <h2>Directional edge over the matched base rate</h2>
+        <p>{alphaFinding.signals.toLocaleString('en-US')} scored signals across {alphaFinding.assetCount} assets, evaluated over the next 10 bars. This is a finding about this engine and this test, not about every possible trading signal.</p>
+      </div>
+      <FindingChart />
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="shell story-grid">
+      <div>
+        <div class="kicker"><span class="kicker-n">01</span><span class="kicker-rule"></span><span>Method</span></div>
+        <h2 class="headline">What was tested.</h2>
+      </div>
+      <div class="story-copy">
+        <p>For each historical bar, the project replayed the same <code>signal_at()</code> path used by its scan. It scored each bullish or bearish call against the asset's move over the next 10 bars. The seven assets span crypto and US equities, with 2.7 to 5 years of history depending on the asset.</p>
+        <p>The baseline matters: if an asset rose in 56% of the test windows, a bullish call had to beat 56%, rather than a generic 50%. The aggregate result was <strong>+0.0 percentage points</strong> of directional edge over that matched baseline.</p>
+        <a class="arrow-link" href={alphaFinding.source} target="_blank" rel="noopener">Inspect commands and per-asset results</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="shell story-grid">
+      <div>
+        <div class="kicker"><span class="kicker-n">02</span><span class="kicker-rule"></span><span>Corrections</span></div>
+        <h2 class="headline">The false positives were instructive.</h2>
+      </div>
+      <div class="story-copy">
+        <div class="finding-note"><strong>Survivors looked better.</strong> Scoring only calls that had not hit a stop produced an apparent positive edge. That subset was selected by the outcome, so the comparison was invalid.</div>
+        <div class="finding-note"><strong>Half right was the wrong bar.</strong> Several calls looked acceptable against 50%. They did not beat the underlying asset's tendency to move in the called direction.</div>
+        <div class="finding-note"><strong>One correction was itself corrected.</strong> An early analysis treated stop hits as full losses and concluded that stops destroyed value. Return-based measurement did not support that conclusion. The project keeps the correction visible in its findings.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="shell story-grid">
+      <div>
+        <div class="kicker"><span class="kicker-n">03</span><span class="kicker-rule"></span><span>Limits</span></div>
+        <h2 class="headline">What this result does not say.</h2>
+      </div>
+      <div class="story-copy">
+        <p>It does not show that no strategy can work. It evaluates this engine's directional calls, these assets, this history, and a 10-bar horizon. The asset-level values range from −1.7 to +2.0 percentage points; the project interprets that spread as noise around zero.</p>
+        <p>The useful output is the measurement process and the record of ideas that failed under scrutiny. The <a href={alphaFinding.source} target="_blank" rel="noopener">full findings</a> include the tables, commands, and later investigations. The <a href={links.alphaEngine} target="_blank" rel="noopener">repository</a> contains the code.</p>
+        <p>For a smaller illustration of selection bias, read our <a href="/blog/deflated-sharpe-ratios/">reproducible Sharpe simulation</a>.</p>
+      </div>
+    </div>
+  </section>
+</Base>
+<style>
+  .source-line { margin-top: 24px; font-family: var(--font-mono); font-size: 12px; color: var(--text-3); }
+  .source-line a, .story-copy a:not(.arrow-link) { color: var(--text-1); text-decoration: underline; text-underline-offset: 3px; }
+  .result-panel { display: grid; grid-template-columns: .85fr 1.15fr; gap: clamp(32px,5vw,80px); border-top: 1px solid var(--border-hover); border-bottom: 1px solid var(--border-hover); padding: 38px 0; }
+  .result-intro .section-label { margin-bottom: 18px; }
+  .result-number { font-family: var(--font-display); font-size: clamp(78px,10vw,148px); line-height: .9; letter-spacing: -.04em; color: var(--accent); }
+  .result-intro h2 { font-size: 18px; font-weight: 600; margin-top: 18px; }
+  .result-intro p { max-width: 44ch; color: var(--text-2); line-height: 1.6; margin-top: 12px; }
+  .story-grid { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); gap: clamp(36px,7vw,100px); }
+  .story-copy { max-width: 68ch; color: var(--text-2); font-size: 17px; line-height: 1.7; }
+  .story-copy p + p { margin-top: 20px; }
+  .story-copy .arrow-link { margin-top: 24px; }
+  .story-copy code { font-size: .85em; color: var(--text-1); }
+  .finding-note { padding: 18px 0; border-bottom: 1px solid var(--border); }
+  .finding-note:first-child { padding-top: 0; }
+  .finding-note strong { color: var(--text); }
+  @media (max-width: 760px) {
+    .result-panel, .story-grid { grid-template-columns: 1fr; }
+    .result-panel { gap: 36px; }
+  }
+</style>

@@ -1,12 +1,11 @@
 ---
 import Base from '../layouts/Base.astro';
-import { projects } from '../data/projects.ts';
 import { reading } from '../data/reading.ts';
-import { links, JOIN_URL } from '../data/links.ts';
+import { JOIN_URL } from '../data/links.ts';
 const channels = [
   {
     title: 'LinkedIn Group',
-    desc: 'Post a paper, ask about its method, or follow the discussion. Free and public.',
+    desc: 'Post a paper, ask about its method, or follow the discussion. A useful first post: one claim from the paper, and one question about how it was tested.',
     meta: 'Join the community',
     href: JOIN_URL,
     cta: 'Join',
@@ -21,11 +20,11 @@ const channels = [
     cta: 'Read',
   },
   {
-    title: 'Open Source',
-    desc: 'Explore factor research notebooks in finance-project-quant. Issues and pull requests welcome.',
-    meta: `${projects.length} tracked projects`,
-    href: projects.find((project) => project.featured)?.href ?? links.github,
-    cta: 'View repo',
+    title: 'Alpha Engine case study',
+    desc: 'See how a public signal project tested 6,788 historical calls, found no measurable edge, and documented its corrections.',
+    meta: 'Public findings',
+    href: '/studies/alpha-engine/',
+    cta: 'Read the study',
   },
 ];
 ---
@@ -34,7 +33,7 @@ const channels = [
     <div class="max-w-[var(--shell)] mx-auto page-head">
       <div class="section-label mb-6">Community</div>
       <h1 class="text-[clamp(44px,7vw,92px)] display-title leading-[0.95]">Meet the QuantHQ community.</h1>
-      <p class="mt-5 text-[var(--text-2)] max-w-xl mx-auto">Where researchers, engineers, and students argue about method. The group is free and public, the reading list is open, and the code is on GitHub.</p>
+      <p class="mt-5 text-[var(--text-2)] max-w-xl mx-auto">A public group for researchers, engineers, and students to share papers, ask about methods, and inspect open work.</p>
     </div>
   </section>
 

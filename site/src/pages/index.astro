@@ -2,8 +2,9 @@
 import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import JsonLd from '../components/JsonLd.astro';
-import KnowledgeGraph from '../components/KnowledgeGraph.astro';
+import FindingChart from '../components/FindingChart.astro';
 import { links, JOIN_URL } from '../data/links.ts';
+import { alphaFinding } from '../data/findings.ts';
 
 import { reading } from '../data/reading.ts';
 
@@ -14,11 +15,6 @@ const allPosts = (await getCollection('blog')).sort((a, b) => b.data.date.getTim
 const latestPosts = allPosts.slice(0, 4);
 // Every number says what it counts and comes from a collection — never hand-written.
 // No "papers we published" figure: we curate and we write, we do not publish papers.
-const aboutStats = [
-  [String(reading.length), 'Papers on the reading list'],
-  [String(allPosts.length), 'Articles written'],
-  ['Free', 'To read and to join'],
-];
 
 const monthYear = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
 
@@ -32,7 +28,7 @@ const organizationSchema = {
   '@id': 'https://quanthq.in/#organization',
   name: 'QuantHQ',
   url: 'https://quanthq.in/',
-  logo: 'https://quanthq.in/logo.jpeg',
+  logo: 'https://quanthq.in/logo.png',
   description,
   sameAs: [links.linkedinGroup, links.github],
 };
@@ -42,7 +38,7 @@ const value = [
   {
     n: '01',
     title: 'A reading list, not a link dump',
-    body: `${reading.length} papers that are actually worth the evening — from the equilibrium arguments the field rests on to what deep learning has really established about price formation. Each one says why it made the list.`,
+    body: `${reading.length} papers, from foundational asset pricing to modern market data. Each note explains why that paper made the list.`,
     href: '/research/',
     cta: 'Open the reading list',
   },
@@ -75,29 +71,25 @@ const value = [
         Read quant research. <span class="hero-em">Challenge the method.</span>
       </h1>
       <p class="hero-lead">
-        Start with a curated reading list, discuss papers in our LinkedIn group, and send us a
-        replication or method note when you have one.
+        Start with {reading.length} annotated papers. Then inspect a public project that found no
+        measurable edge in its own signals, and bring your questions to the group.
       </p>
       <div class="hero-ctas">
-        <a href={JOIN_URL} target="_blank" rel="noopener" class="btn btn-solid">Join the community</a>
-        <a href="/research/" class="btn btn-outline">See the reading list</a>
-      </div>
-      <div class="hero-stats">
-        {aboutStats.map(([n, l]) => (
-          <div class="hero-stat">
-            <span class="hero-stat-n">{n}</span>
-            <span class="hero-stat-l">{l}</span>
-          </div>
-        ))}
+        <a href="/research/" class="btn btn-solid">Explore the reading list</a>
+        <a href="/studies/alpha-engine/" class="btn btn-outline">See the case study</a>
       </div>
     </div>
   </section>
 
-  <!-- The map sits below the hero, full width, rather than beside the copy. -->
   <section class="hero-visual">
-    <div class="shell">
-      <KnowledgeGraph height={250} legend={false} topics={['Asset pricing', 'Market microstructure', 'Factor investing', 'Backtesting', 'Machine learning', 'Risk models', 'Replication', 'Transaction costs']} />
-      <p class="hero-visual-cap">A field guide to the subjects in our reading list and writing.</p>
+    <div class="shell feature-panel">
+      <div class="feature-copy">
+        <div class="section-label">From the public work / Alpha Engine</div>
+        <h2>{alphaFinding.signals.toLocaleString('en-US')} signals. No measured edge.</h2>
+        <p>In a July 2026 evaluation, directional calls across {alphaFinding.assetCount} assets matched the direction-adjusted base rate over the next 10 bars. The failed hypotheses and corrections are part of the record.</p>
+        <a href="/studies/alpha-engine/" class="arrow-link">Read the case study</a>
+      </div>
+      <FindingChart />
     </div>
   </section>
 
@@ -187,7 +179,7 @@ const value = [
       <ul class="fit-list rv rv-stagger">
         <li class="fit-row">
           <span class="fit-who">You're starting out</span>
-          <span class="fit-why">A student or career-switcher trying to get into quant, tired of being sold a course. Read what the field actually reads.</span>
+          <span class="fit-why">A student or career-switcher looking for a path through the papers the field actually reads.</span>
         </li>
         <li class="fit-row">
           <span class="fit-who">You can already build</span>
@@ -195,7 +187,7 @@ const value = [
         </li>
         <li class="fit-row">
           <span class="fit-who">You do this for a living</span>
-          <span class="fit-why">A working quant who wants to argue about method with people outside your own desk.</span>
+          <span class="fit-why">A working quant who wants to compare methods and assumptions with people outside their own desk.</span>
         </li>
       </ul>
     </div>
@@ -212,7 +204,8 @@ const value = [
         limitations, and sources easy to inspect.
       </p>
       <p class="lead rv">
-        The reading list and articles are open to everyone. Discussion happens in the LinkedIn group.
+        Our articles use QuantHQ Team as the editorial byline. Sources are linked, and corrections
+        or contributions can be sent through <a href="/contact/">contact</a>. Discussion happens in the LinkedIn group.
       </p>
     </div>
   </section>
@@ -221,9 +214,9 @@ const value = [
   <section class="band band-center join-band">
     <div class="shell">
       <div class="kicker rv"><span class="kicker-n">06</span><span class="kicker-rule"></span><span>Join</span></div>
-      <h2 class="headline join-headline headline-rule rv">Come argue about method with us.</h2>
+      <h2 class="headline join-headline headline-rule rv">Bring a paper or a question.</h2>
       <p class="lead rv">
-        The community runs on LinkedIn. It is free, it is public, and nobody is selling you a course.
+        The public LinkedIn group is the place to discuss a method, share a replication, or ask what a result leaves out.
       </p>
       <div class="hero-ctas rv">
         <a href={JOIN_URL} target="_blank" rel="noopener" class="btn btn-solid">Join the community</a>
@@ -238,33 +231,16 @@ const value = [
 </Base>
 
 <style>
-  /* ── hero ──
-     Single centred column: eyebrow, headline, lead, CTAs, stats. The map is its
-     own full-width section below rather than a second grid column. */
-  .hero { padding: clamp(48px, 7vh, 80px) 0 clamp(32px, 5vh, 52px); }
+  /* ── hero ── */
+  .hero { padding: clamp(48px, 7vh, 80px) 0 clamp(40px, 6vh, 64px); }
   .hero-copy { text-align: center; }
-  .hero-visual { min-width: 0; padding-bottom: clamp(40px, 7vh, 76px); }
-  .hero-visual-cap {
-    margin-top: 14px; text-align: center; font-family: var(--font-mono);
-    font-size: 11px; letter-spacing: 0.06em; color: var(--text-3);
-  }
-
-  /* stats sit under the CTAs, mirroring the reference's centred metric row */
-  .hero-stats {
-    display: flex; flex-wrap: wrap; justify-content: center;
-    gap: clamp(16px, 4vw, 64px); margin-top: 38px;
-    padding-top: 28px; border-top: 1px solid var(--border);
-  }
-  .hero-stat { display: flex; flex-direction: column; gap: 10px; }
-  .hero-stat-n {
-    font-family: var(--font-mono); font-variant-numeric: tabular-nums;
-    font-size: clamp(28px, 3.6vw, 42px); font-weight: 700;
-    letter-spacing: -0.02em; color: var(--text); line-height: 1;
-  }
-  .hero-stat-l {
-    font-family: var(--font-mono); font-size: 12px;
-    letter-spacing: 0.02em; color: var(--text-3);
-  }
+  .hero-visual { min-width: 0; padding-bottom: clamp(44px, 7vh, 76px); }
+  .feature-panel { display: grid; grid-template-columns: .85fr 1.15fr; gap: clamp(36px, 6vw, 90px); align-items: center; }
+  .feature-copy { border-top: 1px solid var(--border-hover); padding-top: 26px; }
+  .feature-copy h2 { margin-top: 20px; font-family: var(--font-display); font-size: clamp(34px, 4vw, 56px); line-height: 1.04; max-width: 14ch; }
+  .feature-copy p { margin-top: 18px; color: var(--text-2); font-size: 16px; line-height: 1.65; max-width: 54ch; }
+  .feature-copy .arrow-link { margin-top: 20px; }
+  .hero-visual :global(.finding-chart) { border-top: 1px solid var(--border-hover); padding-top: 26px; }
 
   /* ── centred bands ──
      Heading block centres; the data rows below (reading, writing, fit) stay
@@ -300,11 +276,11 @@ const value = [
   /* ── value ── */
   .value-grid {
     display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
-    margin-top: 56px; background: var(--border);
+    margin-top: 40px; background: var(--border);
     border: 1px solid var(--border); overflow: hidden;
   }
   .value-item {
-    background: var(--card-bg); padding: 34px 30px 30px;
+    background: var(--card-bg); padding: 28px 26px 26px;
     display: flex; flex-direction: column;
     transition: background 0.25s;
   }
@@ -318,7 +294,7 @@ const value = [
   .value-cta { margin-top: 26px; padding-top: 20px; border-top: 1px solid var(--border); }
 
   /* ── reading list ── */
-  .reading-list, .writing-list, .fit-list { margin-top: 40px; border-top: 1px solid var(--border); }
+  .reading-list, .writing-list, .fit-list { margin-top: 32px; border-top: 1px solid var(--border); }
   .reading-list li, .writing-list li, .fit-list li { border-bottom: 1px solid var(--border); }
 
   .reading-row {
@@ -387,6 +363,7 @@ const value = [
   /* ── about ── */
   #about { scroll-margin-top: calc(var(--nav-h) + 40px); }
   .band .lead + .lead { margin-top: 18px; }
+  #about .lead a { color: var(--text-1); text-decoration: underline; text-underline-offset: 3px; }
 
   /* ── join ── */
   .join-headline { max-width: 20ch; }
@@ -399,13 +376,16 @@ const value = [
     .value-grid { grid-template-columns: 1fr; }
   }
   @media (max-width: 640px) {
-    .hero-stats { display: grid; grid-template-columns: repeat(3, 1fr); width: 100%; gap: 10px; }
-    .hero-stat-n { font-size: 25px; }
-    .hero-stat-l { font-size: 10px; line-height: 1.4; }
+    .feature-panel { grid-template-columns: 1fr; }
+    .value-item { padding: 22px 20px; }
+    .value-n { margin-bottom: 12px; }
+    .value-body { margin-top: 8px; }
+    .value-cta { margin-top: 16px; padding-top: 14px; }
     .hero-h1 { font-size: clamp(42px, 12vw, 56px); }
     .hero-ctas { margin-top: 26px; }
     .hero-ctas .btn { justify-content: center; }
     .reading-row, .writing-row, .fit-row { grid-template-columns: 1fr; gap: 10px; }
+    .reading-row, .writing-row, .fit-row { padding-top: 18px; padding-bottom: 18px; }
     .reading-meta { flex-direction: row; gap: 10px; text-align: left; }
   }
 </style>
