@@ -40,7 +40,6 @@ const nav = [
 </head>
 <body class="min-h-screen antialiased">
   <a href="#main-content" class="skip-link">Skip to main content</a>
-  <div class="bg-wash" aria-hidden="true"></div>
   <nav class="lg-nav">
     <div class="max-w-[var(--shell)] mx-auto px-8 h-full flex items-center gap-12 w-full">
       <a href="/" class="flex items-center gap-2.5 font-bold text-[15px] tracking-tight">
@@ -69,7 +68,7 @@ const nav = [
     <div id="mnav" class="hidden md:hidden bg-ink-97 backdrop-blur-xl border-b border-[var(--border)] px-8 py-4 flex-col gap-3 text-[15px]">
       <a href="/#about" class="block py-2 text-[var(--text-1)]">About</a>
       {nav.map((n) => <a href={n.href} class="block py-2 text-[var(--text-1)]">{n.label}</a>)}
-      <a href={JOIN_URL} target="_blank" rel="noopener" class="block py-2 font-semibold text-[var(--gold-hi)]">Join the community →</a>
+      <a href={JOIN_URL} target="_blank" rel="noopener" class="block py-2 font-semibold text-[var(--accent)]">Join the community →</a>
     </div>
   </nav>
 
@@ -132,11 +131,6 @@ const nav = [
         if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
       }), { threshold: 0.12 });
       document.querySelectorAll('.rv').forEach((el) => io.observe(el));
-      document.querySelectorAll('.card').forEach((c) => c.addEventListener('mousemove', (e) => {
-        const r = c.getBoundingClientRect();
-        c.style.setProperty('--mx', (e.clientX - r.left) + 'px');
-        c.style.setProperty('--my', (e.clientY - r.top) + 'px');
-      }, { passive: true }));
       document.getElementById('theme-toggle')?.addEventListener('click', () => {
         const light = document.documentElement.classList.toggle('light');
         localStorage.theme = light ? 'light' : 'dark';

@@ -8,7 +8,6 @@ const featured = papers.find((p) => p.data.featured);
 const rest = papers.filter((p) => p !== featured);
 // pinned first, then newest — the pinned set is the canon we keep pointing people at
 const readingList = [...reading].sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned) || b.year - a.year);
-const allTags = [...new Set([...papers.flatMap((p) => p.data.tags), ...reading.flatMap((r) => r.tags)])];
 const searchIndex = [
   ...papers.map((p) => ({
     id: p.id,
@@ -39,11 +38,11 @@ const itemListSchema = {
 ---
 <Base title="Quant Research Reading List | QuantHQ" description={`${reading.length} papers we recommend on asset pricing, factor investing, market microstructure, and machine learning in finance — each with a note on why it earns its place.`}>
   {papers.length > 0 && <JsonLd data={itemListSchema} />}
-  <section class="px-8 pt-20 pb-8">
+  <section class="px-8 pt-12 pb-8">
     <div class="max-w-[var(--shell)] mx-auto page-head">
       <div class="section-label mb-6">Reading list</div>
       <h1 class="text-[clamp(44px,7vw,92px)] display-title leading-none">Research</h1>
-      <p class="mt-5 text-[var(--text-2)] max-w-xl">A reading list of {reading.length} papers — the ones we think are worth the evening, from the equilibrium arguments the whole field rests on to what deep learning has actually established about price formation. Each note says why the paper earns its place.</p>
+      <p class="mt-5 text-[var(--text-2)] max-w-xl">{reading.length} papers worth your evening, each with a note on why it belongs here.</p>
 
       <input
         id="paper-search"
@@ -51,12 +50,6 @@ const itemListSchema = {
         placeholder="Search papers, authors, topics…"
         class="mt-9 w-full max-w-lg px-5 py-3.5 rounded-lg bg-[var(--card-bg)] border border-[var(--border)] text-sm text-[var(--text)] placeholder:text-[var(--text-3)] focus:border-accent-40 focus:outline-none"
       />
-      <div class="mt-5 flex flex-wrap gap-2 justify-center" id="tag-filters">
-        <button data-tag="" class="tag-btn px-4 py-1.5 rounded-full text-xs font-medium border border-accent-40 text-[var(--accent)]">All</button>
-        {allTags.map((t) => (
-          <button data-tag={t} class="tag-btn px-4 py-1.5 rounded-full text-xs font-medium border border-[var(--border)] text-[var(--text-2)] hover:text-[var(--text-1)]">{t}</button>
-        ))}
-      </div>
     </div>
   </section>
 
@@ -117,37 +110,25 @@ const itemListSchema = {
     </div>
   </section>
 
-  <section class="px-8 pt-20 pb-8" data-section="reading">
+  <section class="px-8 pt-8 pb-6" data-section="reading">
     <div class="max-w-[var(--shell)] mx-auto">
       <h2 class="section-label">Recommended reading · {reading.length} papers</h2>
-      <p class="mt-4 text-[var(--text-2)] text-[15px] leading-relaxed max-w-2xl">
-        Papers we come back to. Each note says why it earns the spot rather than restating the abstract —
-        read the notes to decide what to open, then read the paper. Every link goes to the canonical
-        source: a DOI, arXiv, SSRN, or the publisher's own PDF. Some sit behind a paywall; a preprint is
-        usually a search away.
-      </p>
+      <p class="mt-4 text-[var(--text-2)] text-[15px] leading-relaxed max-w-2xl">Read the note to decide what to open. Links lead to the DOI, arXiv, SSRN, or publisher; some papers may be behind a paywall.</p>
     </div>
   </section>
 
   <section class="px-8 pb-4" data-section="reading">
-    <div class="max-w-[var(--shell)] mx-auto grid gap-4 md:grid-cols-2">
+    <div class="max-w-[var(--shell)] mx-auto index-list">
       {readingList.map((r) => (
-        <a href={r.href} target="_blank" rel="noopener" class="card p-7 paper-item group flex flex-col" data-id={r.href} data-tags={r.tags.join(',')}>
-          <div class="flex flex-wrap items-center gap-2 mb-4">
-            {r.pinned && (
-              <span class="text-[9px] uppercase tracking-[0.2em] px-2.5 py-1 rounded-full bg-accent-10 border border-accent-20 text-[var(--accent)] font-semibold">★ Core</span>
-            )}
-            {r.tags.map((t) => (
-              <span class="text-[9px] uppercase tracking-[0.2em] px-2.5 py-1 rounded-full border border-accent-20 text-[var(--accent)] font-semibold">{t}</span>
-            ))}
-            <span class="font-mono text-[10px] uppercase tracking-[0.15em] text-[var(--text-3)] ml-auto">{r.year}</span>
+        <a href={r.href} target="_blank" rel="noopener" class="index-row paper-item" data-id={r.href}>
+          <div>
+            <div class="index-eyebrow">{r.pinned ? 'Core reading · ' : ''}{r.tags.join(' / ')}</div>
+            <h3>{r.title}</h3>
+            <p class="mt-2 text-[13px]">{r.authors}</p>
+            <p class="mt-3 text-[15px]">{r.note}</p>
           </div>
-          <h3 class="text-lg font-semibold text-[var(--text-1)] leading-snug group-hover:text-[var(--accent)] transition-colors">{r.title}</h3>
-          <p class="mt-2 text-[12px] text-[var(--text-2)] font-medium">{r.authors}</p>
-          <p class="mt-3 text-sm text-[var(--text-2)] leading-relaxed">{r.note}</p>
-          <div class="mt-auto pt-4 border-t border-[var(--border)] flex items-center gap-4 text-[12px] text-[var(--text-3)]">
-            <span class="font-mono">{r.venue}</span>
-            <span class="ml-auto text-[var(--accent)] font-semibold uppercase text-[11px] tracking-wide group-hover:tracking-wider transition-all whitespace-nowrap">Open ↗</span>
+          <div class="index-meta">
+            <span>{r.year}</span><span>{r.venue}</span><span>Open paper ↗</span>
           </div>
         </a>
       ))}
@@ -157,10 +138,7 @@ const itemListSchema = {
   <script define:vars={{ searchIndex }} data-astro-rerun>
     (function () {
     const items = [...document.querySelectorAll('.paper-item')];
-    const tagBtns = [...document.querySelectorAll('.tag-btn')];
-    let activeTag = '';
-    // 3 papers — a substring match over the same fields beats shipping a fuzzy-search
-    // library over the network, which failed open (showed everything) when blocked.
+    // Local substring search keeps the reading list usable without a dependency.
     const haystack = new Map(searchIndex.map((p) => [p.id,
       [p.title, p.abstract, p.authors, (p.tags || []).join(' ')].join(' ').toLowerCase()]));
 
@@ -172,9 +150,8 @@ const itemListSchema = {
         : null;
       let shown = 0;
       items.forEach((el) => {
-        const tagOk = !activeTag || el.dataset.tags.split(',').includes(activeTag);
         const qOk = !matched || matched.has(el.dataset.id);
-        const on = tagOk && qOk;
+        const on = qOk;
         if (on) shown++;
         el.dataset.on = on ? '1' : '';
         // the featured card lives in its own section — hide the section so its
@@ -194,13 +171,6 @@ const itemListSchema = {
     }
 
     document.getElementById('paper-search')?.addEventListener('input', apply);
-    tagBtns.forEach((b) => b.addEventListener('click', () => {
-      activeTag = b.dataset.tag;
-      tagBtns.forEach((x) => { x.style.borderColor = ''; x.style.color = ''; });
-      b.style.borderColor = 'var(--accent)';
-      b.style.color = 'var(--accent)';
-      apply();
-    }));
     })();
   </script>
 </Base>

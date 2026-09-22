@@ -78,6 +78,7 @@ const {
       const canvas = wrap.querySelector('.kgraph-canvas');
       const ctx = canvas.getContext('2d');
       const labels = JSON.parse(canvas.dataset.topics);
+      const compact = labels.length <= 8;
       // a decorative panel should not eat half a phone screen. Recomputed on
       // every init() so a resize across the breakpoint picks up the new height.
       const maxH = +wrap.dataset.height || 420;
@@ -102,6 +103,21 @@ const {
         canvas.height = H * dpr;
         canvas.style.height = H + 'px';
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        if (compact) {
+          const cols = W < 640 ? 2 : 4;
+          const rows = Math.ceil(labels.length / cols);
+          nodes = labels.map((label, i) => ({
+            x: W * ((i % cols) + 0.5) / cols,
+            y: H * (Math.floor(i / cols) + 0.44) / rows,
+            label,
+          }));
+          edges = [];
+          for (let i = 0; i < labels.length; i++) {
+            if (i % cols < cols - 1 && i + 1 < labels.length) edges.push([i, i + 1]);
+            if (i + cols < labels.length) edges.push([i, i + cols]);
+          }
+          return;
+        }
         nodes = labels.map((label, i) => ({
           x: W / 2 + (Math.random() - 0.5) * W * 0.7,
           y: H / 2 + (Math.random() - 0.5) * H * 0.7,
@@ -153,6 +169,23 @@ const {
 
       function draw() {
         ctx.clearRect(0, 0, W, H);
+        if (compact) {
+          const I = ink();
+          for (const [a, b] of edges) {
+            ctx.strokeStyle = `rgba(${I},0.16)`;
+            ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(nodes[a].x, nodes[a].y); ctx.lineTo(nodes[b].x, nodes[b].y); ctx.stroke();
+          }
+          ctx.textAlign = 'center';
+          ctx.font = '500 12px JetBrains Mono, monospace';
+          nodes.forEach((n) => {
+            ctx.beginPath(); ctx.arc(n.x, n.y, 4, 0, Math.PI * 2);
+            ctx.fillStyle = isLight() ? '#2563EB' : '#7A9EFF'; ctx.fill();
+            ctx.fillStyle = `rgba(${I},0.8)`;
+            ctx.fillText(n.label, n.x, n.y + 22);
+          });
+          return;
+        }
         step();
         const I = ink(), pal = palette();
 
@@ -199,6 +232,7 @@ const {
         return [e.clientX - r.left, e.clientY - r.top];
       };
       canvas.addEventListener('pointerdown', (e) => {
+        if (compact) return;
         const [x, y] = at(e);
         for (let i = 0; i < nodes.length; i++) {
           if (Math.hypot(nodes[i].x - x, nodes[i].y - y) < 14) {
@@ -227,6 +261,13 @@ const {
       canvas.addEventListener('mouseleave', () => { hover = -1; });
 
       init();
+
+      if (compact) {
+        draw();
+        document.addEventListener('themechange', draw);
+        addEventListener('resize', () => { init(); draw(); }, { passive: true });
+        return;
+      }
 
       if (reduced) {
         draw();

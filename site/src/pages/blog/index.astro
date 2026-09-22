@@ -11,15 +11,6 @@ const searchIndex = posts.map(p => ({
   author: p.data.author,
   category: p.data.category,
 }));
-const catColor = (c) => ({
-  'AI': 'var(--accent)',
-  'Research': 'var(--cyan)',
-  'Engineering': 'var(--green)',
-  'Quantitative Finance': 'var(--gold)',
-  'Opinion': 'var(--accent2)',
-  'Tutorials': 'var(--accent2)',
-}[c] || 'var(--accent)');
-
 const itemListSchema = {
   "@context": "https://schema.org",
   "@type": "ItemList",
@@ -33,15 +24,15 @@ const itemListSchema = {
 ---
 <Base title="Quant Finance & Financial AI Blog | QuantHQ" description="Practical guides and essays on quantitative research, backtesting, financial AI, factor investing, and systematic trading.">
   <JsonLd data={itemListSchema} />
-  <section class="px-8 pt-20 pb-8">
+  <section class="px-8 pt-12 pb-8">
     <div class="max-w-[var(--shell)] mx-auto page-head">
       <div class="section-label mb-6">Writing</div>
-      <h1 class="text-[clamp(44px,7vw,92px)] display-title leading-none">Quant Finance and Financial AI Blog</h1>
-      <p class="mt-5 text-[var(--text-2)] max-w-md mx-auto">Approachable writing on AI, engineering, and quantitative finance.</p>
+      <h1 class="text-[clamp(44px,7vw,92px)] display-title leading-none">Writing</h1>
+      <p class="mt-5 text-[var(--text-2)] max-w-md mx-auto">Notes on quantitative finance, methods, engineering, and AI.</p>
       <input id="blog-search" type="search" placeholder="Search articles…"
         class="mt-9 w-full max-w-lg px-5 py-3.5 rounded-lg bg-[var(--card-bg)] border border-[var(--border)] text-sm text-[var(--text)] placeholder:text-[var(--text-3)] focus:border-accent-40 focus:outline-none" />
       <div class="mt-5 flex flex-wrap gap-2 justify-center">
-        <button data-cat="" class="cat-btn px-4 py-1.5 rounded-full text-xs font-medium border border-accent2-50 text-[var(--accent2)]">All</button>
+        <button data-cat="" class="cat-btn px-4 py-1.5 rounded-full text-xs font-medium border border-accent-40 text-[var(--accent)]">All</button>
         {categories.map((c) => (
           <button data-cat={c} class="cat-btn px-4 py-1.5 rounded-full text-xs font-medium border border-[var(--border)] text-[var(--text-2)] hover:text-[var(--text-1)]">{c}</button>
         ))}
@@ -53,24 +44,22 @@ const itemListSchema = {
     <div class="max-w-[var(--shell)] mx-auto">
       <p id="blog-empty" class="hidden text-[var(--text-2)] text-sm py-8">No posts match that search.</p>
     </div>
-    <div class="max-w-[var(--shell)] mx-auto grid md:grid-cols-2 gap-4" id="blog-list">
-      {posts.map((p) => {
-        const col = catColor(p.data.category);
-        return (
-        <a href={`/blog/${p.id}/`} class="card p-8 block blog-item group overflow-hidden relative" data-id={p.id} data-cat={p.data.category} style={`--glow: color-mix(in srgb, ${col} 22%, transparent)`}>
-          <div class="absolute top-0 left-0 right-0 h-[3px]" style={`background: linear-gradient(90deg, ${col}, transparent 78%)`}></div>
-          <div class="absolute top-0 right-0 w-44 h-44 pointer-events-none" style={`background: radial-gradient(circle at 100% 0%, ${col}, transparent 68%); opacity: 0.09`}></div>
-          <span class="relative text-[10px] uppercase tracking-[0.15em] font-semibold" style={`color: ${col}`}>{p.data.category}</span>
-          <h2 class="relative font-semibold text-[var(--text-1)] leading-snug group-hover:text-[var(--text)] transition-colors mt-3 text-xl">{p.data.title}</h2>
-          <p class="relative mt-3 text-sm text-[var(--text-2)] leading-relaxed">{p.data.description}</p>
-          <div class="relative mt-6 flex items-center gap-3 text-[12px] text-[var(--text-3)]">
-            <span class="text-[var(--text-2)] font-medium">{p.data.author}</span>
-            <span class="font-mono">{p.data.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-            {p.data.readingTime && <span class="ml-auto font-mono">{p.data.readingTime}</span>}
+    <div class="max-w-[var(--shell)] mx-auto index-list" id="blog-list">
+      {posts.map((p) => (
+        <a href={`/blog/${p.id}/`} class="index-row blog-item" data-id={p.id} data-cat={p.data.category}>
+          <div>
+            <div class="index-eyebrow">{p.data.category}</div>
+            <h2>{p.data.title}</h2>
+            <p class="mt-3 text-[15px]">{p.data.description}</p>
+          </div>
+          <div class="index-meta">
+            <span>{p.data.author}</span>
+            <span>{p.data.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+            {p.data.readingTime && <span>{p.data.readingTime}</span>}
+            <span>Read article →</span>
           </div>
         </a>
-        );
-      })}
+      ))}
     </div>
   </section>
 
@@ -80,7 +69,7 @@ const itemListSchema = {
     const items = [...document.querySelectorAll('.blog-item')];
     const btns = [...document.querySelectorAll('.cat-btn')];
     let cat = '';
-    // 2 posts — see research/index.astro: local substring match, no CDN dependency
+    // Local substring search keeps this small article index simple.
     const haystack = new Map(searchIndex.map((p) => [p.id,
       [p.title, p.description, p.author, p.category].join(' ').toLowerCase()]));
 
@@ -107,8 +96,8 @@ const itemListSchema = {
         x.style.borderColor = '';
         x.style.color = '';
       });
-      b.style.borderColor = 'var(--accent2)';
-      b.style.color = 'var(--accent2)';
+      b.style.borderColor = 'var(--accent)';
+      b.style.color = 'var(--accent)';
       apply();
     }));
     })();
